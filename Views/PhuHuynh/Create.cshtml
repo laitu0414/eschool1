@@ -1,0 +1,16 @@
+@model eSchool.ViewModels.PhuHuynhViewModel
+
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Thêm phụ huynh";
+}
+
+<div class="student-panel">
+    <h3>Thêm phụ huynh</h3>
+    <form asp-action="Create" method="post" class="mt-3">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        @await Html.PartialAsync("_Form", Model)
+        <button class="btn btn-primary">Lưu</button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </form>
+</div>

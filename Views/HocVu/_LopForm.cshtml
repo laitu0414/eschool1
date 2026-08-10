@@ -1,0 +1,71 @@
+@model eSchool.ViewModels.LopHocFormViewModel
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label class="form-label">Mã lớp <span class="text-danger">*</span></label>
+        <input asp-for="MaLop" class="form-control" required maxlength="20" />
+        <span asp-validation-for="MaLop" class="text-danger"></span>
+    </div>
+    <div class="col-md-8">
+        <label class="form-label">Tên lớp <span class="text-danger">*</span></label>
+        <input asp-for="TenLop" class="form-control" required maxlength="50" />
+        <span asp-validation-for="TenLop" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Khối</label>
+        <select asp-for="Khoi" class="form-select">
+            <option value="">-- Chọn khối --</option>
+            <option value="Khối 6">Khối 6</option>
+            <option value="Khối 7">Khối 7</option>
+            <option value="Khối 8">Khối 8</option>
+            <option value="Khối 9">Khối 9</option>
+        </select>
+        <span asp-validation-for="Khoi" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Buổi học</label>
+        <select asp-for="BuoiHoc" class="form-select" id="BuoiHocSelect">
+            <option value="">-- Chọn buổi học --</option>
+            <option value="Sáng">Sáng</option>
+            <option value="Chiều">Chiều</option>
+        </select>
+        <span asp-validation-for="BuoiHoc" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Năm học</label>
+        <select asp-for="NamHoc" asp-items="ViewBag.NamHocs" class="form-select">
+            <option value="">-- Chọn năm học --</option>
+        </select>
+        <span asp-validation-for="NamHoc" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Giáo viên chủ nhiệm</label>
+        <select asp-for="IdGiaoVienCN" asp-items="ViewBag.GiaoViens" class="form-select">
+            <option value="">-- Chưa phân công --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Phòng học (Gán phòng)</label>
+        <select asp-for="IdPhongHoc" asp-items="ViewBag.PhongHocs" class="form-select">
+            <option value="">-- Chưa gán phòng --</option>
+        </select>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var khoiSelect = document.getElementById('Khoi');
+        var buoiHocSelect = document.getElementById('BuoiHocSelect');
+        
+        if (khoiSelect && buoiHocSelect) {
+            khoiSelect.addEventListener('change', function () {
+                var val = this.value;
+                if (val === 'Khối 6' || val === 'Khối 7') {
+                    buoiHocSelect.value = 'Sáng';
+                } else if (val === 'Khối 8' || val === 'Khối 9') {
+                    buoiHocSelect.value = 'Chiều';
+                }
+            });
+        }
+    });
+</script>

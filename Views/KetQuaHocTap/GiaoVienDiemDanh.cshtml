@@ -1,0 +1,108 @@
+@model eSchool.ViewModels.GiaoVienDiemDanhPageViewModel
+@{
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    ViewData["Title"] = "Điểm danh lớp";
+}
+
+<div class="page-card mb-4">
+    <div class="page-tools">
+        <form method="get">
+            <select name="idPhanCong" class="form-select">
+                <option value="">Chọn lớp phụ trách</option>
+                @foreach (var item in Model.PhanCongs)
+                {
+                    <option value="@item.IdPhanCong" selected="@(Model.IdPhanCong == item.IdPhanCong ? "selected" : null)">
+                        @item.TenLop - @item.TenMonHoc - Tiết @(item.TietBatDau ?? 0)
+                    </option>
+                }
+            </select>
+            <input name="ngayHoc" type="date" value="@Model.NgayHoc.ToString("yyyy-MM-dd")" class="form-control" />
+            <button class="btn btn-primary">Mở danh sách</button>
+        </form>
+    </div>
+
+    @if (Model.PhanCongDangChon != null)
+    {
+        <div class="teacher-attendance-summary">
+            <div><strong>Lớp:</strong> @Model.PhanCongDangChon.TenLop</div>
+            <div><strong>Môn học:</strong> @Model.PhanCongDangChon.TenMonHoc</div>
+            <div><strong>Học kỳ:</strong> @(string.IsNullOrWhiteSpace(Model.PhanCongDangChon.HocKy) ? "-" : Model.PhanCongDangChon.HocKy)</div>
+            <div><strong>Năm học:</strong> @(string.IsNullOrWhiteSpace(Model.PhanCongDangChon.NamHoc) ? "-" : Model.PhanCongDangChon.NamHoc)</div>
+        </div>
+    }
+</div>
+
+@if (Model.PhanCongDangChon == null)
+{
+    <div class="page-card text-center text-muted py-5">
+        Chưa có phân công giảng dạy để điểm danh.
+    </div>
+}
+else
+{
+    <form asp-action="LuuDiemDanhGiaoVien" method="post" class="page-card teacher-attendance-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="IdPhanCong" value="@Model.PhanCongDangChon.IdPhanCong" />
+        <input type="hidden" name="NgayHoc" value="@Model.NgayHoc.ToString("yyyy-MM-dd")" />
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã học sinh</th>
+                        <th>Họ tên</th>
+                        <th>Có mặt</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.HocSinhs.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">Lớp này chưa có học sinh.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @for (var i = 0; i < Model.HocSinhs.Count; i++)
+                        {
+                            <tr>
+                                <td>@(i + 1)</td>
+                                <td>
+                                    @Model.HocSinhs[i].MaHS
+                                    <input type="hidden" name="HocSinhs[@i].IdHocSinh" value="@Model.HocSinhs[i].IdHocSinh" />
+                                    <input type="hidden" name="HocSinhs[@i].MaHS" value="@Model.HocSinhs[i].MaHS" />
+                                    <input type="hidden" name="HocSinhs[@i].HoTen" value="@Model.HocSinhs[i].HoTen" />
+                                </td>
+                                <td><strong>@Model.HocSinhs[i].HoTen</strong></td>
+                                <td>
+                                    <input type="hidden" name="HocSinhs[@i].CoMat" value="false" />
+                                    <div class="form-check form-switch teacher-attendance-switch">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               name="HocSinhs[@i].CoMat"
+                                               value="true"
+                                               @(Model.HocSinhs[i].CoMat ? "checked" : null) />
+                                    </div>
+                                </td>
+                                <td>
+                                    <input name="HocSinhs[@i].GhiChu" value="@Model.HocSinhs[i].GhiChu" class="form-control" placeholder="Ghi chú nếu cần" />
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.HocSinhs.Any())
+        {
+            <div class="teacher-attendance-actions">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-save me-2"></i>Lưu điểm danh
+                </button>
+            </div>
+        }
+    </form>
+}

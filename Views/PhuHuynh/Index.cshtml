@@ -1,0 +1,81 @@
+@model List<eSchool.ViewModels.PhuHuynhViewModel>
+
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Phụ huynh";
+}
+
+<div class="student-panel">
+    <div class="d-flex justify-content-between align-items-center">
+        <h3>Danh sách phụ huynh</h3>
+        @if (ViewBag.HasParent != true)
+        {
+            <a asp-action="Create" class="btn btn-primary">Thêm phụ huynh</a>
+        }
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mt-3">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mt-3">@TempData["Error"]</div>
+    }
+
+    <form method="get" class="row g-2 mt-3">
+        <div class="col-md-10">
+            <input name="keyword" value="@ViewBag.Keyword" class="form-control"
+                   placeholder="Tìm theo họ tên hoặc số điện thoại..." />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100">Tìm kiếm</button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered mt-3 align-middle">
+            <thead>
+                <tr>
+                    <th>Họ tên</th>
+                    <th>SĐT</th>
+                    <th>Email</th>
+                    <th>Nghề nghiệp</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted">Chưa có phụ huynh</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.HoTen</td>
+                            <td>@item.SDT</td>
+                            <td>@item.Email</td>
+                            <td>@item.NgheNghiep</td>
+                            <td>@(item.TrangThai ? "Hoạt động" : "Ngừng")</td>
+                            <td class="d-flex gap-2">
+                                <a asp-action="Edit" asp-route-id="@item.IdPhuHuynh"
+                                   class="btn btn-sm btn-warning">Sửa</a>
+                                @if (item.TrangThai)
+                                {
+                                    <form asp-action="Delete" method="post"
+                                          onsubmit="return confirm('Chuyển phụ huynh sang trạng thái ngừng hoạt động?')">
+                                        <input type="hidden" name="id" value="@item.IdPhuHuynh" />
+                                        <button class="btn btn-sm btn-danger">Ngừng</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

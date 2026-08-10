@@ -1,0 +1,311 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = eSchool
+build_property.RootNamespace = eSchool
+build_property.ProjectDir = C:\Users\Admin\Desktop\eschool\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = true
+build_property.MSBuildProjectDirectory = C:\Users\Admin\Desktop\eschool
+build_property._RazorSourceGeneratorDebug = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Account/ForceChangePassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxGb3JjZUNoYW5nZVBhc3N3b3JkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Account/ForgotPassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxGb3Jnb3RQYXNzd29yZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Admin/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/ChucVu/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2h1Y1Z1XEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/ChuyenLop/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2h1eWVuTG9wXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/ChuyenLop/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2h1eWVuTG9wXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/ChuyenLop/StudentList.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2h1eWVuTG9wXFN0dWRlbnRMaXN0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/GiaoVien/ChuNhiem.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cQ2h1TmhpZW0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/GiaoVien/HoSo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cSG9Tby5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/GiaoVien/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/GiaoVien/QuanLyKyLuat.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cUXVhbkx5S3lMdWF0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/GiaoVien/ThoiKhoaBieu.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cVGhvaUtob2FCaWV1LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/GiaoVien/YeuCauBaoTri.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cWWV1Q2F1QmFvVHJpLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/GiaoVien/_Form.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cX0Zvcm0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocSinh/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocSinh/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxFZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocSinh/HoSo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxIb1NvLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocSinh/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocSinh/KyLuat.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxLeUx1YXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocSinh/ThoiKhoaBieu.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxUaG9pS2hvYUJpZXUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocSinh/TraCuu.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxUcmFDdXUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocSinh/_Form.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxfRm9ybS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/HocKy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcSG9jS3kuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/LopHoc.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcTG9wSG9jLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/MonHoc.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcTW9uSG9jLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/NamHoc.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcTmFtSG9jLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/PhanCongGiaoVien.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcUGhhbkNvbmdHaWFvVmllbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/PhongHoc.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcUGhvbmdIb2MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/ThietBi.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcVGhpZXRCaS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/ThoiKhoaBieu.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcVGhvaUtob2FCaWV1LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/_HocKyForm.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcX0hvY0t5Rm9ybS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/_LopForm.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcX0xvcEZvcm0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/_MonForm.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcX01vbkZvcm0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/HocVu/_NamHocForm.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcX05hbUhvY0Zvcm0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Home/CoSoVatChat.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDb1NvVmF0Q2hhdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Home/DoiNguGiaoVien.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxEb2lOZ3VHaWFvVmllbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Home/MoHinhDaoTao.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxNb0hpbmhEYW9UYW8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Home/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Home/TamNhin.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxUYW1OaGluLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Home/ThongDiepHieuTruong.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxUaG9uZ0RpZXBIaWV1VHJ1b25nLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/ChiTietDiemDanh.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXENoaVRpZXREaWVtRGFuaC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/DanhSachMienGiam.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXERhbmhTYWNoTWllbkdpYW0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/Diem.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXERpZW0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/DiemDanh.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXERpZW1EYW5oLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/GiaoVienDiemDanh.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXEdpYW9WaWVuRGllbURhbmguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/HocPhi.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXEhvY1BoaS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/NhatKySuaDiem.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXE5oYXRLeVN1YURpZW0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/PhieuDiem.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXFBoaWV1RGllbS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/XemDiem.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXFhlbURpZW0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/XemDiemDanh.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXFhlbURpZW1EYW5oLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/KetQuaHocTap/XemHocPhi.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXFhlbUhvY1BoaS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/NhatKy/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTmhhdEt5XEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/PhuHuynh/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGh1SHV5bmhcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/PhuHuynh/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGh1SHV5bmhcRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/PhuHuynh/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGh1SHV5bmhcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/PhuHuynh/_Form.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGh1SHV5bmhcX0Zvcm0uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_AcademicLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9BY2FkZW1pY0xheW91dC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_AdminLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9BZG1pbkxheW91dC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_ResultLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9SZXN1bHRMYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_SidebarGioiThieu.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9TaWRlYmFyR2lvaVRoaWV1LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_SiteFooter.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9TaXRlRm9vdGVyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_StudentLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9TdHVkZW50TGF5b3V0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_TeacherLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9UZWFjaGVyTGF5b3V0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/TaiKhoan/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGFpS2hvYW5cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/ThongBao/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGhvbmdCYW9cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/TinTucSuKien/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGluVHVjU3VLaWVuXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Desktop/eschool/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-y15n3lqehh

@@ -1,0 +1,27 @@
+<div class="card border-1 rounded-0" style="border-color: #e0e0e0;">
+    <div class="card-header bg-white border-bottom-0 pt-3 pb-2">
+        <h5 class="text-uppercase fw-bold" style="color: #d85a18; border-left: 4px solid #d85a18; padding-left: 10px; margin: 0; font-size: 16px;">DANH MỤC</h5>
+    </div>
+    <div class="list-group list-group-flush" style="font-size: 14px;">
+        <a asp-controller="Home" asp-action="ThongDiepHieuTruong" class="list-group-item list-group-item-action @(ViewData["ActiveMenu"] as string == "ThongDiep" ? "fw-bold" : "")" style="background-color: #f8f9fa; border-bottom: 1px solid #fff;">
+            Thông điệp của Hiệu trưởng
+            <i class="bi bi-caret-right-fill float-end" style="font-size: 10px; margin-top: 4px; color: #333;"></i>
+        </a>
+        <a asp-controller="Home" asp-action="TamNhin" class="list-group-item list-group-item-action @(ViewData["ActiveMenu"] as string == "TamNhin" ? "fw-bold" : "")" style="background-color: #f8f9fa; border-bottom: 1px solid #fff;">
+            Tầm nhìn và sứ mệnh của chúng tôi
+            <i class="bi bi-caret-right-fill float-end" style="font-size: 10px; margin-top: 4px; color: #333;"></i>
+        </a>
+        <a asp-controller="Home" asp-action="DoiNguGiaoVien" class="list-group-item list-group-item-action @(ViewData["ActiveMenu"] as string == "DoiNguGiaoVien" ? "fw-bold" : "")" style="background-color: #f8f9fa; border-bottom: 1px solid #fff;">
+            Đội ngũ giáo viên
+            <i class="bi bi-caret-right-fill float-end" style="font-size: 10px; margin-top: 4px; color: #333;"></i>
+        </a>
+        <a asp-controller="Home" asp-action="CoSoVatChat" class="list-group-item list-group-item-action @(ViewData["ActiveMenu"] as string == "CoSoVatChat" ? "fw-bold" : "")" style="background-color: #f8f9fa; border-bottom: 1px solid #fff;">
+            Cơ sở vật chất
+            <i class="bi bi-caret-right-fill float-end" style="font-size: 10px; margin-top: 4px; color: #333;"></i>
+        </a>
+        <a asp-controller="Home" asp-action="MoHinhDaoTao" class="list-group-item list-group-item-action @(ViewData["ActiveMenu"] as string == "MoHinhDaoTao" ? "fw-bold" : "")" style="background-color: #f8f9fa; border-bottom: 1px solid #fff;">
+            Mô hình đào tạo
+            <i class="bi bi-caret-right-fill float-end" style="font-size: 10px; margin-top: 4px; color: #333;"></i>
+        </a>
+    </div>
+</div>

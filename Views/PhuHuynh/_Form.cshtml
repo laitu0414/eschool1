@@ -1,0 +1,36 @@
+@model eSchool.ViewModels.PhuHuynhViewModel
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="HoTen" class="form-label">Họ tên <span class="text-danger">*</span></label>
+        <input asp-for="HoTen" class="form-control" required maxlength="100" />
+        <span asp-validation-for="HoTen" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="SDT" class="form-label">Số điện thoại</label>
+        <input asp-for="SDT" class="form-control" maxlength="15" />
+        <span asp-validation-for="SDT" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Email" class="form-label">Email</label>
+        <input asp-for="Email" type="email" class="form-control" maxlength="100" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="NgheNghiep" class="form-label">Nghề nghiệp</label>
+        <input asp-for="NgheNghiep" class="form-control" maxlength="100" />
+        <span asp-validation-for="NgheNghiep" class="text-danger"></span>
+    </div>
+    <div class="col-12 mb-3">
+        <label asp-for="DiaChi" class="form-label">Địa chỉ</label>
+        <textarea asp-for="DiaChi" class="form-control" rows="3" maxlength="255"></textarea>
+        <span asp-validation-for="DiaChi" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="TrangThai" class="form-label">Trạng thái</label>
+        <select asp-for="TrangThai" class="form-select">
+            <option value="true">Hoạt động</option>
+            <option value="false">Ngừng hoạt động</option>
+        </select>
+    </div>
+</div>

@@ -1,0 +1,86 @@
+@model List<eSchool.Models.LopHoc>
+
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = "Quản lý lớp";
+}
+
+<div class="page-card">
+    <div class="page-tools">
+        <form method="get">
+            <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm mã, tên hoặc khối..." />
+            <button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Tìm</button>
+        </form>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClass">
+            <i class="bi bi-plus-lg"></i> Thêm lớp
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Khối</th><th>Năm học</th><th>Chủ nhiệm</th><th class="text-end">Thao tác</th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@item.MaLop</strong></td>
+                        <td>@item.TenLop</td>
+                        <td>@item.Khoi</td>
+                        <td>@item.NamHoc</td>
+                        <td>@(item.GiaoVienChuNhiem?.HoTen ?? "Chưa phân công")</td>
+                        <td class="text-end">
+                            <a asp-action="PhanCongGiaoVien" asp-route-lopId="@item.IdLop" class="btn btn-sm btn-outline-success" title="Phân công Giáo viên">
+                                <i class="bi bi-person-lines-fill"></i> Phân công GV
+                            </a>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editClass-@item.IdLop"><i class="bi bi-pencil"></i></button>
+                            <form asp-action="XoaLop" asp-route-id="@item.IdLop" method="post" class="d-inline" onsubmit="return confirm('Xóa lớp này?');">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="createClass" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <form asp-action="TaoLop" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-header"><h5 class="modal-title">Thêm lớp học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">@await Html.PartialAsync("_LopForm", new eSchool.ViewModels.LopHocFormViewModel())</div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button><button class="btn btn-primary">Thêm lớp</button></div>
+        </form>
+    </div></div>
+</div>
+
+@foreach (var item in Model)
+{
+    var phongHocMap = ViewBag.PhongHocMap as Dictionary<int, int>;
+    int? mappedPhongId = phongHocMap != null && phongHocMap.ContainsKey(item.IdLop) ? phongHocMap[item.IdLop] : null;
+
+    <div class="modal fade" id="editClass-@item.IdLop" tabindex="-1">
+        <div class="modal-dialog modal-lg"><div class="modal-content">
+            <form asp-action="SuaLop" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="IdLop" value="@item.IdLop" />
+                <div class="modal-header"><h5 class="modal-title">Sửa lớp học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    @await Html.PartialAsync("_LopForm", new eSchool.ViewModels.LopHocFormViewModel
+                    {
+                        IdLop = item.IdLop, MaLop = item.MaLop, TenLop = item.TenLop,
+                        Khoi = item.Khoi, NamHoc = item.NamHoc, IdGiaoVienCN = item.IdGiaoVienCN,
+                        IdPhongHoc = mappedPhongId
+                    })
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button><button class="btn btn-primary">Cập nhật</button></div>
+            </form>
+        </div></div>
+    </div>
+}

@@ -1,0 +1,314 @@
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Đăng nhập eSchool</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --cyan: #06b6d4;
+            --indigo: #4f46e5;
+            --ink: #172033;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.92) 0 70px, transparent 72px),
+                radial-gradient(circle at 86% 15%, rgba(255, 255, 255, 0.36) 0 115px, transparent 118px),
+                radial-gradient(circle at 78% 84%, rgba(125, 211, 252, 0.45) 0 150px, transparent 154px),
+                linear-gradient(135deg, #eef6ff 0%, #dbeafe 34%, #bae6fd 66%, #eff6ff 100%);
+            overflow: auto;
+            position: relative;
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(37, 99, 235, 0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37, 99, 235, 0.07) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: linear-gradient(120deg, transparent 0%, #000 18%, #000 72%, transparent 100%);
+            pointer-events: none;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            width: 520px;
+            height: 520px;
+            right: -170px;
+            bottom: -180px;
+            background: linear-gradient(145deg, rgba(37, 99, 235, 0.28), rgba(6, 182, 212, 0.16));
+            border-radius: 44% 56% 48% 52%;
+            filter: blur(1px);
+            pointer-events: none;
+        }
+
+        .login-shell {
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand-panel {
+            max-width: 480px;
+            color: #0f2f5f;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.72);
+            box-shadow: 0 18px 45px rgba(37, 99, 235, 0.14);
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .brand-title {
+            margin-top: 26px;
+            font-size: clamp(2.3rem, 5vw, 4.7rem);
+            line-height: 1.02;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
+
+        .brand-text {
+            margin-top: 18px;
+            color: #43536f;
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        .study-card {
+            margin-top: 28px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .study-card span {
+            min-height: 86px;
+            padding: 14px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.66);
+            box-shadow: 0 16px 36px rgba(37, 99, 235, 0.12);
+            color: #244069;
+            font-size: 0.92rem;
+            font-weight: 650;
+        }
+
+        .study-card b {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.45rem;
+        }
+
+        .login-card {
+            width: min(420px, calc(100vw - 32px));
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.86);
+            box-shadow: 0 28px 80px rgba(15, 47, 95, 0.18);
+            backdrop-filter: blur(18px);
+        }
+
+        .logo-mark {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 12px;
+            display: grid;
+            place-items: center;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--primary), var(--cyan));
+            color: #fff;
+            font-size: 1.8rem;
+            box-shadow: 0 16px 30px rgba(37, 99, 235, 0.3);
+        }
+
+        .form-control {
+            min-height: 46px;
+            border-radius: 14px;
+            border-color: #d7e3f3;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn-login {
+            min-height: 48px;
+            border: 0;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--indigo));
+            font-weight: 700;
+            box-shadow: 0 16px 30px rgba(37, 99, 235, 0.28);
+        }
+
+        .floating-shape {
+            position: fixed;
+            z-index: 0;
+            color: rgba(37, 99, 235, 0.16);
+            font-size: 4rem;
+            font-weight: 800;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .shape-book {
+            left: 9%;
+            bottom: 10%;
+            transform: rotate(-12deg);
+        }
+
+        .shape-pencil {
+            right: 13%;
+            top: 12%;
+            transform: rotate(16deg);
+        }
+
+        .auth-mini-footer {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            padding: 0 16px 24px;
+        }
+
+        .auth-mini-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            border-radius: 999px;
+            color: #0f2f5f;
+            background: rgba(255, 255, 255, 0.76);
+            box-shadow: 0 14px 34px rgba(37, 99, 235, 0.13);
+            font-weight: 800;
+            text-decoration: none;
+            backdrop-filter: blur(12px);
+        }
+
+        .auth-mini-logo span:first-child {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            place-items: center;
+            border-radius: 10px;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--cyan));
+            font-weight: 900;
+        }
+
+        @@media (max-width: 991.98px) {
+            body {
+                overflow: auto;
+            }
+
+            .brand-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="floating-shape shape-book">◇</div>
+<div class="floating-shape shape-pencil">✦</div>
+
+<div class="container login-shell d-flex justify-content-center align-items-center">
+    <div class="row align-items-center justify-content-center g-5 w-100">
+        <div class="col-lg-6 d-none d-lg-block">
+            <section class="brand-panel">
+                <div class="brand-badge">
+                    <span>🎓</span>
+                    <span>eSchool Platform</span>
+                </div>
+                <h1 class="brand-title">Quản lý trường học thông minh</h1>
+                <p class="brand-text">
+                    Theo dõi học sinh, giáo viên, lớp học, điểm số và thông báo trong một hệ thống rõ ràng, dễ dùng.
+                </p>
+                <div class="study-card">
+                    <span><b>📚</b>Học vụ gọn gàng</span>
+                    <span><b>📝</b>Điểm số minh bạch</span>
+                    <span><b>🔔</b>Thông báo nhanh</span>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-5 d-flex justify-content-center">
+            <div class="login-card p-4 p-md-5">
+
+        <div class="logo-mark">🎓</div>
+        <h2 class="text-center text-primary fw-bold mb-1">eSchool</h2>
+        <p class="text-center text-muted mb-4">Đăng nhập hệ thống quản lý trường học</p>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger">
+                @ViewBag.Error
+            </div>
+        }
+
+        @if (TempData["AuthSuccess"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["AuthSuccess"]
+            </div>
+        }
+
+        <form asp-controller="Account" asp-action="Login" method="post">
+            <div class="mb-3">
+                <label>Tên đăng nhập <span class="text-danger">*</span></label>
+                <input name="username" class="form-control" autocomplete="username"
+                       required maxlength="50" />
+            </div>
+
+            <div class="mb-3">
+                <label>Mật khẩu <span class="text-danger">*</span></label>
+                <input name="password" type="password" class="form-control"
+                       autocomplete="current-password" required />
+            </div>
+
+            <button class="btn btn-primary btn-login w-100">
+                Đăng nhập
+            </button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a asp-controller="Account" asp-action="ForgotPassword" class="text-decoration-none">
+                Quên mật khẩu?
+            </a>
+        </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="auth-mini-footer">
+    <div class="auth-mini-logo">
+        <span>e</span>
+        <span>eSchool</span>
+    </div>
+</div>
+
+</body>
+</html>

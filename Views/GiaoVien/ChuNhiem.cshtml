@@ -1,0 +1,61 @@
+@model eSchool.ViewModels.ChuNhiemViewModel
+
+@{
+    Layout = Context.Session.GetInt32("RoleId") == 1
+        ? "~/Views/Shared/_AdminLayout.cshtml"
+        : "~/Views/Shared/_TeacherLayout.cshtml";
+    ViewData["Title"] = "Chủ nhiệm lớp";
+}
+
+<div class="page-card">
+    <div class="mb-4">
+        <h5 class="mb-1">Phân công giáo viên chủ nhiệm</h5>
+        <p class="text-muted mb-0">Chọn giáo viên chủ nhiệm cho từng lớp và năm học.</p>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Mã lớp</th>
+                    <th>Tên lớp</th>
+                    <th>Khối</th>
+                    <th>Năm học</th>
+                    <th style="min-width: 320px;">Giáo viên chủ nhiệm</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.LopHocs.Any())
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
+                }
+                @foreach (var lop in Model.LopHocs)
+                {
+                    <tr>
+                        <td>@lop.MaLop</td>
+                        <td><strong>@lop.TenLop</strong></td>
+                        <td>@lop.Khoi</td>
+                        <td>@lop.NamHoc</td>
+                        <td>
+                            <form asp-action="GanChuNhiem" method="post" class="d-flex gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="idLop" value="@lop.IdLop" />
+                                <select name="idGiaoVien" class="form-select">
+                                    <option value="">-- Chưa phân công --</option>
+                                    @foreach (var giaoVien in Model.GiaoViens)
+                                    {
+                                        <option value="@giaoVien.Value"
+                                                selected="@(lop.IdGiaoVienCN?.ToString() == giaoVien.Value)">
+                                            @giaoVien.Text
+                                        </option>
+                                    }
+                                </select>
+                                <button class="btn btn-primary">Lưu</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

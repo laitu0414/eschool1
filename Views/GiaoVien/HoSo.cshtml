@@ -1,0 +1,83 @@
+@model eSchool.Models.GiaoVien
+
+@{
+    Layout = Context.Session.GetInt32("RoleId") == 1
+        ? "~/Views/Shared/_AdminLayout.cshtml"
+        : "~/Views/Shared/_TeacherLayout.cshtml";
+    ViewData["Title"] = "Hồ sơ giáo viên";
+}
+
+<div class="page-card">
+    <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+        <div class="teacher-name">
+            <span>@Model.HoTen.Trim().Substring(0, 1).ToUpper()</span>
+            <div>
+                <h4 class="mb-1">@Model.HoTen</h4>
+                <div class="text-muted">@Model.MaGV</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0">
+            <tbody>
+                <tr>
+                    <th style="width: 220px;">Mã giáo viên</th>
+                    <td>@Model.MaGV</td>
+                </tr>
+                <tr>
+                    <th>Họ tên</th>
+                    <td>@Model.HoTen</td>
+                </tr>
+                <tr>
+                    <th>Môn dạy</th>
+                    <td><span class="badge bg-info text-dark">@(Model.MonHoc?.TenMon ?? "Chưa phân môn")</span></td>
+                </tr>
+                <tr>
+                    <th>Chủ nhiệm lớp</th>
+                    <td>
+                        @if (Model.LopChuNhiems != null && Model.LopChuNhiems.Any())
+                        {
+                            foreach (var lop in Model.LopChuNhiems)
+                            {
+                                <span class="badge bg-success me-1">@lop.TenLop</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không có</span>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    <th>Ngày sinh</th>
+                    <td>@Model.NgaySinh.ToString("dd/MM/yyyy")</td>
+                </tr>
+                <tr>
+                    <th>Giới tính</th>
+                    <td>@(string.IsNullOrWhiteSpace(Model.GioiTinh) ? "-" : Model.GioiTinh)</td>
+                </tr>
+                <tr>
+                    <th>Số điện thoại</th>
+                    <td>@(string.IsNullOrWhiteSpace(Model.SDT) ? "-" : Model.SDT)</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>@(string.IsNullOrWhiteSpace(Model.Email) ? "-" : Model.Email)</td>
+                </tr>
+                <tr>
+                    <th>Địa chỉ</th>
+                    <td>@(string.IsNullOrWhiteSpace(Model.DiaChi) ? "-" : Model.DiaChi)</td>
+                </tr>
+                <tr>
+                    <th>Tài khoản liên kết</th>
+                    <td>@(Model.TaiKhoan?.Username ?? "Chưa liên kết")</td>
+                </tr>
+                <tr>
+                    <th>Email tài khoản</th>
+                    <td>@(string.IsNullOrWhiteSpace(Model.TaiKhoan?.Email) ? "-" : Model.TaiKhoan?.Email)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+@model eSchool.ViewModels.ChuyenLopViewModel
+
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = "Thực hiện chuyển lớp";
+}
+
+<div class="card shadow-sm p-4 mx-auto" style="max-width: 600px; border-radius: 12px; margin-top: 2rem;">
+    <h3 class="fw-bold mb-4">Chuyển lớp cho học sinh</h3>
+
+    <form asp-action="Create" method="post">
+        <input type="hidden" asp-for="IdHocSinh" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Lớp hiện tại</label>
+            <input value="@Model.LopCu" class="form-control" readonly />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Lớp chuyển đến <span class="text-danger">*</span></label>
+            <select asp-for="IdLopMoi" asp-items="Model.LopHocs" class="form-select" required>
+                <option value="">-- Chọn lớp --</option>
+            </select>
+            <span asp-validation-for="IdLopMoi" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Ngày chuyển <span class="text-danger">*</span></label>
+            <input asp-for="NgayChuyen" type="date" class="form-control" required />
+            <span asp-validation-for="NgayChuyen" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Lý do chuyển</label>
+            <select asp-for="LyDo" class="form-select">
+                <option value="Điều chỉnh sĩ số">Điều chỉnh sĩ số</option>
+                <option value="Theo nguyện vọng">Theo nguyện vọng</option>
+                <option value="Chuyển giáo viên chủ nhiệm">Chuyển giáo viên chủ nhiệm</option>
+                <option value="Kỷ luật">Kỷ luật</option>
+                <option value="Khác">Khác</option>
+            </select>
+            <span asp-validation-for="LyDo" class="text-danger"></span>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Ghi chú</label>
+            <textarea asp-for="GhiChu" class="form-control" rows="3" maxlength="255"></textarea>
+            <span asp-validation-for="GhiChu" class="text-danger"></span>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4">Xác nhận chuyển</button>
+            <a asp-action="Index" asp-route-lopId="@Model.IdLopCu" class="btn btn-secondary px-4">Hủy</a>
+        </div>
+    </form>
+</div>

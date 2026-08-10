@@ -1,0 +1,265 @@
+@using System.Linq
+@model List<eSchool.Models.TinTucSuKien>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Tin tức sự kiện";
+}
+
+<div class="page-title">
+    <h1>Tin tức sự kiện</h1>
+    <p>Quản lý bài viết ngoài trang chủ, thêm ảnh, link, tiêu đề và mô tả.</p>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="mb-1">Danh sách tin tức sự kiện</h5>
+            <small class="text-muted">Tổng số: @(Model?.Count ?? 0) bài viết</small>
+        </div>
+
+        <button type="button"
+                class="btn-icon-add"
+                title="Thêm tin tức sự kiện"
+                data-bs-toggle="modal"
+                data-bs-target="#createModal">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead>
+                <tr>
+                    <th width="80">Ảnh</th>
+                    <th>Tiêu đề</th>
+                    <th>Mô tả</th>
+                    <th>Đường link</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th width="150" class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.AnhMinhHoa))
+                                {
+                                    <a href="@item.DuongDan" target="_blank" rel="noopener noreferrer">
+                                        <img src="@item.AnhMinhHoa" alt="@item.TieuDe" class="news-admin-thumb" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <div class="news-admin-thumb news-admin-thumb-empty">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <a href="@item.DuongDan" target="_blank" rel="noopener noreferrer" class="news-admin-link">
+                                    <strong>@item.TieuDe</strong>
+                                </a>
+                            </td>
+                            <td class="text-muted">@item.MoTa</td>
+                            <td>
+                                <a href="@item.DuongDan" target="_blank" rel="noopener noreferrer">
+                                    @item.DuongDan
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge @(item.TrangThai ? "text-bg-success" : "text-bg-secondary")">
+                                    @(item.TrangThai ? "Hiển thị" : "Ẩn")
+                                </span>
+                            </td>
+                            <td>@item.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <div class="action-icons">
+                                    <button type="button"
+                                            class="btn-icon-edit"
+                                            title="Sửa"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editModal_@item.IdTinTucSuKien">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+
+                                    <form asp-action="Delete"
+                                          method="post"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.IdTinTucSuKien" />
+                                        <button type="submit" class="btn-icon-delete" title="Xóa">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="editModal_@item.IdTinTucSuKien" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content custom-modal">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-pencil-square me-2 text-warning"></i>Sửa tin tức sự kiện
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+
+                                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="IdTinTucSuKien" value="@item.IdTinTucSuKien" />
+
+                                        <div class="modal-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+                                                    <input name="TieuDe" value="@item.TieuDe" class="form-control" maxlength="200" required />
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Loại tin</label>
+                                                    <select name="LoaiTin" class="form-select">
+                                                        <option value="1" selected="@(item.LoaiTin == eSchool.Models.LoaiTinTuc.TuyenSinh ? "selected" : null)">Tuyển sinh</option>
+                                                        <option value="2" selected="@(item.LoaiTin == eSchool.Models.LoaiTinTuc.TinTuc ? "selected" : null)">Tin tức</option>
+                                                        <option value="3" selected="@(item.LoaiTin == eSchool.Models.LoaiTinTuc.ThongBao ? "selected" : null)">Thông báo</option>
+                                                        <option value="4" selected="@(item.LoaiTin == eSchool.Models.LoaiTinTuc.ThanhTich ? "selected" : null)">Thành tích</option>
+                                                        <option value="5" selected="@(item.LoaiTin == eSchool.Models.LoaiTinTuc.ChuongTrinhDaoTao ? "selected" : null)">Chương trình đào tạo</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Trạng thái</label>
+                                                    <select name="TrangThai" class="form-select">
+                                                        <option value="true" selected="@(item.TrangThai ? "selected" : null)">Hiển thị</option>
+                                                        <option value="false" selected="@(!item.TrangThai ? "selected" : null)">Ẩn</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label">Đường link <span class="text-danger">*</span></label>
+                                                    <input name="DuongDan" value="@item.DuongDan" class="form-control" maxlength="500" required />
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label">Mô tả <span class="text-danger">*</span></label>
+                                                    <textarea name="MoTa" class="form-control" rows="4" maxlength="1000" required>@item.MoTa</textarea>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    <label class="form-label">Ảnh mới</label>
+                                                    <input name="AnhTaiLen" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label">Ảnh hiện tại</label>
+                                                    <div class="news-admin-preview">
+                                                        @if (!string.IsNullOrWhiteSpace(item.AnhMinhHoa))
+                                                        {
+                                                            <img src="@item.AnhMinhHoa" alt="@item.TieuDe" class="news-admin-preview-img" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Chưa có ảnh</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-create">
+                                                <i class="bi bi-save me-2"></i>Cập nhật
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            Chưa có tin tức sự kiện nào
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content custom-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>Thêm tin tức sự kiện
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+                            <input name="TieuDe" class="form-control" maxlength="200" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Loại tin</label>
+                            <select name="LoaiTin" class="form-select">
+                                <option value="1">Tuyển sinh</option>
+                                <option value="2" selected>Tin tức</option>
+                                <option value="3">Thông báo</option>
+                                <option value="4">Thành tích</option>
+                                <option value="5">Chương trình đào tạo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Trạng thái</label>
+                            <select name="TrangThai" class="form-select">
+                                <option value="true">Hiển thị</option>
+                                <option value="false">Ẩn</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Đường link <span class="text-danger">*</span></label>
+                            <input name="DuongDan" class="form-control" maxlength="500" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Mô tả <span class="text-danger">*</span></label>
+                            <textarea name="MoTa" class="form-control" rows="4" maxlength="1000" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ảnh minh họa <span class="text-danger">*</span></label>
+                            <input name="AnhTaiLen" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-create">
+                        <i class="bi bi-save me-2"></i>Tạo mới
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

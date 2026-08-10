@@ -1,0 +1,514 @@
+@model List<eSchool.Models.PhongHoc>
+
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = "Quản lý Phòng học & Bảo trì";
+    var lopHocs = ViewBag.LopHocs as List<SelectListItem> ?? new List<SelectListItem>();
+    var baoTris = ViewBag.BaoTris as List<eSchool.Models.BaoTri> ?? new List<eSchool.Models.BaoTri>();
+}
+
+<style>
+    .stat-card {
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 20px;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        border: none;
+    }
+    
+    .stat-card .icon-box {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .stat-title {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #212529;
+    }
+
+    .stat-desc {
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .bg-blue-light { background-color: #f1f5fd !important; }
+    .icon-blue { background-color: #e6f0ff; color: #0d6efd; }
+    .text-blue { color: #0d6efd; }
+
+    .bg-green-light { background-color: #f2f9f4 !important; }
+    .icon-green { background-color: #e6f5ea; color: #198754; }
+    .text-green { color: #198754; }
+
+    .bg-orange-light { background-color: #fdf5f0 !important; }
+    .icon-orange { background-color: #fceddb; color: #fd7e14; }
+    .text-orange { color: #d97706; }
+
+    .bg-red-light { background-color: #fdf2f2 !important; }
+    .icon-red { background-color: #fce8e8; color: #dc3545; }
+    .text-red { color: #dc3545; }
+</style>
+
+<!-- Dashboard Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card bg-blue-light">
+            <div class="stat-title">Tổng phòng</div>
+            <div class="icon-box icon-blue"><i class="bi bi-building"></i></div>
+            <div class="stat-value">@ViewBag.TotalPhong</div>
+            <div class="stat-desc text-green">
+                <i class="bi bi-check-circle"></i> @ViewBag.PhongHoatDong hoạt động
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card bg-green-light">
+            <div class="stat-title">Thiết bị</div>
+            <div class="icon-box icon-green"><i class="bi bi-box-seam"></i></div>
+            <div class="stat-value">@ViewBag.TotalTB</div>
+            <div class="stat-desc text-green">
+                <i class="bi bi-check-circle"></i> @ViewBag.TBTot tốt
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card bg-orange-light">
+            <div class="stat-title">Đang bảo trì</div>
+            <div class="icon-box icon-orange"><i class="bi bi-tools"></i></div>
+            <div class="stat-value">@ViewBag.DangBaoTri</div>
+            <div class="stat-desc text-orange">
+                <i class="bi bi-clock-history"></i> @ViewBag.QuaHan quá hạn
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-medium" id="phonghoc-tab" data-bs-toggle="tab" data-bs-target="#phonghoc-pane" type="button" role="tab">Danh sách Phòng học</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-medium" id="baotri-tab" data-bs-toggle="tab" data-bs-target="#baotri-pane" type="button" role="tab">Danh sách Bảo trì thiết bị</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="myTabContent">
+    <!-- Tab Phòng Học -->
+    <div class="tab-pane fade show active" id="phonghoc-pane" role="tabpanel" tabindex="0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <form method="get" class="d-flex gap-2 align-items-center">
+                <select name="loaiPhong" class="form-select w-auto">
+                    <option value="">Tất cả loại phòng</option>
+                    @Html.Raw($"<option value='Học lý thuyết' {(ViewBag.FilterLoaiPhong == "Học lý thuyết" ? "selected" : "")}>Học lý thuyết</option>")
+                    @Html.Raw($"<option value='Thực hành' {(ViewBag.FilterLoaiPhong == "Thực hành" ? "selected" : "")}>Thực hành</option>")
+                    @Html.Raw($"<option value='Lab' {(ViewBag.FilterLoaiPhong == "Lab" ? "selected" : "")}>Lab</option>")
+                    @Html.Raw($"<option value='Thể chất' {(ViewBag.FilterLoaiPhong == "Thể chất" ? "selected" : "")}>Thể chất</option>")
+                </select>
+                <select name="trangThai" class="form-select w-auto">
+                    <option value="">Tất cả trạng thái</option>
+                    @Html.Raw($"<option value='true' {(ViewBag.FilterTrangThai == true ? "selected" : "")}>Hoạt động</option>")
+                    @Html.Raw($"<option value='false' {(ViewBag.FilterTrangThai == false ? "selected" : "")}>Bảo trì</option>")
+                </select>
+                <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm phòng hoặc thiết bị..." style="min-width: 250px;" />
+                <button type="submit" class="btn btn-light border px-3"><i class="bi bi-funnel"></i> Lọc</button>
+            </form>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPhong">
+                <i class="bi bi-plus-lg"></i> Thêm phòng
+            </button>
+        </div>
+
+        <div class="table-responsive bg-white rounded shadow-sm border border-light">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Phòng</th>
+                        <th>Loại</th>
+                        <th>Sức chứa</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-5">Không tìm thấy phòng học phù hợp</td></tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <i class="bi bi-building text-secondary me-2"></i><strong>@item.TenPhong</strong>
+                            </td>
+                            <td>@item.LoaiPhong</td>
+                            <td>@item.SucChua</td>
+                            <td>
+                                @if (item.TrangThai)
+                                {
+                                    <span class="badge bg-success rounded-pill px-3">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark rounded-pill px-3">Bảo trì</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" data-bs-toggle="modal" data-bs-target="#editPhong-@item.IdPhongHoc">Sửa</button>
+                                <a href="/HocVu/ThietBi?phongId=@item.IdPhongHoc" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Chi tiết</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab Bảo Trì -->
+    <div class="tab-pane fade" id="baotri-pane" role="tabpanel" tabindex="0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Danh sách các yêu cầu/phiếu bảo trì</h5>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBaoTri">
+                <i class="bi bi-plus-lg"></i> Thêm bảo trì
+            </button>
+        </div>
+        
+        <div class="table-responsive bg-white rounded shadow-sm border border-light">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Mã phiếu</th>
+                        <th>Mã TB</th>
+                        <th>Tên thiết bị</th>
+                        <th>Ngày bảo trì</th>
+                        <th>Nội dung</th>
+                        <th>Chi phí</th>
+                        <th>Người thực hiện</th>
+                        <th>Kết quả</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!baoTris.Any())
+                    {
+                        <tr><td colspan="9" class="text-center text-muted py-4">Chưa có dữ liệu bảo trì</td></tr>
+                    }
+                    @foreach (var item in baoTris)
+                    {
+                        <tr>
+                            <td class="ps-4"><strong>@item.MaBaoTri</strong></td>
+                            <td>@item.ThietBi?.MaTB</td>
+                            <td>@item.ThietBi?.TenTB</td>
+                            <td>@item.NgayBaoTri.ToString("dd/MM/yyyy")</td>
+                            <td>@item.NoiDung</td>
+                            <td>@item.ChiPhi.ToString("N0") đ</td>
+                            <td>@item.NguoiThucHien</td>
+                            <td>
+                                @if(item.TrangThai == "Hoàn thành" || item.KetQua == "Hoàn thành") {
+                                    <span class="badge bg-success">Hoàn thành</span>
+                                } else if (item.TrangThai == "Chờ xử lý") {
+                                    <span class="badge bg-danger">Chờ xử lý</span>
+                                } else {
+                                    <span class="badge bg-warning text-dark">Đang xử lý</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBaoTri-@item.IdBaoTri">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form asp-action="XoaBaoTri" asp-route-id="@item.IdBaoTri" method="post" class="d-inline" onsubmit="return confirm('Xóa phiếu bảo trì này?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODALS PHÒNG HỌC ================= -->
+<div class="modal fade" id="createPhong" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="TaoPhong" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm phòng học mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Mã phòng <span class="text-danger">*</span></label>
+                            <input name="MaPhong" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Tên phòng <span class="text-danger">*</span></label>
+                            <input name="TenPhong" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Loại phòng</label>
+                            <select name="LoaiPhong" class="form-select">
+                                <option value="Học lý thuyết">Học lý thuyết</option>
+                                <option value="Thực hành">Thực hành</option>
+                                <option value="Lab">Lab</option>
+                                <option value="Thể chất">Thể chất</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Sức chứa</label>
+                            <input type="number" name="SucChua" class="form-control" value="40" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-medium">Trạng thái</label>
+                            <select name="TrangThai" class="form-select">
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Đang bảo trì</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-medium">Lớp học cố định (Nếu có)</label>
+                            <select name="IdLop" asp-items="lopHocs" class="form-select">
+                                <option value="">-- Dùng chung --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu phòng học</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@foreach (var item in Model)
+{
+    <div class="modal fade" id="editPhong-@item.IdPhongHoc" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form asp-action="SuaPhong" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="IdPhongHoc" value="@item.IdPhongHoc" />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Sửa phòng học</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Mã phòng <span class="text-danger">*</span></label>
+                                <input name="MaPhong" value="@item.MaPhong" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Tên phòng <span class="text-danger">*</span></label>
+                                <input name="TenPhong" value="@item.TenPhong" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Loại phòng</label>
+                                <select name="LoaiPhong" class="form-select">
+                                    @Html.Raw($"<option value='Học lý thuyết' {(item.LoaiPhong == "Học lý thuyết" ? "selected" : "")}>Học lý thuyết</option>")
+                                    @Html.Raw($"<option value='Thực hành' {(item.LoaiPhong == "Thực hành" ? "selected" : "")}>Thực hành</option>")
+                                    @Html.Raw($"<option value='Lab' {(item.LoaiPhong == "Lab" ? "selected" : "")}>Lab</option>")
+                                    @Html.Raw($"<option value='Thể chất' {(item.LoaiPhong == "Thể chất" ? "selected" : "")}>Thể chất</option>")
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Sức chứa</label>
+                                <input type="number" name="SucChua" class="form-control" value="@item.SucChua" />
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-medium">Trạng thái</label>
+                                <select name="TrangThai" class="form-select">
+                                    @Html.Raw($"<option value='true' {(item.TrangThai ? "selected" : "")}>Hoạt động</option>")
+                                    @Html.Raw($"<option value='false' {(!item.TrangThai ? "selected" : "")}>Đang bảo trì</option>")
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-medium">Lớp học cố định (Nếu có)</label>
+                                <select name="IdLop" class="form-select">
+                                    <option value="">-- Dùng chung --</option>
+                                    @foreach(var l in lopHocs)
+                                    {
+                                        if (item.IdLop.ToString() == l.Value)
+                                        {
+                                            <option value="@l.Value" selected>@l.Text</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@l.Value">@l.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="w-100 d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-outline-danger" onclick="if(confirm('Xóa phòng học?')) { document.getElementById('delete-phong-@item.IdPhongHoc').submit(); }"><i class="bi bi-trash"></i> Xóa phòng</button>
+                            <div>
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <form id="delete-phong-@item.IdPhongHoc" asp-action="XoaPhong" asp-route-id="@item.IdPhongHoc" method="post" style="display:none;">
+                    @Html.AntiForgeryToken()
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ================= MODALS BẢO TRÌ ================= -->
+<div class="modal fade" id="createBaoTri" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="TaoBaoTri" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm phiếu bảo trì</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Mã bảo trì</label>
+                        <input name="MaBaoTri" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Thiết bị</label>
+                        <select name="IdThietBi" asp-items="ViewBag.ThietBis" class="form-select" required>
+                            <option value="">-- Chọn thiết bị --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ngày bảo trì</label>
+                        <input type="date" name="NgayBaoTri" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nội dung</label>
+                        <textarea name="NoiDung" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chi phí</label>
+                        <input type="number" name="ChiPhi" class="form-control" value="0" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Người thực hiện</label>
+                        <input name="NguoiThucHien" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kết quả</label>
+                        <select name="KetQua" class="form-select">
+                            <option value="Đang xử lý">Đang xử lý</option>
+                            <option value="Hoàn thành">Hoàn thành</option>
+                            <option value="Không thể khắc phục">Không thể khắc phục</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-primary">Lưu lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@foreach (var item in baoTris)
+{
+    <div class="modal fade" id="editBaoTri-@item.IdBaoTri" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="SuaBaoTri" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="IdBaoTri" value="@item.IdBaoTri" />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cập nhật phiếu bảo trì</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Mã bảo trì</label>
+                            <input name="MaBaoTri" class="form-control" value="@item.MaBaoTri" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Thiết bị</label>
+                            <select name="IdThietBi" class="form-select" required>
+                                @foreach (var tb in ViewBag.ThietBis as List<SelectListItem>)
+                                {
+                                    if (tb.Value == item.IdThietBi.ToString())
+                                    {
+                                        <option value="@tb.Value" selected>@tb.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@tb.Value">@tb.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ngày bảo trì</label>
+                            <input type="date" name="NgayBaoTri" class="form-control" value="@item.NgayBaoTri.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nội dung</label>
+                            <textarea name="NoiDung" class="form-control" rows="2" required>@item.NoiDung</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Chi phí</label>
+                            <input type="number" name="ChiPhi" class="form-control" value="@item.ChiPhi.ToString("0")" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Người thực hiện</label>
+                            <input name="NguoiThucHien" class="form-control" value="@item.NguoiThucHien" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kết quả</label>
+                            <select name="KetQua" class="form-select">
+                                <option value="Đang xử lý" selected="@(item.KetQua == "Đang xử lý" ? "selected" : null)">Đang xử lý</option>
+                                <option value="Hoàn thành" selected="@(item.KetQua == "Hoàn thành" ? "selected" : null)">Hoàn thành</option>
+                                <option value="Không thể khắc phục" selected="@(item.KetQua == "Không thể khắc phục" ? "selected" : null)">Không thể khắc phục</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                        <button class="btn btn-primary">Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

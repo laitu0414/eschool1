@@ -1,0 +1,221 @@
+@model List<eSchool.Models.PhanCongGiangDay>
+
+@{
+    Layout = Context.Session.GetInt32("RoleId") == 1
+        ? "~/Views/Shared/_AdminLayout.cshtml"
+        : "~/Views/Shared/_TeacherLayout.cshtml";
+    ViewData["Title"] = "Thời khóa biểu giáo viên";
+    var days = new Dictionary<int, string>
+    {
+        [2] = "Thứ Hai",
+        [3] = "Thứ Ba",
+        [4] = "Thứ Tư",
+        [5] = "Thứ Năm",
+        [6] = "Thứ Sáu",
+        [7] = "Thứ Bảy"
+    };
+
+    var morningStartTimes = new Dictionary<int, string> { {1, "07:00"}, {2, "07:50"}, {3, "08:50"}, {4, "09:40"}, {5, "10:35"} };
+    var morningEndTimes = new Dictionary<int, string> { {1, "07:45"}, {2, "08:35"}, {3, "09:35"}, {4, "10:25"}, {5, "11:20"} };
+
+    var afternoonStartTimes = new Dictionary<int, string> { {1, "13:30"}, {2, "14:20"}, {3, "15:20"}, {4, "16:10"}, {5, "17:05"} };
+    var afternoonEndTimes = new Dictionary<int, string> { {1, "14:15"}, {2, "15:05"}, {3, "16:05"}, {4, "16:55"}, {5, "17:50"} };
+}
+
+<div class="page-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-lg-3">
+            <label class="form-label">Chọn tuần</label>
+            <input type="date" name="tuan" value="@ViewBag.Tuan" class="form-control" />
+        </div>
+        <div class="col-lg-4">
+            <label class="form-label">Giáo viên</label>
+            <select name="giaoVienId" class="form-select" @(Context.Session.GetInt32("RoleId") == 2 ? "disabled" : "")>
+                @foreach (var giaoVien in ViewBag.GiaoViens)
+                {
+                    <option value="@giaoVien.Value"
+                            selected="@(ViewBag.GiaoVienId?.ToString() == giaoVien.Value)">
+                        @giaoVien.Text
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="col-lg-2">
+            <label class="form-label">Học kỳ</label>
+            <select name="hocKy" class="form-select">
+                <option value="">Tất cả</option>
+                <option value="Học kỳ 1" selected="@(ViewBag.HocKy == "Học kỳ 1")">Học kỳ 1</option>
+                <option value="Học kỳ 2" selected="@(ViewBag.HocKy == "Học kỳ 2")">Học kỳ 2</option>
+            </select>
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label">Năm học</label>
+            <input name="namHoc" value="@ViewBag.NamHoc" class="form-control" placeholder="2026-2027" />
+        </div>
+        <div class="col-lg-2">
+            <button class="btn btn-primary w-100">Xem lịch</button>
+        </div>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="page-card text-center text-muted py-5">
+        <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+        Giáo viên chưa có lịch giảng dạy.
+    </div>
+}
+else
+{
+    var pMap = ViewBag.PhongHocMap as Dictionary<int, string>;
+    DateTime startOfWeek = ViewBag.StartOfWeek != null ? DateTime.Parse(ViewBag.StartOfWeek) : DateTime.Today;
+    var thayDois = ViewBag.ThayDois as List<eSchool.Models.LichHocThayDoi> ?? new List<eSchool.Models.LichHocThayDoi>();
+    
+    <div class="table-responsive bg-white rounded shadow-sm">
+        <table class="table table-bordered align-middle text-center mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 150px;" class="fw-bold text-primary align-middle">
+                        Giờ học
+                    </th>
+                    @for (int i = 2; i <= 7; i++)
+                    {
+                        var currentDate = startOfWeek.AddDays(i - 2);
+                        var isDoiPhong = thayDois.Any(x => x.Ngay.Date == currentDate.Date && !x.IsNghi && x.GhiChu != null && x.GhiChu.StartsWith("Đổi phòng: ") && Model.Any(m => m.IdLop == x.IdLop && m.Thu == i));
+                        <th class="align-middle">
+                            <div>Thứ @i</div>
+                            <div class="small fw-normal text-muted">@currentDate.ToString("dd/MM")</div>
+                            @if(isDoiPhong) {
+                                <span class="badge bg-warning text-dark mt-1"><i class="bi bi-arrow-left-right"></i> Đổi phòng</span>
+                            }
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @* Morning Sessions: 1 to 5 *@
+                <tr><td colspan="7" class="fw-bold bg-light text-start text-primary px-3 py-2">Sáng</td></tr>
+                @for (int tiet = 1; tiet <= 5; tiet++)
+                {
+                    <tr>
+                        <td class="text-muted bg-light">
+                            <div class="fw-bold">Tiết @tiet</div>
+                            @if (morningStartTimes.ContainsKey(tiet) && morningEndTimes.ContainsKey(tiet))
+                            {
+                                <small style="font-size: 0.75em;">@morningStartTimes[tiet] - @morningEndTimes[tiet]</small>
+                            }
+                        </td>
+                        @for (int thu = 2; thu <= 7; thu++)
+                        {
+                            var currentDateForCell = startOfWeek.AddDays(thu - 2);
+                            var item = Model.FirstOrDefault(x => x.Thu == thu && 
+                                (x.LopHoc?.BuoiHoc == "Sáng" || (string.IsNullOrEmpty(x.LopHoc?.BuoiHoc) && x.LopHoc?.Khoi != null && (x.LopHoc.Khoi.Contains("6") || x.LopHoc.Khoi.Contains("7")))) &&
+                                x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet);
+                                
+                            if (item != null)
+                            {
+                                if (item.TietBatDau == tiet)
+                                {
+                                    <td rowspan="@(item.SoTiet ?? 1)" style="background-color: #f8f9fa;">
+                                        <div class="fw-bold text-primary">Lớp @item.LopHoc?.TenLop</div>
+                                        <div class="text-muted small">@(item.MonHoc?.TenMon ?? "Trống")</div>
+                                        @{
+                                            var doiPhongThayDoi = thayDois.FirstOrDefault(x => x.Ngay.Date == currentDateForCell.Date && x.IdLop == item.IdLop && !x.IsNghi && x.GhiChu != null && x.GhiChu.StartsWith("Đổi phòng: "));
+                                            var roomCode = item.PhongHoc?.MaPhong;
+                                            if (string.IsNullOrEmpty(roomCode) && pMap != null && pMap.ContainsKey(item.IdLop))
+                                            {
+                                                roomCode = pMap[item.IdLop];
+                                            }
+                                            if (doiPhongThayDoi != null)
+                                            {
+                                                roomCode = doiPhongThayDoi.GhiChu.Replace("Đổi phòng: ", "");
+                                            }
+                                        }
+                                        @if (!string.IsNullOrEmpty(roomCode))
+                                        {
+                                            <div class="text-info small fw-bold mt-1"><i class="bi bi-geo-alt-fill"></i> @roomCode</div>
+                                        }
+                                    </td>
+                                }
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                        }
+                    </tr>
+                }
+
+                @* Afternoon Sessions: 1 to 5 *@
+                <tr><td colspan="7" class="fw-bold bg-light text-start text-primary px-3 py-2">Chiều</td></tr>
+                @for (int tiet = 1; tiet <= 5; tiet++)
+                {
+                    <tr>
+                        <td class="text-muted bg-light">
+                            <div class="fw-bold">Tiết @tiet</div>
+                            @if (afternoonStartTimes.ContainsKey(tiet) && afternoonEndTimes.ContainsKey(tiet))
+                            {
+                                <small style="font-size: 0.75em;">@afternoonStartTimes[tiet] - @afternoonEndTimes[tiet]</small>
+                            }
+                        </td>
+                        @for (int thu = 2; thu <= 7; thu++)
+                        {
+                            var currentDateForCell = startOfWeek.AddDays(thu - 2);
+                            var item = Model.FirstOrDefault(x => x.Thu == thu && 
+                                (x.LopHoc?.BuoiHoc == "Chiều" || (string.IsNullOrEmpty(x.LopHoc?.BuoiHoc) && x.LopHoc?.Khoi != null && (!x.LopHoc.Khoi.Contains("6") && !x.LopHoc.Khoi.Contains("7")))) &&
+                                x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet);
+                                
+                            if (item != null)
+                            {
+                                if (item.TietBatDau == tiet)
+                                {
+                                    <td rowspan="@(item.SoTiet ?? 1)" style="background-color: #f8f9fa;">
+                                        <div class="fw-bold text-primary">Lớp @item.LopHoc?.TenLop</div>
+                                        <div class="text-muted small">@(item.MonHoc?.TenMon ?? "Trống")</div>
+                                        @{
+                                            var doiPhongThayDoi = thayDois.FirstOrDefault(x => x.Ngay.Date == currentDateForCell.Date && x.IdLop == item.IdLop && !x.IsNghi && x.GhiChu != null && x.GhiChu.StartsWith("Đổi phòng: "));
+                                            var roomCode = item.PhongHoc?.MaPhong;
+                                            if (string.IsNullOrEmpty(roomCode) && pMap != null && pMap.ContainsKey(item.IdLop))
+                                            {
+                                                roomCode = pMap[item.IdLop];
+                                            }
+                                            if (doiPhongThayDoi != null)
+                                            {
+                                                roomCode = doiPhongThayDoi.GhiChu.Replace("Đổi phòng: ", "");
+                                            }
+                                        }
+                                        @if (!string.IsNullOrEmpty(roomCode))
+                                        {
+                                            <div class="text-info small fw-bold mt-1"><i class="bi bi-geo-alt-fill"></i> @roomCode</div>
+                                        }
+                                    </td>
+                                }
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    var unscheduled = Model.Where(x => !x.Thu.HasValue || !x.TietBatDau.HasValue).ToList();
+    if (unscheduled.Any())
+    {
+        <div class="mt-4">
+            <h5 class="mb-2">Chưa xếp thời gian</h5>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var lesson in unscheduled)
+                {
+                    <div class="border rounded p-2 bg-light">
+                        <div><strong>@lesson.MonHoc?.TenMon</strong></div>
+                        <span class="badge text-bg-secondary">Lớp @lesson.LopHoc?.TenLop</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}

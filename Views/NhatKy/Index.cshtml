@@ -1,0 +1,51 @@
+﻿@model List<eSchool.Models.NhatKyHoatDong>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Nhật ký hoạt động";
+}
+
+<div class="page-title">
+    <h1>Nhật ký hoạt động</h1>
+    <p>Theo dõi các thao tác của quản trị viên trong hệ thống</p>
+</div>
+
+<div class="content-card">
+
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th width="70">STT</th>
+                <th>Tài khoản</th>
+                <th>Hành động</th>
+                <th>Nội dung</th>
+                <th>Thời gian</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    <tr>
+                        <td>@(i + 1)</td>
+                        <td>@Model[i].TenDangNhap</td>
+                        <td>@Model[i].HanhDong</td>
+                        <td>@Model[i].NoiDung</td>
+                        <td>@Model[i].ThoiGian.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        Chưa có nhật ký hoạt động
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>

@@ -1,0 +1,253 @@
+@model eSchool.ViewModels.HocPhiPageViewModel
+@{ Layout = "~/Views/Shared/_ResultLayout.cshtml"; ViewData["Title"] = "Học phí"; string Status(int value) => value == 1 ? "Đã đóng" : value == 2 ? "Quá hạn" : "Chưa đóng"; }
+<div class="page-card">
+<div class="page-tools">
+    <form method="get">
+        <select name="trangThai" class="form-select">
+            <option value="">Tất cả trạng thái</option>
+            <option value="0">Chưa hoàn thành</option>
+            <option value="1">Đã hoàn thành</option>
+        </select>
+        <select name="namHocId" asp-items="Model.NamHocs" class="form-select">
+            <option value="">Tất cả năm học</option>
+        </select>
+        <button class="btn btn-outline-secondary">Lọc</button>
+    </form>
+    <div class="d-flex gap-2">
+        <a asp-action="DanhSachMienGiam" class="btn btn-outline-info"><i class="bi bi-list-ul"></i> Danh sách miễn giảm</a>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#batchFeeModal"><i class="bi bi-layers"></i> Tạo theo Khối/Lớp</button>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Khối / Lớp</th>
+                <th>Năm học</th>
+                <th>Học kỳ</th>
+                <th>Mức thu</th>
+                <th>Hạn đóng</th>
+                <th>Tiến độ thu</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.DanhSachTongHop.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu học phí</td></tr>
+            }
+            @foreach (var item in Model.DanhSachTongHop)
+            {
+                <tr>
+                    <td>
+                        <strong>@item.TenLop</strong><br />
+                        <small class="text-muted">Khối @item.Khoi</small>
+                    </td>
+                    <td>@item.NamHoc</td>
+                    <td>@item.HocKy</td>
+                    <td>@item.SoTien.ToString("N0") đ</td>
+                    <td>@item.HanDongTien?.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        @item.DaDong / @item.TongSoHocSinh
+                        <div class="progress mt-1" style="height: 5px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: @(item.TongSoHocSinh > 0 ? (item.DaDong * 100 / item.TongSoHocSinh) : 0)%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        @if (item.DaDong >= item.TongSoHocSinh && item.TongSoHocSinh > 0)
+                        {
+                            <span class="badge text-bg-success">Hoàn thành</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-warning">Đang thu</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+</div>
+
+<!-- Modal Tạo học phí hàng loạt -->
+<div class="modal fade" id="batchFeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="LuuHocPhiHangLoat" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Tạo học phí theo Khối / Lớp</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Năm học</label>
+                            <select name="IdNamHoc" asp-items="Model.NamHocs" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Học kỳ</label>
+                            <select name="IdHocKy" asp-items="Model.HocKys" class="form-select" required></select>
+                        </div>
+                        <div class="col-12 mt-4 mb-2"><h6 class="fw-bold border-bottom pb-2">Phạm vi áp dụng</h6></div>
+                        <div class="col-md-6">
+                            <label class="form-label">Theo khối</label>
+                            <select name="Khoi" class="form-select">
+                                <option value="">-- Chọn Khối --</option>
+                                <option value="Khối 6">Khối 6</option>
+                                <option value="Khối 7">Khối 7</option>
+                                <option value="Khối 8">Khối 8</option>
+                                <option value="Khối 9">Khối 9</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hoặc Theo Lớp</label>
+                            <select name="IdLop" asp-items="ViewBag.LopHocs" class="form-select">
+                                <option value="">-- Chọn Lớp --</option>
+                            </select>
+                        </div>
+                        <div class="col-12 text-muted small"><i class="bi bi-info-circle"></i> Sẽ tạo tự động kèm thông báo cho toàn bộ học sinh, tự động trừ tiền miễn giảm theo danh sách đã thiết lập.</div>
+                        <div class="col-12 mt-4 mb-2"><h6 class="fw-bold border-bottom pb-2">Khoản thu</h6></div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số tiền gốc <span class="text-danger">*</span></label>
+                            <input name="SoTien" type="number" min="0" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hạn đóng</label>
+                            <input name="HanDongTien" type="date" class="form-control" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ghi chú / Nội dung thông báo</label>
+                            <textarea name="GhiChu" class="form-control" rows="2" placeholder="VD: Học phí HK1..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-primary">Tạo hàng loạt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nhập miễn giảm bằng Excel -->
+<div class="modal fade" id="importMienGiamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ImportMienGiamExcel" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Nhập chính sách từ Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Chọn file Excel (.xlsx)</label>
+                        <input type="file" name="excelFile" class="form-control" accept=".xlsx" required />
+                        <div class="form-text">
+                            File Excel cần có các cột: <strong>Mã học sinh, Phần trăm giảm, Lý do, Hiệu lực, Ghi chú</strong>.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-success"><i class="bi bi-upload"></i> Nhập dữ liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm miễn giảm -->
+<div class="modal fade" id="mienGiamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="LuuMienGiam" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm miễn giảm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Lớp</label>
+                            <select id="selectLopMienGiam" asp-items="ViewBag.LopHocs" class="form-select">
+                                <option value=""> Chọn lớp </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Học sinh <span class="text-danger">*</span></label>
+                            <select name="IdHocSinh" id="selectHsMienGiam" class="form-select" required>
+                                <option value=""> Chọn học sinh </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Chính sách (Giảm %)</label>
+                            <select name="PhanTramGiam" class="form-select">
+                                <option value="0">Không giảm</option>
+                                <option value="50">Giảm 50%</option>
+                                <option value="100">Giảm 100%</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Lý do</label>
+                            <select name="LyDo" class="form-select">
+                                <option>Hộ nghèo</option>
+                                <option>Hộ cận nghèo</option>
+                                <option>Con thương binh</option>
+                                <option>Con liệt sĩ</option>
+                                <option>Khuyết tật</option>
+                                <option>Dân tộc thiểu số</option>
+                                <option>Mồ côi</option>
+                                <option>Học bổng</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Hiệu lực</label>
+                            <select name="HieuLuc" class="form-select" required>
+                                <option value="">Chọn năm học</option>
+                                @foreach (var nam in Model.NamHocs)
+                                {
+                                    <option value="@nam.Text">@nam.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ghi chú</label>
+                            <textarea name="GhiChu" class="form-control" rows="2" placeholder="_______________________"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-success">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('selectLopMienGiam').addEventListener('change', function () {
+            var lopId = this.value;
+            var hsSelect = document.getElementById('selectHsMienGiam');
+            hsSelect.innerHTML = '<option value="">-- Chọn học sinh --</option>';
+            if (lopId) {
+                fetch('/KetQuaHocTap/GetHocSinhByLop?lopId=' + lopId)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(hs => {
+                            var option = document.createElement('option');
+                            option.value = hs.id;
+                            option.textContent = hs.ten;
+                            hsSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+    </script>
+}

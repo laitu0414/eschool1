@@ -1,0 +1,12 @@
+@model eSchool.Models.HocKy
+
+<div class="mb-3">
+    <label class="form-label">Tên học kỳ</label>
+    <select asp-for="TenHocKy" class="form-select"><option value="Học kỳ 1">Học kỳ 1</option><option value="Học kỳ 2">Học kỳ 2</option><option value="Học kỳ hè">Học kỳ hè</option></select>
+</div>
+<div class="mb-3"><label class="form-label">Năm học</label><select asp-for="IdNamHoc" asp-items="ViewBag.NamHocs" class="form-select"><option value="">-- Chọn năm học --</option></select></div>
+<div class="row g-3">
+    <div class="col-6"><label class="form-label">Ngày bắt đầu</label><input asp-for="NgayBatDau" type="date" class="form-control" /></div>
+    <div class="col-6"><label class="form-label">Ngày kết thúc</label><input asp-for="NgayKetThuc" type="date" class="form-control" /></div>
+</div>
+<div class="form-check form-switch mt-3"><input asp-for="TrangThai" class="form-check-input" /><label asp-for="TrangThai" class="form-check-label">Đang hoạt động</label></div>

@@ -1,0 +1,90 @@
+@model eSchool.ViewModels.HocSinhDiemDanhPageViewModel
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Điểm danh";
+}
+
+<div class="student-attendance-page">
+    <div class="student-attendance-hero">
+        <div>
+            <span class="student-attendance-eyebrow">Điểm danh</span>
+            <h2>Lịch sử điểm danh</h2>
+            <p>Chọn môn học để xem từng ngày có điểm danh hay không.</p>
+        </div>
+        <div class="student-attendance-current">
+            <span>Môn đang xem</span>
+            <strong>@Model.TenMonHocDangChon</strong>
+        </div>
+    </div>
+
+    <div class="student-attendance-subjects">
+        @if (!Model.MonHocs.Any())
+        {
+            <div class="student-score-panel text-muted">Chưa có môn học nào để hiển thị điểm danh.</div>
+        }
+        else
+        {
+            @foreach (var item in Model.MonHocs)
+            {
+                var isActive = Model.IdMonHoc?.ToString() == item.Value;
+                <a asp-action="XemDiemDanh"
+                   asp-route-idMonHoc="@item.Value"
+                   class="student-attendance-subject @(isActive ? "active" : null)">
+                    @item.Text
+                </a>
+            }
+        }
+    </div>
+
+    <div class="student-score-panel">
+        <div class="student-score-panel-head">
+            <div>
+                <h3>Chi tiết điểm danh</h3>
+                <p>Danh sách từng ngày điểm danh theo môn học đã chọn.</p>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table student-score-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Ngày học</th>
+                        <th>Môn học</th>
+                        <th>Lớp</th>
+                        <th>Tiết</th>
+                        <th>Giáo viên</th>
+                        <th>Trạng thái</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.LichSuDiemDanh.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">Chưa có dữ liệu điểm danh cho môn học này.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.LichSuDiemDanh)
+                        {
+                            <tr>
+                                <td>@item.NgayHoc.ToString("dd/MM/yyyy")</td>
+                                <td><strong>@item.TenMonHoc</strong></td>
+                                <td>@item.TenLop</td>
+                                <td>@(item.IdTietHoc?.ToString() ?? "-")</td>
+                                <td>@item.TenGiaoVien</td>
+                                <td>
+                                    <span class="student-score-badge @((item.TrangThai == "Co mat" || item.TrangThai == "Có mặt") ? "good" : "bad")">
+                                        @(item.TrangThai == "Co mat" ? "Có mặt" : (item.TrangThai == "Vang" ? "Vắng" : item.TrangThai))
+                                    </span>
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(item.GhiChu) ? "-" : item.GhiChu)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

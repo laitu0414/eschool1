@@ -1,0 +1,49 @@
+@model eSchool.ViewModels.ChiTietDiemDanhPageViewModel
+@{
+    Layout = "~/Views/Shared/_ResultLayout.cshtml";
+    ViewData["Title"] = "Chi tiết điểm danh";
+}
+
+<div class="page-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+        <div>
+            <h3 class="mb-2">@Model.BuoiHoc.TenLop - @Model.BuoiHoc.TenMonHoc</h3>
+            <div class="text-muted">
+                Ngày học: @Model.BuoiHoc.NgayHoc.ToString("dd/MM/yyyy")
+                | Tiết: @(Model.BuoiHoc.IdTietHoc?.ToString() ?? "-")
+                | Giáo viên: @Model.BuoiHoc.TenGiaoVien
+            </div>
+        </div>
+        <a asp-action="DiemDanh" class="btn btn-outline-secondary">Quay lại</a>
+    </div>
+</div>
+
+<div class="page-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Mã học sinh</th>
+                    <th>Họ tên</th>
+                    <th>Trạng thái</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ChiTietHocSinhs)
+                {
+                    <tr>
+                        <td>@item.MaHS</td>
+                        <td><strong>@item.HoTen</strong></td>
+                        <td>
+                            <span class="badge @(item.TrangThai == "Co mat" || item.TrangThai == "Có mặt" ? "text-bg-success" : "text-bg-danger")">
+                                @item.TrangThai
+                            </span>
+                        </td>
+                        <td>@(string.IsNullOrWhiteSpace(item.GhiChu) ? "-" : item.GhiChu)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

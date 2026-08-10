@@ -1,0 +1,92 @@
+﻿@model eSchool.ViewModels.HocSinhViewModel
+
+<div class="row">
+    <div class="col-12 mb-4 text-center">
+        @{
+            var previewImage = string.IsNullOrWhiteSpace(Model.AnhDaiDien)
+                ? Url.Content("~/image/default-avatar.svg")
+                : Model.AnhDaiDien;
+        }
+        <img id="studentImagePreview"
+             src="@previewImage"
+             alt="Ảnh học sinh"
+             style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:3px solid #e5e7eb;" />
+        <div class="mt-3">
+            <label asp-for="AnhTaiLen" class="form-label">Ảnh học sinh</label>
+            <input asp-for="AnhTaiLen"
+                   type="file"
+                   class="form-control"
+                   accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                   onchange="previewStudentImage(this)" />
+            <span asp-validation-for="AnhTaiLen" class="text-danger"></span>
+            <small class="text-muted d-block mt-1">JPG, PNG hoặc WebP, tối đa 5 MB.</small>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Mã học sinh <span class="text-danger">*</span></label>
+        <input asp-for="MaHS" class="form-control" required maxlength="20" placeholder="VD: HS001" />
+        <span asp-validation-for="MaHS" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Họ tên <span class="text-danger">*</span></label>
+        <input asp-for="HoTen" class="form-control" required maxlength="100" placeholder="Nhập họ tên học sinh" />
+        <span asp-validation-for="HoTen" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Ngày sinh <span class="text-danger">*</span></label>
+        <input asp-for="NgaySinh" type="date" class="form-control" required max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        <span asp-validation-for="NgaySinh" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Giới tính</label>
+        <select asp-for="GioiTinh" class="form-select">
+            <option value="">-- Chọn giới tính --</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+        </select>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Số điện thoại</label>
+        <input asp-for="SDT" class="form-control" maxlength="15" placeholder="0xxxxxxxxx" />
+        <span asp-validation-for="SDT" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Email</label>
+        <input asp-for="Email" type="email" class="form-control" maxlength="100" placeholder="hocsinh@email.com" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Lớp học</label>
+        <select asp-for="IdLopHoc" asp-items="Model.LopHocs" class="form-select">
+            <option value="">-- Chọn lớp --</option>
+        </select>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Trạng thái</label>
+        <select asp-for="TrangThai" class="form-select">
+            <option value="true">Đang học</option>
+            <option value="false">Nghỉ học</option>
+        </select>
+    </div>
+
+    <div class="col-md-12 mb-3">
+        <label>Địa chỉ</label>
+        <textarea asp-for="DiaChi" class="form-control" maxlength="255" placeholder="Nhập địa chỉ liên hệ"></textarea>
+        <span asp-validation-for="DiaChi" class="text-danger"></span>
+    </div>
+</div>
+
+<script>
+    function previewStudentImage(input) {
+        if (!input.files || !input.files[0]) return;
+        document.getElementById('studentImagePreview').src = URL.createObjectURL(input.files[0]);
+    }
+</script>

@@ -1,0 +1,515 @@
+﻿@using System.Linq
+@model List<eSchool.Models.TaiKhoan>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Quản lý tài khoản";
+
+    var chucVus = ViewBag.ChucVus as List<eSchool.Models.ChucVu>;
+    var hocSinhsChuaGan = ViewBag.HocSinhsChuaGan as List<HocSinh> ?? new List<HocSinh>();
+    var giaoViensChuaGan = ViewBag.GiaoViensChuaGan as List<eSchool.Models.GiaoVien> ?? new List<eSchool.Models.GiaoVien>();
+}
+
+<div class="page-title">
+    <h1>Quản lý tài khoản</h1>
+    <p>Quản lý đăng nhập, phân quyền, trạng thái và mật khẩu tài khoản</p>
+</div>
+
+<div class="content-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="mb-1">Danh sách tài khoản</h5>
+            <small class="text-muted">Tổng số: @(Model?.Count ?? 0) tài khoản</small>
+        </div>
+
+        <button type="button"
+                class="btn-icon-add"
+                title="Thêm tài khoản"
+                data-bs-toggle="modal"
+                data-bs-target="#createModal">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form asp-action="Index" method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <input name="keyword"
+                   value="@ViewBag.Keyword"
+                   class="form-control"
+                   placeholder="Tìm theo username hoặc email..." />
+        </div>
+
+        <div class="col-md-3">
+            <select name="idChucVu" class="form-select">
+                <option value="">-- Tất cả chức vụ --</option>
+
+                @if (chucVus != null)
+                {
+                    foreach (var cv in chucVus)
+                    {
+                        if (ViewBag.IdChucVu != null && ViewBag.IdChucVu == cv.IdChucVu)
+                        {
+                            <option value="@cv.IdChucVu" selected>@cv.TenChucVu</option>
+                        }
+                        else
+                        {
+                            <option value="@cv.IdChucVu">@cv.TenChucVu</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <select name="trangThai" class="form-select">
+                <option value="">-- Tất cả trạng thái --</option>
+
+                @if (ViewBag.TrangThai != null && ViewBag.TrangThai == true)
+                {
+                    <option value="true" selected>Hoạt động</option>
+                    <option value="false">Đã khóa</option>
+                }
+                else if (ViewBag.TrangThai != null && ViewBag.TrangThai == false)
+                {
+                    <option value="true">Hoạt động</option>
+                    <option value="false" selected>Đã khóa</option>
+                }
+                else
+                {
+                    <option value="true">Hoạt động</option>
+                    <option value="false">Đã khóa</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100">
+                <i class="bi bi-search me-1"></i>
+                Lọc
+            </button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead>
+                <tr>
+                    <th width="70">STT</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Mật khẩu</th>
+                    <th>Chức vụ</th>
+                    <th>Trạng thái</th>
+                    <th width="180" class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @for (int i = 0; i < Model.Count; i++)
+                    {
+                        var item = Model[i];
+
+                        <tr>
+                            <td>@(i + 1)</td>
+
+                            <td>
+                                <strong>@item.Username</strong>
+                            </td>
+
+                            <td>
+                                @(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có" : item.Email)
+                            </td>
+
+                            <td>
+                                <span class="text-muted">••••••••</span>
+                            </td>
+
+                            <td>
+                                @(item.ChucVu?.TenChucVu ?? "Chưa có")
+                            </td>
+
+                            <td>
+                                @if (item.TrangThai)
+                                {
+                                    <span class="badge-success">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-danger">Đã khóa</span>
+                                }
+                            </td>
+
+                            <td>
+                                <div class="action-icons">
+
+                                    <button type="button"
+                                            class="btn-icon-edit"
+                                            title="Sửa tài khoản"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editModal_@item.IdTaiKhoan">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn-icon-password"
+                                            title="Đổi mật khẩu"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#changePassModal_@item.IdTaiKhoan">
+                                        <i class="bi bi-key-fill"></i>
+                                    </button>
+
+                                    <form asp-action="ToggleStatus" method="post" class="d-inline"
+                                          onsubmit="return confirm('Đổi trạng thái tài khoản này?')">
+                                        <input type="hidden" name="id" value="@item.IdTaiKhoan" />
+                                        <button type="submit" class="btn-icon-lock" title="Khóa / mở khóa">
+                                            @if (item.TrangThai)
+                                            {
+                                                <i class="bi bi-lock-fill"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-unlock-fill"></i>
+                                            }
+                                        </button>
+                                    </form>
+
+                                    <form asp-action="Delete" method="post" class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa tài khoản này?')">
+                                        <input type="hidden" name="id" value="@item.IdTaiKhoan" />
+                                        <button type="submit" class="btn-icon-delete" title="Xóa tài khoản">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- MODAL SỬA -->
+                        <div class="modal fade" id="editModal_@item.IdTaiKhoan" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content custom-modal">
+
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-pencil-square me-2 text-warning"></i>
+                                            Sửa tài khoản
+                                        </h5>
+
+                                        <button type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal">
+                                        </button>
+                                    </div>
+
+                                    <form asp-action="Edit" method="post">
+                                        <input type="hidden" name="id" value="@item.IdTaiKhoan" />
+
+                                        <div class="modal-body">
+
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Username <span class="text-danger">*</span>
+                                                </label>
+                                                <input name="username"
+                                                       value="@item.Username"
+                                                       class="form-control"
+                                                       required
+                                                       maxlength="50" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Email/Gmail
+                                                </label>
+                                                <input name="email"
+                                                       value="@item.Email"
+                                                       type="email"
+                                                       class="form-control"
+                                                       maxlength="100"
+                                                       placeholder="Nhập Gmail để nhận lại mật khẩu" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Chức vụ <span class="text-danger">*</span>
+                                                </label>
+                                                <select name="idChucVu" class="form-select" required>
+                                                    @if (chucVus != null)
+                                                    {
+                                                        foreach (var cv in chucVus)
+                                                        {
+                                                            if (item.IdChucVu == cv.IdChucVu)
+                                                            {
+                                                                <option value="@cv.IdChucVu" selected>@cv.TenChucVu</option>
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="@cv.IdChucVu">@cv.TenChucVu</option>
+                                                            }
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Trạng thái
+                                                </label>
+                                                <select name="trangThai" class="form-select">
+                                                    @if (item.TrangThai)
+                                                    {
+                                                        <option value="true" selected>Hoạt động</option>
+                                                        <option value="false">Đã khóa</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="true">Hoạt động</option>
+                                                        <option value="false" selected>Đã khóa</option>
+                                                    }
+                                                </select>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button"
+                                                    class="btn btn-cancel"
+                                                    data-bs-dismiss="modal">
+                                                Hủy
+                                            </button>
+
+                                            <button type="submit"
+                                                    class="btn btn-create">
+                                                <i class="bi bi-save me-2"></i>
+                                                Cập nhật
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MODAL ĐỔI MẬT KHẨU -->
+                        <div class="modal fade" id="changePassModal_@item.IdTaiKhoan" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content custom-modal">
+
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-key-fill me-2 text-primary"></i>
+                                            Đặt lại mật khẩu
+                                        </h5>
+
+                                        <button type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal">
+                                        </button>
+                                    </div>
+
+                                    <form asp-action="ResetPassword" method="post">
+                                        <input type="hidden" name="id" value="@item.IdTaiKhoan" />
+
+                                        <div class="modal-body">
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Mật khẩu mới <span class="text-danger">*</span></label>
+                                                <input name="newPassword"
+                                                       type="password"
+                                                       class="form-control"
+                                                       minlength="6"
+                                                       required
+                                                       placeholder="Nhập mật khẩu mới" />
+                                            </div>
+
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button"
+                                                    class="btn btn-cancel"
+                                                    data-bs-dismiss="modal">
+                                                Hủy
+                                            </button>
+
+                                            <button type="submit"
+                                                    class="btn btn-create">
+                                                <i class="bi bi-save me-2"></i>
+                                                Đặt lại mật khẩu
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            Không có tài khoản nào
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- MODAL THÊM -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>
+                    Thêm tài khoản mới
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <form asp-action="Create" method="post">
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Username <span class="text-danger">*</span>
+                        </label>
+
+                        <input name="username"
+                               class="form-control"
+                               maxlength="50"
+                               required
+                               placeholder="Nhập username" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Password <span class="text-danger">*</span>
+                        </label>
+
+                        <input name="password"
+                               type="password"
+                               class="form-control"
+                               minlength="6"
+                               required
+                               placeholder="Nhập password" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Email/Gmail
+                        </label>
+
+                        <input name="email"
+                               type="email"
+                               class="form-control"
+                               maxlength="100"
+                               placeholder="Nhập Gmail để nhận lại mật khẩu" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Chức vụ <span class="text-danger">*</span>
+                        </label>
+
+                        <select name="idChucVu" id="createRoleSelect" class="form-select" required>
+                            @if (chucVus != null)
+                            {
+                                foreach (var cv in chucVus)
+                                {
+                                    <option value="@cv.IdChucVu">@cv.TenChucVu</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-none" id="studentLinkGroup">
+                        <label class="form-label">
+                            Gắn với học sinh
+                        </label>
+                        <select name="idHocSinhLienKet" class="form-select">
+                            <option value="">-- Chọn học sinh chưa có tài khoản --</option>
+                            @foreach (var hocSinh in hocSinhsChuaGan)
+                            {
+                                <option value="@hocSinh.IdHocSinh">@hocSinh.MaHS - @hocSinh.HoTen</option>
+                            }
+                        </select>
+                        <small class="text-muted">Mỗi tài khoản học sinh chỉ được gắn với một hồ sơ học sinh.</small>
+                    </div>
+
+                    <div class="mb-3 d-none" id="teacherLinkGroup">
+                        <label class="form-label">
+                            Gắn với giáo viên
+                        </label>
+                        <select name="idGiaoVienLienKet" class="form-select">
+                            <option value="">-- Chọn giáo viên chưa có tài khoản --</option>
+                            @foreach (var giaoVien in giaoViensChuaGan)
+                            {
+                                <option value="@giaoVien.IdGiaoVien">@giaoVien.MaGV - @giaoVien.HoTen</option>
+                            }
+                        </select>
+                        <small class="text-muted">Mỗi tài khoản giáo viên chỉ được gắn với một hồ sơ giáo viên.</small>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-cancel"
+                            data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-create">
+                        <i class="bi bi-save me-2"></i>
+                        Tạo tài khoản
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const roleSelect = document.getElementById('createRoleSelect');
+        const studentGroup = document.getElementById('studentLinkGroup');
+        const teacherGroup = document.getElementById('teacherLinkGroup');
+
+        function syncProfileLinkFields() {
+            const roleId = roleSelect ? roleSelect.value : '';
+            studentGroup?.classList.toggle('d-none', roleId !== '3');
+            teacherGroup?.classList.toggle('d-none', roleId !== '2');
+        }
+
+        roleSelect?.addEventListener('change', syncProfileLinkFields);
+        syncProfileLinkFields();
+    })();
+</script>

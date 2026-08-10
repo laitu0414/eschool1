@@ -1,0 +1,188 @@
+@model List<eSchool.Models.ChinhSachMienGiam>
+@{
+    Layout = "~/Views/Shared/_ResultLayout.cshtml";
+    ViewData["Title"] = "Danh sách Miễn giảm";
+}
+
+<div class="page-card">
+    <div class="page-tools d-flex justify-content-between">
+        <h4 class="mb-0">Quản lý Chính sách Miễn Giảm</h4>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#mienGiamModal"><i class="bi bi-shield-check"></i> Thêm miễn giảm</button>
+            <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importMienGiamModal"><i class="bi bi-file-earmark-excel"></i> Nhập từ Excel</button>
+            <a asp-action="HocPhi" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Trở lại Học phí</a>
+        </div>
+    </div>
+
+    <div class="table-responsive mt-3">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Lớp</th>
+                    <th>Học sinh</th>
+                    <th>Chính sách (Giảm %)</th>
+                    <th>Lý do</th>
+                    <th>Hiệu lực</th>
+                    <th>Ghi chú</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">Chưa có chính sách miễn giảm nào được áp dụng</td></tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@item.HocSinh?.LopHoc?.TenLop</strong></td>
+                        <td>
+                            <strong>@item.HocSinh?.HoTen</strong><br/>
+                            <small class="text-muted">@item.HocSinh?.MaHS</small>
+                        </td>
+                        <td>
+                            @if (item.PhanTramGiam > 0)
+                            {
+                                <span class="badge text-bg-success">Giảm @item.PhanTramGiam.ToString("0")%</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Không giảm</span>
+                            }
+                        </td>
+                        <td>@item.LyDo</td>
+                        <td>@item.HieuLuc</td>
+                        <td>@item.GhiChu</td>
+                        <td class="text-end">
+                            <form asp-action="XoaMienGiam" asp-route-id="@item.IdMienGiam" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa chính sách này?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Nhập miễn giảm bằng Excel -->
+<div class="modal fade" id="importMienGiamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ImportMienGiamExcel" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Nhập chính sách từ Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Chọn file Excel (.xlsx)</label>
+                        <input type="file" name="excelFile" class="form-control" accept=".xlsx" required />
+                        <div class="form-text">
+                            File Excel cần có các cột: <strong>Mã học sinh, Phần trăm giảm, Lý do, Hiệu lực, Ghi chú</strong>.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a asp-action="DownloadMienGiamTemplate" class="btn btn-outline-secondary me-auto"><i class="bi bi-download"></i> Tải file mẫu</a>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-success"><i class="bi bi-upload"></i> Nhập dữ liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm miễn giảm -->
+<div class="modal fade" id="mienGiamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="LuuMienGiam" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm miễn giảm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Lớp</label>
+                            <select id="selectLopMienGiam" asp-items="ViewBag.LopHocs" class="form-select">
+                                <option value=""> Chọn lớp </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Học sinh <span class="text-danger">*</span></label>
+                            <select name="IdHocSinh" id="selectHsMienGiam" class="form-select" required>
+                                <option value=""> Chọn học sinh </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Chính sách (Giảm %)</label>
+                            <select name="PhanTramGiam" class="form-select">
+                                <option value="0">Không giảm</option>
+                                <option value="50">Giảm 50%</option>
+                                <option value="100">Giảm 100%</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Lý do</label>
+                            <select name="LyDo" class="form-select">
+                                <option>Hộ nghèo</option>
+                                <option>Hộ cận nghèo</option>
+                                <option>Con thương binh</option>
+                                <option>Con liệt sĩ</option>
+                                <option>Khuyết tật</option>
+                                <option>Dân tộc thiểu số</option>
+                                <option>Mồ côi</option>
+                                <option>Học bổng</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Hiệu lực (Năm học)</label>
+                            <select name="HieuLuc" class="form-select" required>
+                                <option value="">-- Chọn năm học --</option>
+                                @foreach (var nam in ViewBag.NamHocs as List<SelectListItem> ?? new List<SelectListItem>())
+                                {
+                                    <option value="@nam.Text">@nam.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ghi chú</label>
+                            <textarea name="GhiChu" class="form-control" rows="2" placeholder="_______________________"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-success">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('selectLopMienGiam')?.addEventListener('change', function () {
+            var lopId = this.value;
+            var hsSelect = document.getElementById('selectHsMienGiam');
+            hsSelect.innerHTML = '<option value=""> Chọn học sinh </option>';
+            if (lopId) {
+                fetch('/KetQuaHocTap/GetHocSinhByLop?lopId=' + lopId)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(hs => {
+                            var option = document.createElement('option');
+                            option.value = hs.id;
+                            option.textContent = hs.ten;
+                            hsSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+    </script>
+}

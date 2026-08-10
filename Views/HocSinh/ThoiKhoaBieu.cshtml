@@ -1,0 +1,176 @@
+@model List<eSchool.Models.PhanCongGiangDay>
+
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Thời khóa biểu";
+
+    var hocSinh = ViewBag.HocSinh as HocSinh;
+    var tenLop = ViewBag.TenLop as string ?? hocSinh?.LopHoc?.TenLop ?? "Chưa xếp lớp";
+    var hocKy = ViewBag.HocKy as string ?? string.Empty;
+    var namHoc = ViewBag.NamHoc as string ?? string.Empty;
+
+    var days = new Dictionary<int, string>
+    {
+        [2] = "Thứ Hai",
+        [3] = "Thứ Ba",
+        [4] = "Thứ Tư",
+        [5] = "Thứ Năm",
+        [6] = "Thứ Sáu",
+        [7] = "Thứ Bảy"
+    };
+
+    var morningStartTimes = new Dictionary<int, string> { {1, "07:00"}, {2, "07:50"}, {3, "08:50"}, {4, "09:40"}, {5, "10:35"} };
+    var morningEndTimes = new Dictionary<int, string> { {1, "07:45"}, {2, "08:35"}, {3, "09:35"}, {4, "10:25"}, {5, "11:20"} };
+
+    var afternoonStartTimes = new Dictionary<int, string> { {1, "13:30"}, {2, "14:20"}, {3, "15:20"}, {4, "16:10"}, {5, "17:05"} };
+    var afternoonEndTimes = new Dictionary<int, string> { {1, "14:15"}, {2, "15:05"}, {3, "16:05"}, {4, "16:55"}, {5, "17:50"} };
+}
+
+<div class="student-management-page">
+    <div class="student-list-card mb-4">
+        <div class="student-list-head">
+            <div>
+                <h3>Thời khóa biểu lớp @tenLop</h3>
+                <p>Xem lịch học theo lớp hiện tại của học sinh.</p>
+            </div>
+        </div>
+
+        <form method="get" class="student-filter-bar">
+            <div class="student-filter-search" style="flex: 1; max-width: 200px;">
+                <i class="bi bi-calendar-week"></i>
+                <input type="date" name="tuan" value="@ViewBag.Tuan" class="student-filter-select" title="Chọn tuần" style="border: none; padding-left: 0; outline: none; width: 100%;" />
+            </div>
+
+            <input name="namHoc"
+                   value="@namHoc"
+                   class="student-filter-select"
+                   placeholder="2026-2027" />
+
+            <button type="submit" class="student-filter-btn">
+                <i class="bi bi-funnel"></i>
+                Lọc lịch
+            </button>
+
+            <a asp-action="ThoiKhoaBieu" class="student-reset-btn">Làm mới</a>
+        </form>
+    </div>
+
+    @if (hocSinh?.IdLopHoc == null)
+    {
+        <div class="student-list-card text-center text-muted" style="padding: 40px;">
+            <p>Học sinh chưa được xếp lớp. Vui lòng liên hệ giáo viên chủ nhiệm.</p>
+        </div>
+    }
+    else if (!Model.Any())
+    {
+        <div class="student-list-card text-center text-muted" style="padding: 40px;">
+            <p>Chưa có dữ liệu thời khóa biểu cho lớp này.</p>
+        </div>
+    }
+    else
+    {
+        DateTime startOfWeek = ViewBag.StartOfWeek != null ? DateTime.Parse(ViewBag.StartOfWeek) : DateTime.Today;
+        var thayDois = ViewBag.ThayDois as List<eSchool.Models.LichHocThayDoi> ?? new List<eSchool.Models.LichHocThayDoi>();
+
+        <div class="table-responsive bg-white rounded shadow-sm">
+            <table class="table table-bordered align-middle text-center mb-0">
+                <thead class="table-light">
+                    @{
+                        var lop = Model.FirstOrDefault()?.LopHoc;
+                        var isMorning = lop?.BuoiHoc == "Sáng" || (string.IsNullOrEmpty(lop?.BuoiHoc) && lop?.Khoi != null && (lop.Khoi.Contains("6") || lop.Khoi.Contains("7")));
+                        var buoiHocText = isMorning ? "Sáng" : "Chiều";
+                        var startTimes = isMorning ? morningStartTimes : afternoonStartTimes;
+                        var endTimes = isMorning ? morningEndTimes : afternoonEndTimes;
+                    }
+                    <tr>
+                        <th style="width: 150px;" class="fw-bold text-primary align-middle">
+                            @tenLop <span class="badge bg-secondary ms-1">@buoiHocText</span>
+                            @{
+                                var pMap = ViewBag.PhongHocMap as Dictionary<int, string>;
+                                if (pMap != null && lop != null && pMap.ContainsKey(lop.IdLop))
+                                {
+                                    <div class="mt-1"><span class="badge bg-info text-dark"><i class="bi bi-door-open me-1"></i>@pMap[lop.IdLop]</span></div>
+                                }
+                            }
+                        </th>
+                        @for (int i = 2; i <= 7; i++)
+                        {
+                            var currentDate = startOfWeek.AddDays(i - 2);
+                            var isDoiPhong = thayDois.Any(x => x.Ngay.Date == currentDate.Date && (x.IdLop == null || x.IdLop == hocSinh.IdLopHoc) && !x.IsNghi && x.GhiChu != null && x.GhiChu.StartsWith("Đổi phòng: "));
+                            <th class="align-middle">
+                                <div>Thứ @i</div>
+                                <small class="text-muted fw-normal d-block">@currentDate.ToString("dd/MM/yyyy")</small>
+                                @if(isDoiPhong) {
+                                    <span class="badge bg-warning text-dark mt-1"><i class="bi bi-arrow-left-right"></i> Đổi phòng</span>
+                                }
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        for (int tiet = 1; tiet <= 5; tiet++)
+                        {
+                            <tr>
+                                <td class="text-muted bg-light">
+                                    <div class="fw-bold">Tiết @tiet</div>
+                                    @if (startTimes.ContainsKey(tiet) && endTimes.ContainsKey(tiet))
+                                    {
+                                        <small style="font-size: 0.75em;">@startTimes[tiet] - @endTimes[tiet]</small>
+                                    }
+                                </td>
+                                
+                                @for (int thu = 2; thu <= 7; thu++)
+                                {
+                                    var currentDateForCell = startOfWeek.AddDays(thu - 2);
+                                    var isHoliday = thayDois.Any(x => x.Ngay.Date == currentDateForCell.Date && x.IsNghi && (x.IdLop == null || x.IdLop == hocSinh.IdLopHoc));
+
+                                    if (isHoliday)
+                                    {
+                                        if (tiet == 1)
+                                        {
+                                            <td rowspan="5" class="align-middle bg-danger bg-opacity-10 text-danger fw-bold" style="letter-spacing: 2px;">
+                                                NGHỈ HỌC
+                                            </td>
+                                        }
+                                        continue;
+                                    }
+
+                                    var item = Model.FirstOrDefault(x => x.Thu == thu && x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet);
+                                    
+                                    if (item != null)
+                                    {
+                                        if (item.TietBatDau == tiet)
+                                        {
+                                            <td rowspan="@(item.SoTiet ?? 1)" style="background-color: #f8f9fa;">
+                                                <div class="fw-bold text-primary">@(item.MonHoc?.TenMon ?? "Trống")</div>
+                                                <div class="text-muted small">@(item.GiaoVien?.HoTen ?? "Chưa phân GV")</div>
+                                                @{
+                                                    var doiPhongThayDoi = thayDois.FirstOrDefault(x => x.Ngay.Date == currentDateForCell.Date && (x.IdLop == null || x.IdLop == hocSinh.IdLopHoc) && !x.IsNghi && x.GhiChu != null && x.GhiChu.StartsWith("Đổi phòng: "));
+                                                    var roomCode = item.PhongHoc?.MaPhong;
+                                                    if (doiPhongThayDoi != null)
+                                                    {
+                                                        roomCode = doiPhongThayDoi.GhiChu.Replace("Đổi phòng: ", "");
+                                                    }
+                                                }
+                                                @if (!string.IsNullOrEmpty(roomCode))
+                                                {
+                                                    <div class="text-info small fw-bold mt-1"><i class="bi bi-geo-alt-fill"></i> @roomCode</div>
+                                                }
+                                            </td>
+                                        }
+                                    }
+
+                                    else
+                                    {
+                                        <td></td>
+                                    }
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

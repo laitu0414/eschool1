@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Đội ngũ giáo viên";
+    ViewData["ActiveMenu"] = "DoiNguGiaoVien";
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            @await Html.PartialAsync("_SidebarGioiThieu")
+        </div>
+        <div class="col-lg-9">
+            <div class="card rounded-0 border-1" style="border-color: #e0e0e0;">
+                <div class="card-header rounded-0 text-white" style="background-color: #e66624; border-bottom: none; font-size: 14px;">
+                    Trang chủ <i class="bi bi-chevron-right" style="font-size: 10px; margin: 0 5px;"></i> Đội ngũ giáo viên
+                </div>
+                <div class="card-body p-4 pt-3 bg-white">
+                    <h1 class="mb-3 text-uppercase" style="color: #e66624; font-size: 26px;">Đội ngũ giáo viên</h1>
+                    <div class="d-flex justify-content-between align-items-center mb-4 text-muted border-bottom pb-2">
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="/image/giaovien.png" alt="Đội ngũ giáo viên" style="max-width: 100%; height: auto; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+                    </div>
+
+                    <p style="font-family: Roboto, sans-serif; text-align: justify; line-height: 1.6;">
+                        Với quyết tâm trở thành đơn vị đi đầu trong đổi mới giáo dục theo mô hình chất lượng cao có hệ song bằng, eSchool chú trọng đầu tư chiều sâu vào việc phát triển năng lực đội ngũ CBQL, giáo viên cốt cán để đảm bảo chương trình giáo dục ưu việt của toàn bộ hệ thống phải được triển khai bởi đội ngũ chất lượng, những nhà giáo có <strong>Tâm - Tầm – Tài</strong>.
+                    </p>
+
+                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">1. Đội ngũ Cán bộ quản lý</h4>
+                    <p style="text-align: justify; line-height: 1.6;">
+                        Nhà trường có đội ngũ cán bộ quản lý giàu kinh nghiệm, có năng lực lãnh đạo, yêu nghề, tâm huyết với sự nghiệp giáo dục, năng động, sáng tạo và có tư duy đổi mới. Các thầy cô luôn tiên phong trong việc áp dụng các phương pháp giảng dạy tiên tiến nhất vào thực tiễn nhà trường.
+                    </p>
+
+                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">2. Đội ngũ Giáo viên</h4>
+                    <p style="text-align: justify; line-height: 1.6;">
+                        <strong>100% giáo viên tốt nghiệp đại học trở lên</strong> trong đó hơn 30% có trình độ thạc sĩ.<br><br>
+                        <strong>70% là những giáo viên dạy giỏi</strong> cấp Quận, cấp Thành phố được tuyển chọn từ các trường có uy tín, có năng lực chuyên môn vững vàng, có kinh nghiệm bồi dưỡng học sinh giỏi các cấp; phẩm chất đạo đức tốt, tâm huyết với nghề, có phong cách ứng xử thân thiện với học sinh và phụ huynh học sinh.<br><br>
+                        <strong>30% là giáo viên trẻ</strong> được đào tạo về chương trình song bằng, tốt nghiệp bằng giỏi hoặc thủ khoa của các trường Đại học Sư phạm, là giáo viên giỏi giàu kinh nghiệm từ các tỉnh.
+                    </p>
+
+                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">3. Đội ngũ Chuyên gia và Cố vấn</h4>
+                    <p style="text-align: justify; line-height: 1.6;">
+                        Ngoài ra, trường còn mời đội ngũ chuyên gia từ các trường đại học, các trung tâm giáo dục chất lượng cao thỉnh giảng tăng cường bồi dưỡng cho HS giỏi, phối hợp với trung tâm ngoại ngữ uy tín mời giáo viên người nước ngoài có kinh nghiệm giảng dạy, thân thiện với học sinh tham gia giảng dạy tại trường.
+                    </p>
+
+                    <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+                        <img src="/images/doi-ngu-giao-vien.jpg" alt="Đội ngũ giáo viên eSchool" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 5px;" onerror="this.src='https://via.placeholder.com/800x400?text=Hinh+Anh+Giao+Vien'"/>
+                    </div>
+                    
+                    <p style="text-align: justify; line-height: 1.6; font-style: italic; color: #555;">
+                        "Một người thầy giỏi giống như ngọn nến - đốt cháy chính mình để soi sáng đường cho những người khác." - eSchool tự hào với những người "lái đò" tận tâm, luôn đồng hành cùng học sinh trên con đường chinh phục tri thức.
+                    </p>
+
+                    <div class="text-end mb-5 mt-4">
+                        <strong>TM. BGH NHÀ TRƯỜNG</strong><br />
+                        <strong>HIỆU TRƯỞNG</strong>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

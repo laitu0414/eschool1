@@ -1,0 +1,85 @@
+@model List<eSchool.Models.ChuyenLop>
+@using Microsoft.AspNetCore.Http
+@{
+    var roleId = Context.Session.GetInt32("RoleId");
+    Layout = roleId == 1 ? "~/Views/Shared/_AcademicLayout.cshtml" : "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Lịch sử chuyển lớp";
+    var lopNames = ViewBag.LopNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+}
+
+<div class="card shadow-sm p-4 mx-auto" style="border-radius: 12px; margin-top: 1rem;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Nhật ký chuyển lớp</h3>
+            <p class="text-muted mb-0">Theo dõi các lịch sử thay đổi lớp học từ Admin</p>
+        </div>
+        <div>
+            @if (roleId == 1)
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead style="background-color: #fdfaf9;">
+                <tr>
+                    <th style="width: 15%;">Thời gian</th>
+                    @if (roleId != 3)
+                    {
+                        <th style="width: 15%;">Hành động</th>
+                        <th style="width: 20%;">Người thực hiện</th>
+                    }
+                    <th style="width: @(roleId == 3 ? "85%" : "50%");">Nội dung chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="@(roleId == 3 ? 2 : 4)" class="text-center text-muted py-4">Chưa có lịch sử chuyển lớp</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        var lopCu = lopNames.GetValueOrDefault(item.IdLopCu) ?? $"Lớp {item.IdLopCu}";
+                        var lopMoi = lopNames.GetValueOrDefault(item.IdLopMoi) ?? $"Lớp {item.IdLopMoi}";
+                        <tr>
+                            <td class="text-muted">
+                                <i class="bi bi-clock me-1"></i> @item.NgayChuyen.ToString("dd/MM/yyyy")
+                            </td>
+                            @if (roleId != 3)
+                            {
+                                <td>
+                                    <span class="badge bg-primary text-white rounded-pill px-3 py-2">Chuyển lớp</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center" style="width: 28px; height: 28px; font-size: 13px; font-weight: bold;">
+                                            A
+                                        </div>
+                                        <span class="ms-2 fw-semibold">admin</span>
+                                    </div>
+                                </td>
+                            }
+                            <td>
+                                <div>
+                                    Đã chuyển học sinh <strong>@item.HocSinh?.HoTen</strong> (@item.HocSinh?.MaHS) từ <strong>@lopCu</strong> sang <strong>@lopMoi</strong>
+                                </div>
+                                @if (!string.IsNullOrEmpty(item.LyDo))
+                                {
+                                    <small class="text-muted fst-italic">Lý do: @item.LyDo</small>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

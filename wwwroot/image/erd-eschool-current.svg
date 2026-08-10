@@ -1,0 +1,396 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1700" viewBox="0 0 2400 1700">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 34px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 500 16px 'Segoe UI', Arial, sans-serif; fill: #475569; }
+      .section-title { font: 700 20px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 18; ry: 18; }
+      .head-security { fill: #2563eb; }
+      .head-people { fill: #16a34a; }
+      .head-academic { fill: #d97706; }
+      .head-ops { fill: #dc2626; }
+      .head-public { fill: #7c3aed; }
+      .card-title { font: 700 18px 'Segoe UI', Arial, sans-serif; fill: #ffffff; }
+      .field { font: 14px 'Consolas', 'Courier New', monospace; fill: #0f172a; }
+      .note { font: 14px 'Segoe UI', Arial, sans-serif; fill: #334155; }
+      .legend { font: 13px 'Segoe UI', Arial, sans-serif; fill: #334155; }
+      .line { stroke: #64748b; stroke-width: 2.6; fill: none; }
+      .line-dashed { stroke: #94a3b8; stroke-width: 2.6; fill: none; stroke-dasharray: 10 8; }
+      .label { font: 12px 'Segoe UI', Arial, sans-serif; fill: #334155; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="2400" height="1700"/>
+
+  <text class="title" x="60" y="56">ERD eSchool - current codebase</text>
+  <text class="subtitle" x="60" y="88">Built from Models/*.cs and AppDbContext.cs after the latest feature changes.</text>
+
+  <text class="section-title" x="60" y="140">Security / Admin</text>
+  <text class="section-title" x="60" y="420">People</text>
+  <text class="section-title" x="60" y="800">Academic</text>
+  <text class="section-title" x="60" y="1180">Assessment / Attendance / Finance</text>
+
+  <!-- Security cards -->
+  <g transform="translate(60,160)">
+    <rect class="card" width="240" height="150"/>
+    <rect class="head-security" width="240" height="40" rx="18" ry="18"/>
+    <rect class="head-security" width="240" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">CHUCVU</text>
+    <text class="field" x="18" y="64">PK  IdChucVu</text>
+    <text class="field" x="18" y="86">    TenChucVu</text>
+  </g>
+
+  <g transform="translate(340,160)">
+    <rect class="card" width="290" height="210"/>
+    <rect class="head-security" width="290" height="40" rx="18" ry="18"/>
+    <rect class="head-security" width="290" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">TAIKHOAN</text>
+    <text class="field" x="18" y="64">PK  IdTaiKhoan</text>
+    <text class="field" x="18" y="86">    Username</text>
+    <text class="field" x="18" y="108">    Password</text>
+    <text class="field" x="18" y="130">    Email?</text>
+    <text class="field" x="18" y="152">    TrangThai</text>
+    <text class="field" x="18" y="174">    BatBuocDoiMatKhau</text>
+    <text class="field" x="18" y="196">FK  IdChucVu</text>
+  </g>
+
+  <g transform="translate(680,160)">
+    <rect class="card" width="290" height="190"/>
+    <rect class="head-security" width="290" height="40" rx="18" ry="18"/>
+    <rect class="head-security" width="290" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">THONGBAO</text>
+    <text class="field" x="18" y="64">PK  IdThongBao</text>
+    <text class="field" x="18" y="86">    TieuDe</text>
+    <text class="field" x="18" y="108">    NoiDung</text>
+    <text class="field" x="18" y="130">    NgayTao</text>
+    <text class="field" x="18" y="152">    DoiTuongNhan</text>
+    <text class="field" x="18" y="174">FK  IdTaiKhoan</text>
+  </g>
+
+  <g transform="translate(1020,160)">
+    <rect class="card" width="290" height="170"/>
+    <rect class="head-security" width="290" height="40" rx="18" ry="18"/>
+    <rect class="head-security" width="290" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">NHATKYHOATDONG</text>
+    <text class="field" x="18" y="64">PK  IdNhatKy</text>
+    <text class="field" x="18" y="86">    TenDangNhap</text>
+    <text class="field" x="18" y="108">    HanhDong</text>
+    <text class="field" x="18" y="130">    NoiDung</text>
+    <text class="field" x="18" y="152">    ThoiGian</text>
+  </g>
+
+  <g transform="translate(1360,160)">
+    <rect class="card" width="300" height="190"/>
+    <rect class="head-public" width="300" height="40" rx="18" ry="18"/>
+    <rect class="head-public" width="300" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">TINTUCSUKIEN</text>
+    <text class="field" x="18" y="64">PK  IdTinTucSuKien</text>
+    <text class="field" x="18" y="86">    TieuDe</text>
+    <text class="field" x="18" y="108">    MoTa</text>
+    <text class="field" x="18" y="130">    DuongDan</text>
+    <text class="field" x="18" y="152">    AnhMinhHoa?</text>
+    <text class="field" x="18" y="174">    NgayTao, TrangThai</text>
+  </g>
+
+  <!-- People cards -->
+  <g transform="translate(60,440)">
+    <rect class="card" width="280" height="190"/>
+    <rect class="head-people" width="280" height="40" rx="18" ry="18"/>
+    <rect class="head-people" width="280" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">PHUHUYNH</text>
+    <text class="field" x="18" y="64">PK  IdPhuHuynh</text>
+    <text class="field" x="18" y="86">    HoTen</text>
+    <text class="field" x="18" y="108">    SDT?</text>
+    <text class="field" x="18" y="130">    Email?</text>
+    <text class="field" x="18" y="152">    DiaChi?, NgheNghiep?</text>
+    <text class="field" x="18" y="174">    TrangThai</text>
+  </g>
+
+  <g transform="translate(390,440)">
+    <rect class="card" width="290" height="170"/>
+    <rect class="head-people" width="290" height="40" rx="18" ry="18"/>
+    <rect class="head-people" width="290" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">HOCSINHPHUHUYNH</text>
+    <text class="field" x="18" y="64">PK  IdHocSinhPhuHuynh</text>
+    <text class="field" x="18" y="86">FK  IdHocSinh</text>
+    <text class="field" x="18" y="108">FK  IdPhuHuynh</text>
+    <text class="field" x="18" y="130">    QuanHe?</text>
+    <text class="field" x="18" y="152">    LaLienHeChinh</text>
+  </g>
+
+  <g transform="translate(730,400)">
+    <rect class="card" width="330" height="290"/>
+    <rect class="head-people" width="330" height="40" rx="18" ry="18"/>
+    <rect class="head-people" width="330" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">HOCSINH</text>
+    <text class="field" x="18" y="64">PK  IdHocSinh</text>
+    <text class="field" x="18" y="86">    MaHS, HoTen</text>
+    <text class="field" x="18" y="108">    NgaySinh, GioiTinh?</text>
+    <text class="field" x="18" y="130">    SDT?, Email?</text>
+    <text class="field" x="18" y="152">    DiaChi?, AnhDaiDien?</text>
+    <text class="field" x="18" y="174">    NoiSinh?, DanToc?, TonGiao?</text>
+    <text class="field" x="18" y="196">    QuocTich?, NgayNhapHoc?</text>
+    <text class="field" x="18" y="218">    TrangThai, NgayTao?, GhiChu?</text>
+    <text class="field" x="18" y="240">FK  IdTaiKhoan?</text>
+    <text class="field" x="18" y="262">FK  IdLopHoc?</text>
+  </g>
+
+  <g transform="translate(1110,420)">
+    <rect class="card" width="300" height="210"/>
+    <rect class="head-people" width="300" height="40" rx="18" ry="18"/>
+    <rect class="head-people" width="300" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">GIAOVIEN</text>
+    <text class="field" x="18" y="64">PK  IdGiaoVien</text>
+    <text class="field" x="18" y="86">    MaGV, HoTen</text>
+    <text class="field" x="18" y="108">    NgaySinh, GioiTinh?</text>
+    <text class="field" x="18" y="130">    SDT?, Email?</text>
+    <text class="field" x="18" y="152">    DiaChi?</text>
+    <text class="field" x="18" y="174">FK  IdTaiKhoan?</text>
+  </g>
+
+  <!-- Academic cards -->
+  <g transform="translate(60,820)">
+    <rect class="card" width="260" height="170"/>
+    <rect class="head-academic" width="260" height="40" rx="18" ry="18"/>
+    <rect class="head-academic" width="260" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">NAMHOC</text>
+    <text class="field" x="18" y="64">PK  IdNamHoc</text>
+    <text class="field" x="18" y="86">    TenNamHoc</text>
+    <text class="field" x="18" y="108">    NgayBatDau</text>
+    <text class="field" x="18" y="130">    NgayKetThuc</text>
+    <text class="field" x="18" y="152">    TrangThai</text>
+  </g>
+
+  <g transform="translate(360,820)">
+    <rect class="card" width="260" height="190"/>
+    <rect class="head-academic" width="260" height="40" rx="18" ry="18"/>
+    <rect class="head-academic" width="260" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">HOCKY</text>
+    <text class="field" x="18" y="64">PK  IdHocKy</text>
+    <text class="field" x="18" y="86">    TenHocKy</text>
+    <text class="field" x="18" y="108">FK  IdNamHoc</text>
+    <text class="field" x="18" y="130">    NgayBatDau</text>
+    <text class="field" x="18" y="152">    NgayKetThuc</text>
+    <text class="field" x="18" y="174">    TrangThai</text>
+  </g>
+
+  <g transform="translate(660,820)">
+    <rect class="card" width="300" height="190"/>
+    <rect class="head-academic" width="300" height="40" rx="18" ry="18"/>
+    <rect class="head-academic" width="300" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">LOPHOC</text>
+    <text class="field" x="18" y="64">PK  IdLop</text>
+    <text class="field" x="18" y="86">    MaLop</text>
+    <text class="field" x="18" y="108">    TenLop</text>
+    <text class="field" x="18" y="130">    Khoi?</text>
+    <text class="field" x="18" y="152">    NamHoc (text)?</text>
+    <text class="field" x="18" y="174">FK  IdGiaoVienCN?</text>
+  </g>
+
+  <g transform="translate(1000,820)">
+    <rect class="card" width="260" height="150"/>
+    <rect class="head-academic" width="260" height="40" rx="18" ry="18"/>
+    <rect class="head-academic" width="260" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">MONHOC</text>
+    <text class="field" x="18" y="64">PK  IdMonHoc</text>
+    <text class="field" x="18" y="86">    MaMon</text>
+    <text class="field" x="18" y="108">    TenMon</text>
+    <text class="field" x="18" y="130">    SoTiet</text>
+  </g>
+
+  <g transform="translate(1300,820)">
+    <rect class="card" width="260" height="170"/>
+    <rect class="head-academic" width="260" height="40" rx="18" ry="18"/>
+    <rect class="head-academic" width="260" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">DANGKYLOP</text>
+    <text class="field" x="18" y="64">PK  IdDangKy</text>
+    <text class="field" x="18" y="86">FK  IdHocSinh</text>
+    <text class="field" x="18" y="108">FK  IdLop</text>
+    <text class="field" x="18" y="130">    NgayDangKy</text>
+  </g>
+
+  <g transform="translate(1600,760)">
+    <rect class="card" width="320" height="250"/>
+    <rect class="head-academic" width="320" height="40" rx="18" ry="18"/>
+    <rect class="head-academic" width="320" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">PHANCONGGIANGDAY</text>
+    <text class="field" x="18" y="64">PK  IdPhanCong</text>
+    <text class="field" x="18" y="86">FK  IdGiaoVien</text>
+    <text class="field" x="18" y="108">FK  IdMonHoc</text>
+    <text class="field" x="18" y="130">FK  IdLop</text>
+    <text class="field" x="18" y="152">    HocKy (text)?</text>
+    <text class="field" x="18" y="174">    NamHoc (text)?</text>
+    <text class="field" x="18" y="196">    Thu?</text>
+    <text class="field" x="18" y="218">    TietBatDau?, SoTiet?</text>
+  </g>
+
+  <g transform="translate(1960,820)">
+    <rect class="card" width="300" height="190"/>
+    <rect class="head-academic" width="300" height="40" rx="18" ry="18"/>
+    <rect class="head-academic" width="300" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">CHUYENLOP</text>
+    <text class="field" x="18" y="64">PK  IdChuyenLop</text>
+    <text class="field" x="18" y="86">FK  IdHocSinh</text>
+    <text class="field" x="18" y="108">    IdLopCu (logic ref)</text>
+    <text class="field" x="18" y="130">    IdLopMoi (logic ref)</text>
+    <text class="field" x="18" y="152">    NgayChuyen, LyDo?, GhiChu?</text>
+  </g>
+
+  <!-- Ops cards -->
+  <g transform="translate(660,1200)">
+    <rect class="card" width="320" height="250"/>
+    <rect class="head-ops" width="320" height="40" rx="18" ry="18"/>
+    <rect class="head-ops" width="320" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">DIEM</text>
+    <text class="field" x="18" y="64">PK  IdDiem</text>
+    <text class="field" x="18" y="86">FK  IdHocSinh</text>
+    <text class="field" x="18" y="108">FK  IdMonHoc</text>
+    <text class="field" x="18" y="130">FK  IdHocKy?</text>
+    <text class="field" x="18" y="152">FK  IdNamHoc?</text>
+    <text class="field" x="18" y="174">    HocKy (text)</text>
+    <text class="field" x="18" y="196">    Diem15Phut, Diem1Tiet</text>
+    <text class="field" x="18" y="218">    DiemGiuaKy, DiemCuoiKy, DiemTB</text>
+  </g>
+
+  <g transform="translate(1020,1200)">
+    <rect class="card" width="300" height="190"/>
+    <rect class="head-ops" width="300" height="40" rx="18" ry="18"/>
+    <rect class="head-ops" width="300" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">DIEMDANH</text>
+    <text class="field" x="18" y="64">PK  IdDiemDanh</text>
+    <text class="field" x="18" y="86">FK  IdHocSinh</text>
+    <text class="field" x="18" y="108">FK  IdLop</text>
+    <text class="field" x="18" y="130">    NgayHoc</text>
+    <text class="field" x="18" y="152">    IdTietHoc?, TrangThai, GhiChu?</text>
+  </g>
+
+  <g transform="translate(1360,1200)">
+    <rect class="card" width="320" height="230"/>
+    <rect class="head-ops" width="320" height="40" rx="18" ry="18"/>
+    <rect class="head-ops" width="320" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">HOCPHI</text>
+    <text class="field" x="18" y="64">PK  IdHocPhi</text>
+    <text class="field" x="18" y="86">FK  IdHocSinh</text>
+    <text class="field" x="18" y="108">FK  IdNamHoc?</text>
+    <text class="field" x="18" y="130">FK  IdHocKy?</text>
+    <text class="field" x="18" y="152">    HocKy (text), SoTien</text>
+    <text class="field" x="18" y="174">    NgayDuKien, HanDongTien, NgayDong</text>
+    <text class="field" x="18" y="196">    TrangThai, PhuongThuc?, GhiChu?</text>
+  </g>
+
+  <g transform="translate(1720,1200)">
+    <rect class="card" width="320" height="210"/>
+    <rect class="head-ops" width="320" height="40" rx="18" ry="18"/>
+    <rect class="head-ops" width="320" height="24" y="16"/>
+    <text class="card-title" x="18" y="26">PHIEUDIEM</text>
+    <text class="field" x="18" y="64">PK  IdPhieuDiem</text>
+    <text class="field" x="18" y="86">FK  IdHocSinh</text>
+    <text class="field" x="18" y="108">FK  IdLop?</text>
+    <text class="field" x="18" y="130">FK  IdHocKy?, IdNamHoc?</text>
+    <text class="field" x="18" y="152">FK  NguoiLap?</text>
+    <text class="field" x="18" y="174">    NgayLap</text>
+  </g>
+
+  <!-- Key relation lines -->
+  <path class="line" d="M300 235 L340 235"/>
+  <text class="label" x="308" y="226">1-n</text>
+
+  <path class="line" d="M630 255 L680 255"/>
+  <text class="label" x="640" y="246">1-n</text>
+
+  <path class="line" d="M485 370 L485 420 L1260 420"/>
+  <text class="label" x="498" y="410">optional 1-1 / creator links below</text>
+
+  <path class="line" d="M485 370 L485 545 L730 545"/>
+  <text class="label" x="520" y="536">TaiKhoan-HocSinh</text>
+
+  <path class="line" d="M485 370 L485 525 L1110 525"/>
+  <text class="label" x="520" y="516">TaiKhoan-GiaoVien</text>
+
+  <path class="line" d="M340 535 L390 535"/>
+  <text class="label" x="350" y="526">1-n</text>
+
+  <path class="line" d="M680 535 L730 535"/>
+  <text class="label" x="688" y="526">1-n</text>
+
+  <path class="line" d="M1210 630 L1210 820 L960 820"/>
+  <text class="label" x="1090" y="808">chu nhiem</text>
+
+  <path class="line" d="M895 690 L895 820"/>
+  <text class="label" x="904" y="770">lop hien tai</text>
+
+  <path class="line" d="M190 990 L190 1080 L490 1080 L490 1010"/>
+  <text class="label" x="220" y="1070">1-n</text>
+
+  <path class="line" d="M830 1010 L830 1080 L490 1080"/>
+  <text class="label" x="690" y="1070">HocSinh-DangKyLop</text>
+
+  <path class="line" d="M1110 525 L1760 525 L1760 760"/>
+  <text class="label" x="1490" y="516">GiaoVien-PhanCong</text>
+
+  <path class="line" d="M1130 970 L1600 970"/>
+  <text class="label" x="1330" y="960">MonHoc-PhanCong</text>
+
+  <path class="line" d="M960 960 L1600 960"/>
+  <text class="label" x="1220" y="950">LopHoc-PhanCong</text>
+
+  <path class="line" d="M320 905 L360 905"/>
+  <text class="label" x="325" y="896">1-n</text>
+
+  <path class="line" d="M620 905 L620 1325 L660 1325"/>
+  <text class="label" x="628" y="1220">HocKy-Diem</text>
+
+  <path class="line" d="M320 905 L320 1315 L660 1315"/>
+  <text class="label" x="328" y="1208">NamHoc-Diem</text>
+
+  <path class="line" d="M1060 545 L1060 1325 L980 1325"/>
+  <text class="label" x="1068" y="1210">HocSinh-Diem</text>
+
+  <path class="line" d="M1130 970 L1130 1325 L980 1325"/>
+  <text class="label" x="1138" y="1210">MonHoc-Diem</text>
+
+  <path class="line" d="M895 690 L895 1295 L1020 1295"/>
+  <text class="label" x="903" y="1188">HocSinh-DiemDanh</text>
+
+  <path class="line" d="M810 1010 L810 1275 L1020 1275"/>
+  <text class="label" x="818" y="1168">LopHoc-DiemDanh</text>
+
+  <path class="line" d="M990 1380 L1360 1380"/>
+  <text class="label" x="1140" y="1370">HocSinh-HocPhi</text>
+
+  <path class="line" d="M620 945 L1360 945 L1360 1275"/>
+  <text class="label" x="930" y="936">HocKy-HocPhi</text>
+
+  <path class="line" d="M320 925 L1340 925 L1340 1255"/>
+  <text class="label" x="760" y="916">NamHoc-HocPhi</text>
+
+  <path class="line" d="M1060 1410 L1720 1410"/>
+  <text class="label" x="1330" y="1400">HocSinh-PhieuDiem</text>
+
+  <path class="line" d="M960 970 L1860 970 L1860 1200"/>
+  <text class="label" x="1370" y="960">LopHoc-PhieuDiem</text>
+
+  <path class="line" d="M620 965 L1820 965 L1820 1200"/>
+  <text class="label" x="1180" y="956">HocKy/NamHoc-PhieuDiem</text>
+
+  <path class="line" d="M630 330 L630 1160 L1820 1160 L1820 1200"/>
+  <text class="label" x="1430" y="1150">TaiKhoan-NguoiLap</text>
+
+  <path class="line" d="M1060 565 L2060 565 L2060 820"/>
+  <text class="label" x="1620" y="556">HocSinh-ChuyenLop</text>
+
+  <path class="line-dashed" d="M1960 915 L960 915"/>
+  <text class="label" x="1450" y="906">IdLopCu / IdLopMoi are logical refs to LopHoc</text>
+
+  <!-- Legend -->
+  <g transform="translate(1760,120)">
+    <rect class="card" width="560" height="140"/>
+    <text class="section-title" x="20" y="32">Legend</text>
+    <line class="line" x1="20" y1="60" x2="120" y2="60"/>
+    <text class="legend" x="140" y="65">Actual relation from current EF model / code.</text>
+    <line class="line-dashed" x1="20" y1="92" x2="120" y2="92"/>
+    <text class="legend" x="140" y="97">Logical reference used by code, not mapped as EF FK.</text>
+    <text class="legend" x="20" y="124">Standalone tables: NHATKYHOATDONG, TINTUCSUKIEN.</text>
+  </g>
+</svg>

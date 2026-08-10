@@ -1,0 +1,75 @@
+﻿@model eSchool.ViewModels.HocSinhViewModel
+
+@{
+    Layout = Context.Session.GetInt32("RoleId") == 1
+        ? "~/Views/Shared/_AdminLayout.cshtml"
+        : "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Hồ sơ học sinh";
+}
+
+<div class="student-panel">
+    <h3>Hồ sơ học sinh</h3>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-4 text-center">
+            <img src="@(string.IsNullOrWhiteSpace(Model.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : Model.AnhDaiDien)"
+                 alt="Ảnh @Model.HoTen"
+                 style="width:150px;height:150px;border-radius:50%;object-fit:cover;" />
+
+            <h4 class="mt-3">@Model.HoTen</h4>
+            <p>@Model.MaHS</p>
+        </div>
+
+        <div class="col-md-8">
+            <table class="table table-bordered">
+                <tr>
+                    <th>Họ tên</th>
+                    <td>@Model.HoTen</td>
+                </tr>
+
+                <tr>
+                    <th>Ngày sinh</th>
+                    <td>@Model.NgaySinh.ToString("dd/MM/yyyy")</td>
+                </tr>
+
+                <tr>
+                    <th>Giới tính</th>
+                    <td>@Model.GioiTinh</td>
+                </tr>
+
+                <tr>
+                    <th>Lớp</th>
+                    <td>@Model.TenLop</td>
+                </tr>
+
+                <tr>
+                    <th>Tài khoản</th>
+                    <td>@(Model.TenTaiKhoan ?? "Chưa liên kết")</td>
+                </tr>
+
+                <tr>
+                    <th>SĐT</th>
+                    <td>@Model.SDT</td>
+                </tr>
+
+                <tr>
+                    <th>Email</th>
+                    <td>@Model.Email</td>
+                </tr>
+
+                <tr>
+                    <th>Địa chỉ</th>
+                    <td>@Model.DiaChi</td>
+                </tr>
+
+                <tr>
+                    <th>Trạng thái</th>
+                    <td>@(Model.TrangThai ? "Đang học" : "Nghỉ học")</td>
+                </tr>
+            </table>
+
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </div>
+    </div>
+</div>

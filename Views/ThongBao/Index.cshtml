@@ -1,0 +1,294 @@
+﻿@using System.Linq
+@model List<eSchool.Models.ThongBao>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Quản lý thông báo";
+}
+
+<div class="page-title">
+    <h1>Quản lý thông báo</h1>
+    <p>Thêm, sửa, xóa và quản lý thông báo trong hệ thống eSchool</p>
+</div>
+
+<div class="content-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="mb-1">Danh sách thông báo</h5>
+            <small class="text-muted">Tổng số: @(Model?.Count ?? 0) thông báo</small>
+        </div>
+
+        <button type="button"
+                class="btn-icon-add"
+                title="Thêm thông báo"
+                data-bs-toggle="modal"
+                data-bs-target="#createModal">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead>
+                <tr>
+                    <th width="70">STT</th>
+                    <th>Tiêu đề</th>
+                    <th>Nội dung</th>
+                    <th>Đối tượng</th>
+                    <th>Người tạo</th>
+                    <th>Ngày tạo</th>
+                    <th width="150" class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @for (int i = 0; i < Model.Count; i++)
+                    {
+                        <tr>
+                            <td>@(i + 1)</td>
+
+                            <td>
+                                <strong>@Model[i].TieuDe</strong>
+                            </td>
+
+                            <td>
+                                <span class="text-muted">
+                                    @Model[i].NoiDung
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    @Model[i].TenDoiTuongNhan
+                                </span>
+                            </td>
+
+                            <td>
+                                @(Model[i].TaiKhoan?.Username ?? "Admin")
+                            </td>
+
+                            <td>
+                                @Model[i].NgayTao.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+
+                            <td>
+                                <div class="action-icons">
+
+                                    <button type="button"
+                                            class="btn-icon-edit"
+                                            title="Sửa thông báo"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editModal_@Model[i].IdThongBao">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+
+                                    <form asp-controller="ThongBao"
+                                          asp-action="Delete"
+                                          method="post"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa thông báo này?')">
+                                        <input type="hidden" name="id" value="@Model[i].IdThongBao" />
+                                        <button type="submit" class="btn-icon-delete" title="Xóa thông báo">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- MODAL SỬA -->
+                        <div class="modal fade" id="editModal_@Model[i].IdThongBao" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content custom-modal">
+
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-pencil-square me-2 text-warning"></i>
+                                            Sửa thông báo
+                                        </h5>
+
+                                        <button type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal">
+                                        </button>
+                                    </div>
+
+                                    <form asp-controller="ThongBao"
+                                          asp-action="Edit"
+                                          method="post">
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@Model[i].IdThongBao" />
+
+                                        <div class="modal-body">
+
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Tiêu đề <span class="text-danger">*</span>
+                                                </label>
+
+                                                <input name="tieuDe"
+                                                       value="@Model[i].TieuDe"
+                                                       class="form-control"
+                                                       required
+                                                       maxlength="200"
+                                                       placeholder="Nhập tiêu đề thông báo" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Nội dung <span class="text-danger">*</span>
+                                                </label>
+
+                                                <textarea name="noiDung"
+                                                          class="form-control"
+                                                          rows="4"
+                                                          required
+                                                          placeholder="Nhập nội dung thông báo">@Model[i].NoiDung</textarea>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Đối tượng nhận <span class="text-danger">*</span>
+                                                </label>
+
+                                                <select name="doiTuongNhan" class="form-select" required>
+                                                    <option value="0" selected="@(Model[i].DoiTuongNhan == 0 ? "selected" : null)">Tất cả</option>
+                                                    <option value="1" selected="@(Model[i].DoiTuongNhan == 1 ? "selected" : null)">Giáo viên</option>
+                                                    <option value="2" selected="@(Model[i].DoiTuongNhan == 2 ? "selected" : null)">Học sinh</option>
+                                                </select>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button"
+                                                    class="btn btn-cancel"
+                                                    data-bs-dismiss="modal">
+                                                Hủy
+                                            </button>
+
+                                            <button type="submit"
+                                                    class="btn btn-create">
+                                                <i class="bi bi-save me-2"></i>
+                                                Cập nhật
+                                            </button>
+                                        </div>
+
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            Chưa có thông báo nào
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- MODAL THÊM -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>
+                    Thêm thông báo mới
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <form asp-controller="ThongBao"
+                  asp-action="Create"
+                  method="post">
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Tiêu đề <span class="text-danger">*</span>
+                        </label>
+
+                        <input name="tieuDe"
+                               class="form-control"
+                               required
+                               maxlength="200"
+                               placeholder="Nhập tiêu đề thông báo" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Nội dung <span class="text-danger">*</span>
+                        </label>
+
+                        <textarea name="noiDung"
+                                  class="form-control"
+                                  rows="4"
+                                  required
+                                  placeholder="Nhập nội dung thông báo"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Đối tượng nhận <span class="text-danger">*</span>
+                        </label>
+
+                        <select name="doiTuongNhan" class="form-select" required>
+                            <option value="0">Tất cả</option>
+                            <option value="1">Giáo viên</option>
+                            <option value="2">Học sinh</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-cancel"
+                            data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-create">
+                        <i class="bi bi-save me-2"></i>
+                        Tạo mới
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

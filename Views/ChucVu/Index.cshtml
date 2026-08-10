@@ -1,0 +1,68 @@
+﻿@model List<eSchool.Models.ChucVu>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Quản lý chức vụ";
+}
+
+<div class="content-card">
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form asp-action="Create" method="post" class="row mb-4">
+        <div class="col-md-10">
+            <label class="form-label">Tên chức vụ <span class="text-danger">*</span></label>
+            <input name="tenChucVu" class="form-control" required maxlength="50"
+                   placeholder="Nhập tên chức vụ..." />
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100">Thêm</button>
+        </div>
+    </form>
+
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên chức vụ</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr>
+                    <td>@(i + 1)</td>
+
+                    <td>
+                        <form asp-action="Edit" method="post" class="d-flex gap-2">
+                            <input type="hidden" name="id" value="@Model[i].IdChucVu" />
+                            <input name="tenChucVu" value="@Model[i].TenChucVu"
+                                   class="form-control" required maxlength="50" />
+                            <button class="btn btn-sm btn-warning">Sửa</button>
+                        </form>
+                    </td>
+
+                    <td>
+                        <form asp-action="Delete" method="post"
+                              onsubmit="return confirm('Xóa chức vụ này?')">
+                            <input type="hidden" name="id" value="@Model[i].IdChucVu" />
+                            <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>

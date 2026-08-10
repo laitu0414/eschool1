@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Thông điệp của hiệu trưởng";
+    ViewData["ActiveMenu"] = "ThongDiep";
+}
+
+<style>
+    .message-container {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+    }
+    .message-title {
+        color: #d85a18;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .message-meta {
+        background-color: #f2f2f2;
+        padding: 5px 10px;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 15px;
+    }
+
+    .message-image {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto 20px auto;
+        display: block;
+        border: 2px solid #ddd;
+    }
+    .message-content p {
+        margin-bottom: 15px;
+        text-align: justify;
+    }
+</style>
+
+<div class="container message-container my-5">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            @await Html.PartialAsync("_SidebarGioiThieu")
+        </div>
+        <div class="col-lg-9">
+            <div class="card rounded-0 border-1" style="border-color: #e0e0e0;">
+                <div class="card-header rounded-0 text-white" style="background-color: #e66624; border-bottom: none; font-size: 14px;">
+                    Trang chủ <i class="bi bi-chevron-right" style="font-size: 10px; margin: 0 5px;"></i> Thông điệp của Hiệu trưởng
+                </div>
+                <div class="card-body p-4 pt-3 bg-white">
+                    <h1 class="message-title" style="color: #e66624; font-size: 26px;">Thông điệp của hiệu trưởng</h1>
+    
+
+
+    <!-- Hình ảnh thông điệp (thay thế đoạn text cũ) -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="~/images/khat-khao-cong-hien.png" alt="Khát khao cống hiến, cháy bỏng đam mê" style="max-width: 100%; height: auto; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+    </div>
+
+    <div class="message-content">
+        <p><strong>Chào mừng Quý vị phụ huynh và học sinh đến với trường eschool.</strong> Với tư cách là Hiệu trưởng nhà trường, tôi vô cùng hân hạnh khi được giới thiệu với Quý vị phụ huynh và học sinh những cơ hội đặc biệt mà chúng tôi dành cho các em học sinh.</p>
+        
+        <p>Trong bối cảnh toàn cầu hóa và sự bùng nổ công nghệ của thế kỷ XXI, chúng ta đang đứng trước ngưỡng cửa của cuộc cách mạng công nghiệp 4.0 giáo dục buộc phải thay đổi. Phương pháp dạy học chỉ tập trung vào truyền đạt kiến thức không còn phù hợp nữa. Thay vào đó, phương pháp tập trung vào tư duy và kỹ năng ngày càng được chú trọng. Đây là cốt lõi của giáo dục hiện đại.</p>
+        
+        <p>Nhận thức xu hướng đó, trường eschool chúng tôi mong muốn trang bị cho học sinh đầy đủ kiến thức, kỹ năng để các em có thể tự tin vững bước vào đời sống xã hội và phát triển những đức tính tốt, thích nghi với hoàn cảnh sống trong tương lai.</p>
+        
+        <p>Chúng tôi hiểu rằng giá trị cuộc sống của các em được xây dựng và hình thành qua những bài giảng trên lớp, những nhu cầu chính đáng, những trải nghiệm mà nhờ thế chúng tôi xây dựng cho học sinh những phẩm chất cao đẹp đó là phẩm chất yêu nước, nhân ái, chăm chỉ, trung thực, trách nhiệm. Những phẩm chất ấy là mạch máu chảy trong con người Việt Nam, là bệ phóng bồi đắp vào lòng kính trọng bản thân, tôn trọng nhân loại và tự hào về đất nước.</p>
+        
+        <p>Thông qua các chương trình học, chúng tôi khuyến khích học sinh đi theo lối tư duy logic, tích cực, tính tự giác cao, tự tin, sáng tạo và ý thức cộng đồng, từ đó HS khám phá ra những điều các em thực sự thích và rèn luyện chúng. Chúng tôi mang đến nhiều hoạt động trải nghiệm trong và ngoài nhà trường để hình thành tính cách, tính thiết thực, và hoàn thiện, giúp cho cuộc sống của các em thêm phong phú, toàn diện. Phát triển bản thân, sự tin tưởng vững chắc vào tương lai tươi sáng và quyết tâm tự khẳng định những giá trị cốt lõi trong tố chất đạo đức và nghị lực của học sinh chúng tôi.</p>
+        
+        <p>Xây dựng một môi trường giáo dục văn hóa "Thân thiện - Trung thực - An toàn" phải huy động mọi lực, phẩm chất, học sinh với sự phối hợp đồng bộ giữa "Gia đình, Nhà trường, Học sinh và Xã hội" tạo ra một ngôi nhà chung "Tự chủ - Đam mê - Hợp tác – Sáng tạo" để học sinh mỗi ngày tới trường là một ngày Hạnh phúc. Đó là mục tiêu mà chúng tôi và học sinh cùng hướng tới.</p>
+    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

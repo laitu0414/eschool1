@@ -1,0 +1,210 @@
+@model eSchool.ViewModels.AdminDiemDanhPageViewModel
+@{
+    Layout = "~/Views/Shared/_ResultLayout.cshtml";
+    ViewData["Title"] = "Tổng hợp điểm danh";
+}
+
+@if (ViewBag.NamHocId == null || ViewBag.LopId == null || ViewBag.Ngay == null)
+{
+    <div class="d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+        <div class="card shadow border-0" style="max-width: 450px; width: 100%; border-radius: 1rem;">
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-calendar-check fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">Tổng hợp điểm danh</h4>
+                    <p class="text-muted small">Vui lòng chọn thông tin để hiển thị danh sách điểm danh</p>
+                </div>
+
+                <form method="get" id="filterFormFull">
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-medium">Năm học</label>
+                        <select name="namHocId" asp-items="Model.NamHocs" class="form-select form-select-lg shadow-none border-secondary-subtle" id="namHocSelectFull">
+                            <option value="">-- Chọn năm học --</option>
+                        </select>
+                    </div>
+
+                    <div id="step2Full" class="d-none">
+                        <div class="mb-3 text-start">
+                            <label class="form-label fw-medium">Lớp học</label>
+                            <select name="lopId" asp-items="Model.LopHocs" class="form-select form-select-lg shadow-none border-secondary-subtle" id="lopSelectFull">
+                                <option value="">-- Chọn lớp học --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="step3Full" class="d-none">
+                        <div class="mb-4 text-start">
+                            <label class="form-label fw-medium">Ngày học</label>
+                            <input type="date" name="ngay" value="@(ViewBag.Ngay ?? DateTime.Today.ToString("yyyy-MM-dd"))" class="form-control form-control-lg shadow-none border-secondary-subtle" id="ngaySelectFull" />
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3" id="btnFilterFull">
+                            <i class="bi bi-search me-2"></i> Hiển thị danh sách
+                        </button>
+                    </div>
+
+                    <button type="button" class="btn btn-primary btn-lg w-100 rounded-3" id="btnNextFull">
+                        Tiếp tục <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h4 class="mb-1 text-dark fw-bold">Danh sách điểm danh</h4>
+            @{
+                var selectedNamHoc = Model.NamHocs.FirstOrDefault(x => x.Value == ViewBag.NamHocId?.ToString());
+                var selectedLop = Model.LopHocs.FirstOrDefault(x => x.Value == ViewBag.LopId?.ToString());
+            }
+            <p class="text-muted mb-0">
+                Năm học: <span class="fw-medium text-primary">@(selectedNamHoc?.Text ?? "")</span> | 
+                Lớp: <span class="fw-medium text-primary">@(selectedLop?.Text ?? "")</span> | 
+                Ngày: <span class="fw-medium text-primary">@(ViewBag.Ngay != null ? DateTime.Parse(ViewBag.Ngay).ToString("dd/MM/yyyy") : "")</span>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/KetQuaHocTap/DiemDanh" class="btn btn-light px-4 border">
+                <i class="bi bi-arrow-counterclockwise me-2"></i> Chọn lại
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4 py-3">Môn học</th>
+                            <th>Tiết</th>
+                            <th>Giáo viên</th>
+                            <th class="text-center">Sĩ số</th>
+                            <th class="text-center">Có mặt</th>
+                            <th class="text-center">Vắng</th>
+                            <th class="text-end pe-4">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.DanhSachBuoiHoc.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <div class="mb-3"><i class="bi bi-calendar-x text-secondary" style="font-size: 3rem;"></i></div>
+                                    <span class="fs-5">Chưa có buổi điểm danh nào trong ngày này.</span>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model.DanhSachBuoiHoc)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-medium text-dark">@item.TenMonHoc</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">Tiết @(item.IdTietHoc?.ToString() ?? "-")</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 28px; height: 28px; font-size: 0.8rem; font-weight: bold;">
+                                                @(!string.IsNullOrEmpty(item.TenGiaoVien) && item.TenGiaoVien != "Chua cap nhat" ? item.TenGiaoVien.Substring(0, 1).ToUpper() : "?")
+                                            </div>
+                                            <span>@(item.TenGiaoVien == "Chua cap nhat" ? "Chưa cập nhật" : item.TenGiaoVien)</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center fw-medium">@item.TongHocSinh</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 border border-success border-opacity-25">
+                                            @item.SoHocSinhCoMat
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 border border-danger border-opacity-25">
+                                            @item.SoHocSinhVang
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a asp-action="ChiTietDiemDanh"
+                                           asp-route-lopId="@item.IdLop"
+                                           asp-route-ngayHoc="@item.NgayHoc.ToString("yyyy-MM-dd")"
+                                           asp-route-idTietHoc="@item.IdTietHoc"
+                                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                            Xem chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const namHocSelectFull = document.getElementById("namHocSelectFull");
+            const lopSelectFull = document.getElementById("lopSelectFull");
+            const btnNextFull = document.getElementById("btnNextFull");
+            
+            const step2Full = document.getElementById("step2Full");
+            const step3Full = document.getElementById("step3Full");
+            
+            let currentStep = 1;
+
+            if (namHocSelectFull) {
+                namHocSelectFull.addEventListener("change", function () {
+                    if (this.value) {
+                        btnNextFull.disabled = false;
+                    } else {
+                        btnNextFull.disabled = true;
+                    }
+                });
+
+                lopSelectFull.addEventListener("change", function () {
+                    if (this.value && currentStep === 2) {
+                        btnNextFull.disabled = false;
+                    } else if (currentStep === 2) {
+                        btnNextFull.disabled = true;
+                    }
+                });
+
+                btnNextFull.addEventListener("click", function () {
+                    if (currentStep === 1 && namHocSelectFull.value) {
+                        namHocSelectFull.disabled = true;
+                        step2Full.classList.remove("d-none");
+                        btnNextFull.disabled = !lopSelectFull.value;
+                        
+                        let hiddenNamHoc = document.createElement("input");
+                        hiddenNamHoc.type = "hidden";
+                        hiddenNamHoc.name = "namHocId";
+                        hiddenNamHoc.value = namHocSelectFull.value;
+                        document.getElementById("filterFormFull").appendChild(hiddenNamHoc);
+                        
+                        currentStep = 2;
+                    } else if (currentStep === 2 && lopSelectFull.value) {
+                        lopSelectFull.disabled = true;
+                        step3Full.classList.remove("d-none");
+                        btnNextFull.classList.add("d-none");
+                        
+                        let hiddenLop = document.createElement("input");
+                        hiddenLop.type = "hidden";
+                        hiddenLop.name = "lopId";
+                        hiddenLop.value = lopSelectFull.value;
+                        document.getElementById("filterFormFull").appendChild(hiddenLop);
+                        
+                        currentStep = 3;
+                    }
+                });
+                
+                btnNextFull.disabled = !namHocSelectFull.value;
+            }
+        });
+    </script>
+}

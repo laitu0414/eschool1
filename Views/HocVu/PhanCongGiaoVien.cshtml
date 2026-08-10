@@ -1,0 +1,326 @@
+@model eSchool.ViewModels.PhanCongGiaoVienViewModel
+
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = $"Phân công Giáo viên - Lớp {Model.LopHoc.TenLop}";
+}
+
+<style>
+    .draggable-card {
+        cursor: grab;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .draggable-card:active {
+        cursor: grabbing;
+        transform: scale(0.98);
+    }
+    .drop-zone {
+        min-height: 80px;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        transition: background-color 0.2s, border-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+    }
+    .drop-zone.drag-over {
+        background-color: #e9ecef;
+        border-color: #0d6efd;
+    }
+    .teacher-item-in-zone {
+        width: 100%;
+        background: #fff;
+        border-radius: 6px;
+        padding: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+    }
+    .subject-card.active {
+        border-color: #0d6efd !important;
+        background-color: #f8fbff !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Phân công Giáo viên - Lớp @Model.LopHoc.TenLop</h4>
+            <a asp-action="LopHoc" class="btn btn-outline-secondary">Quay lại</a>
+        </div>
+        <p class="text-muted">Kéo thẻ giáo viên từ bên trái và thả vào môn học tương ứng bên phải, <strong>hoặc bấm chọn một môn học rồi bấm vào giáo viên</strong> để phân công. Thay đổi sẽ được lưu tự động.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Cột trái: Kho Giáo viên -->
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Danh sách Giáo viên</h5>
+                <input type="text" id="searchTeacher" class="form-control form-control-sm mt-2" placeholder="Tìm kiếm giáo viên...">
+            </div>
+            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                <div class="d-flex flex-column gap-2" id="teacherList">
+                    @foreach (var info in Model.DanhSachGiaoVien)
+                    {
+                        var gv = info.GiaoVien;
+                        <div class="card draggable-card" draggable="true" 
+                             data-teacher-id="@gv.IdGiaoVien" 
+                             data-teacher-name="@gv.HoTen" 
+                             data-teacher-subject-id="@(gv.IdMonHoc ?? 0)"
+                             data-busy-periods="@string.Join(",", info.BusyPeriods)">
+                            <div class="card-body p-2 d-flex align-items-center gap-2">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-person text-secondary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold" style="font-size: 0.9rem;">@gv.HoTen</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">@gv.MaGV</div>
+                                    <div class="text-info mt-1" style="font-size: 0.75rem;"><i class="bi bi-book"></i> @(gv.MonHoc?.TenMon ?? "Chưa phân môn")</div>
+                                    <div class="text-primary mt-1" style="font-size: 0.75rem;"><i class="bi bi-clock-history"></i> Đã phân công: @info.TongSoTiet tiết/tuần</div>
+                                    @if(info.ChiTietLichDay.Any())
+                                    {
+                                        <div class="text-secondary mt-1" style="font-size: 0.7rem;">
+                                            @foreach(var ct in info.ChiTietLichDay)
+                                            {
+                                                <div class="text-truncate" style="max-width: 200px;" title="@ct">- @ct</div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Môn học của lớp -->
+    <div class="col-md-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Thời khóa biểu lớp @Model.LopHoc.TenLop</h5>
+                <span class="badge bg-primary">Phân công theo môn học</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center mb-0" style="table-layout: fixed;">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 100px;">Tiết</th>
+                                <th>Thứ 2</th>
+                                <th>Thứ 3</th>
+                                <th>Thứ 4</th>
+                                <th>Thứ 5</th>
+                                <th>Thứ 6</th>
+                                <th>Thứ 7</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int tiet = 1; tiet <= 5; tiet++)
+                            {
+                                <tr>
+                                    <td class="bg-light fw-bold text-muted">Tiết @tiet</td>
+                                    @for (int thu = 2; thu <= 7; thu++)
+                                    {
+                                        var periodKey = $"{Model.LopHoc.BuoiHoc}_{thu}_{tiet}";
+                                        var mon = Model.DanhSachMonHoc.FirstOrDefault(x => x.RequiredPeriods.Contains(periodKey));
+
+                                        if (mon != null)
+                                        {
+                                            <td class="p-1">
+                                                <div class="border rounded p-2 bg-light subject-card h-100 d-flex flex-column justify-content-center" 
+                                                     data-subject-id="@mon.IdMonHoc" 
+                                                     data-required-periods="@string.Join(",", mon.RequiredPeriods)"
+                                                     style="cursor: pointer; transition: all 0.2s; min-height: 80px;">
+                                                    <div class="fw-bold text-primary mb-1" style="font-size: 0.9rem;">@mon.TenMonHoc</div>
+                                                    
+                                                    <div class="drop-zone flex-grow-1 p-1 mt-1" data-monhoc-id="@mon.IdMonHoc" style="min-height: 40px; border-width: 1px;">
+                                                        @if (mon.IdGiaoVien.HasValue)
+                                                        {
+                                                            <div class="teacher-item-in-zone text-success p-1 text-center w-100" style="font-size: 0.8rem;">
+                                                                @mon.TenGiaoVien
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-box-arrow-in-down"></i> Kéo thả</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td></td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const draggables = document.querySelectorAll('.draggable-card');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        const searchInput = document.getElementById('searchTeacher');
+        const teacherList = document.getElementById('teacherList');
+        const lopId = @Model.LopHoc.IdLop;
+
+        let selectedSubjectId = null;
+        const allSubjectCards = document.querySelectorAll('.subject-card');
+
+        function filterTeachers() {
+            const text = searchInput.value.toLowerCase();
+            const cards = teacherList.querySelectorAll('.draggable-card');
+            
+            let requiredPeriods = [];
+            if (selectedSubjectId) {
+                const activeSubject = document.querySelector(`.subject-card[data-subject-id="${selectedSubjectId}"]`);
+                if (activeSubject) {
+                    const reqPeriodsStr = activeSubject.getAttribute('data-required-periods');
+                    if (reqPeriodsStr) {
+                        requiredPeriods = reqPeriodsStr.split(',');
+                    }
+                }
+            }
+            
+            cards.forEach(card => {
+                const name = card.getAttribute('data-teacher-name').toLowerCase();
+                const subjectId = card.getAttribute('data-teacher-subject-id');
+                const busyPeriodsStr = card.getAttribute('data-busy-periods');
+                const busyPeriods = busyPeriodsStr ? busyPeriodsStr.split(',') : [];
+                
+                const matchesSearch = name.includes(text);
+                const matchesSubject = selectedSubjectId ? (subjectId === selectedSubjectId) : true;
+                
+                let isBusy = false;
+                if (selectedSubjectId && requiredPeriods.length > 0 && busyPeriods.length > 0) {
+                    isBusy = requiredPeriods.some(p => busyPeriods.includes(p));
+                }
+                
+                if (matchesSearch && matchesSubject && !isBusy) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        searchInput.addEventListener('input', filterTeachers);
+
+        allSubjectCards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                const subjectId = this.getAttribute('data-subject-id');
+                
+                if (selectedSubjectId === subjectId) {
+                    selectedSubjectId = null;
+                    this.classList.remove('active');
+                } else {
+                    selectedSubjectId = subjectId;
+                    allSubjectCards.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                }
+                
+                filterTeachers();
+            });
+        });
+
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', () => {
+                draggable.classList.add('dragging');
+                const teacherId = draggable.getAttribute('data-teacher-id');
+                const teacherName = draggable.getAttribute('data-teacher-name');
+                event.dataTransfer.setData('teacherId', teacherId);
+                event.dataTransfer.setData('teacherName', teacherName);
+            });
+
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('dragging');
+            });
+
+            draggable.addEventListener('click', () => {
+                if (selectedSubjectId) {
+                    const teacherId = draggable.getAttribute('data-teacher-id');
+                    const teacherName = draggable.getAttribute('data-teacher-name');
+                    const activeSubjectCard = document.querySelector(`.subject-card[data-subject-id="${selectedSubjectId}"]`);
+                    if (activeSubjectCard) {
+                        const zone = activeSubjectCard.querySelector('.drop-zone');
+                        if (zone) {
+                            assignTeacher(lopId, selectedSubjectId, teacherId, teacherName, zone);
+                        }
+                    }
+                }
+            });
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', e => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', e => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+
+                const teacherId = e.dataTransfer.getData('teacherId');
+                const teacherName = e.dataTransfer.getData('teacherName');
+                const monHocId = zone.getAttribute('data-monhoc-id');
+
+                if (teacherId && monHocId) {
+                    assignTeacher(lopId, monHocId, teacherId, teacherName, zone);
+                }
+            });
+        });
+
+        async function assignTeacher(lopId, monHocId, giaoVienId, teacherName, zone) {
+            const oldHtml = zone.innerHTML;
+            zone.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> <span class="small ms-2">Đang xử lý...</span>';
+
+            try {
+                const response = await fetch('/HocVu/CapNhatPhanCongGiaoVien', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        LopId: parseInt(lopId),
+                        MonHocId: parseInt(monHocId),
+                        GiaoVienId: parseInt(giaoVienId)
+                    })
+                });
+
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok && data.success) {
+                    zone.innerHTML = `<div class="teacher-item-in-zone text-success"><i class="bi bi-person-check-fill"></i> ${data.tenGiaoVien}</div>`;
+                } else {
+                    const errorMsg = data.message || "Có lỗi xảy ra khi lưu thay đổi.";
+                    alert("LỖI: " + errorMsg);
+                    zone.innerHTML = oldHtml;
+                }
+            } catch (error) {
+                console.error(error);
+                alert("LỖI: Không thể kết nối đến máy chủ.");
+                zone.innerHTML = oldHtml;
+            }
+        }
+    </script>
+}

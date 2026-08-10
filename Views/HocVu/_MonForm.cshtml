@@ -1,0 +1,17 @@
+@model eSchool.ViewModels.MonHocFormViewModel
+
+<div class="mb-3">
+    <label class="form-label">Mã môn <span class="text-danger">*</span></label>
+    <input asp-for="MaMon" class="form-control" required maxlength="20" />
+    <span asp-validation-for="MaMon" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label class="form-label">Tên môn <span class="text-danger">*</span></label>
+    <input asp-for="TenMon" class="form-control" required maxlength="100" />
+    <span asp-validation-for="TenMon" class="text-danger"></span>
+</div>
+<div>
+    <label class="form-label">Tổng số tiết <span class="text-danger">*</span></label>
+    <input asp-for="SoTiet" type="number" min="1" max="500" required class="form-control" />
+    <span asp-validation-for="SoTiet" class="text-danger"></span>
+</div>

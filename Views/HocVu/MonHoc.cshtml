@@ -1,0 +1,58 @@
+@model List<eSchool.Models.MonHoc>
+
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = "Quản lý môn học";
+}
+
+<div class="page-card">
+    <div class="page-tools">
+        <form method="get">
+            <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm mã hoặc tên môn..." />
+            <button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Tìm</button>
+        </form>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSubject"><i class="bi bi-plus-lg"></i> Thêm môn</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>Mã môn</th><th>Tên môn</th><th>Số tiết</th><th class="text-end">Thao tác</th></tr></thead>
+            <tbody>
+                @if (!Model.Any()) { <tr><td colspan="4" class="text-center text-muted py-4">Chưa có môn học</td></tr> }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@item.MaMon</strong></td><td>@item.TenMon</td><td>@item.SoTiet</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSubject-@item.IdMonHoc"><i class="bi bi-pencil"></i></button>
+                            <form asp-action="XoaMon" asp-route-id="@item.IdMonHoc" method="post" class="d-inline" onsubmit="return confirm('Xóa môn học này?');">
+                                @Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="createSubject" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form asp-action="TaoMon" method="post">
+        @Html.AntiForgeryToken()
+        <div class="modal-header"><h5 class="modal-title">Thêm môn học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">@await Html.PartialAsync("_MonForm", new eSchool.ViewModels.MonHocFormViewModel())</div>
+        <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button><button class="btn btn-primary">Thêm môn</button></div>
+    </form>
+</div></div></div>
+
+@foreach (var item in Model)
+{
+    <div class="modal fade" id="editSubject-@item.IdMonHoc" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <form asp-action="SuaMon" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="IdMonHoc" value="@item.IdMonHoc" />
+            <div class="modal-header"><h5 class="modal-title">Sửa môn học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">@await Html.PartialAsync("_MonForm", new eSchool.ViewModels.MonHocFormViewModel { IdMonHoc = item.IdMonHoc, MaMon = item.MaMon, TenMon = item.TenMon, SoTiet = item.SoTiet })</div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button><button class="btn btn-primary">Cập nhật</button></div>
+        </form>
+    </div></div></div>
+}

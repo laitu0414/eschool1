@@ -1,0 +1,290 @@
+@model eSchool.ViewModels.TrangChuViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "eSchool";
+    var featuredNews = Model.TinTucSuKiens.FirstOrDefault();
+    var secondaryNews = Model.TinTucSuKiens.Skip(1).Take(4).ToList();
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/home-portal.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body>
+    <div class="portal-shell">
+        <header class="portal-header">
+            <div class="portal-topbar">
+                <a class="portal-brand" asp-controller="Home" asp-action="Index">
+                    <span class="portal-brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
+                    <span>
+                        <strong>eSchool</strong>
+                        <small>Hệ thống quản lý trường học</small>
+                    </span>
+                </a>
+
+
+
+                <button type="button" class="portal-login-btn" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Đăng nhập</span>
+                </button>
+            </div>
+
+            <div class="portal-nav-wrapper">
+                <div class="portal-nav-container">
+                    <nav class="portal-nav">
+                        <a href="/"><i class="bi bi-house-door-fill" style="margin-right: 5px;"></i> Trang chủ</a>
+                        <div class="dropdown d-inline-block">
+                            <a href="#gioi-thieu" class="dropdown-toggle" style="text-decoration: none;" data-bs-toggle="dropdown" aria-expanded="false">Giới thiệu</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="ThongDiepHieuTruong" style="text-transform: none; font-weight: normal;">Thông điệp của Hiệu trưởng</a></li>
+                                <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="TamNhin" style="text-transform: none; font-weight: normal;">Tầm nhìn và sứ mệnh của chúng tôi</a></li>
+                                <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="DoiNguGiaoVien" style="text-transform: none; font-weight: normal;">Đội ngũ giáo viên</a></li>
+                                <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="CoSoVatChat" style="text-transform: none; font-weight: normal;">Cơ sở vật chất</a></li>
+                                <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="MoHinhDaoTao" style="text-transform: none; font-weight: normal;">Mô hình đào tạo</a></li>
+                            </ul>
+                        </div>
+                        <a href="#cat-1">Tuyển sinh</a>
+                        <a href="#cat-2">Tin tức - Sự kiện</a>
+                        <a href="#cat-3">Thông báo</a>
+                        <a href="#cat-4">Thành tích</a>
+                        <a href="#cat-5">Chương trình đào tạo</a>
+                        <a href="#lien-he">Liên hệ</a>
+                    </nav>
+                </div>
+            </div>
+    </header>
+
+    <div class="portal-hero-wrapper">
+        <div class="portal-hero" id="gioi-thieu">
+            <div class="portal-hero-copy">
+                    <span class="portal-eyebrow">Cổng thông tin eSchool</span>
+                    <h1>Trường học số gọn gàng, rõ ràng và dễ dùng</h1>
+                    <p>
+                        Theo dõi tin tức, thông báo, học tập và các hoạt động trong một giao diện hiện đại.
+                        Từ đây người dùng chỉ cần bấm <strong>Đăng nhập</strong> để vào đúng hệ thống của mình.
+                    </p>
+                    <div class="portal-hero-actions">
+                        <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            Đăng nhập hệ thống
+                        </button>
+                        <button type="button" class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">
+                            Quên mật khẩu
+                        </button>
+                    </div>
+                </div>
+
+                <div class="portal-hero-card">
+                    <div class="portal-hero-stat">
+                        <span>Tin tức nổi bật</span>
+                        <strong>@Model.TinTucSuKiens.Count</strong>
+                    </div>
+                    <div class="portal-hero-stat">
+                        <span>Thông báo mới</span>
+                        <strong>@Model.ThongBaos.Count</strong>
+                    </div>
+                    <div class="portal-hero-stat">
+                        <span>Hỗ trợ truy cập</span>
+                        <strong>Đăng nhập và khôi phục mật khẩu nhanh</strong>
+                    </div>
+                </div>
+        </div>
+    </div>
+
+        <main class="portal-main">
+            @{
+                var categories = new[] { 
+                    new { Id = eSchool.Models.LoaiTinTuc.TuyenSinh, Title = "TUYỂN SINH" },
+                    new { Id = eSchool.Models.LoaiTinTuc.TinTuc, Title = "TIN TỨC - SỰ KIỆN" },
+                    new { Id = eSchool.Models.LoaiTinTuc.ThongBao, Title = "THÔNG BÁO" },
+                    new { Id = eSchool.Models.LoaiTinTuc.ThanhTich, Title = "THÀNH TÍCH" },
+                    new { Id = eSchool.Models.LoaiTinTuc.ChuongTrinhDaoTao, Title = "CHƯƠNG TRÌNH ĐÀO TẠO" }
+                };
+            }
+
+            @foreach(var cat in categories)
+            {
+                var catNews = Model.TinTucSuKiens.Where(x => x.LoaiTin == cat.Id).ToList();
+                
+                <div class="category-section mb-5 bg-white p-4 rounded-3 shadow-sm border" style="border-color: #eee !important;" id="cat-@((int)cat.Id)">
+                    <div class="d-flex align-items-center mb-4 border-bottom pb-2">
+                        <div style="width: 4px; height: 20px; background-color: #e46c15; margin-right: 10px;"></div>
+                        <h3 class="m-0" style="color: #e46c15; font-size: 1.15rem; font-weight: 800;">@cat.Title</h3>
+                        <div class="ms-3 text-muted d-none d-md-block" style="font-size: 0.85rem; font-weight: 600;">
+                            Trang chủ &nbsp;|&nbsp; Học sinh &nbsp;|&nbsp; Phụ huynh
+                        </div>
+                    </div>
+                    
+                    @if(catNews.Any())
+                    {
+                        var main = catNews.First();
+                        var sub = catNews.Skip(1).Take(4).ToList();
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5 mb-3 mb-md-0">
+                                <a href="@main.DuongDan" target="_blank" class="text-decoration-none">
+                                    <img src="@main.AnhMinhHoa" class="w-100 rounded border" style="height: 240px; object-fit: cover; background: #f8f9fa;" onerror="this.src='https://via.placeholder.com/600x300?text=News'" />
+                                </a>
+                            </div>
+                            <div class="col-md-7">
+                                <a href="@main.DuongDan" target="_blank" class="text-decoration-none text-dark">
+                                    <h4 class="fw-bold mb-2" style="font-size: 1.25rem; line-height: 1.4;">@main.TieuDe</h4>
+                                </a>
+                                <p class="text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-calendar3"></i> @main.NgayTao.ToString("dd/MM/yyyy HH:mm") &nbsp;&middot;&nbsp; <i class="bi bi-eye"></i> @main.LuotXem lượt xem</p>
+                                <p class="text-secondary" style="font-size: 0.95rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-align: justify;">@main.MoTa</p>
+                            </div>
+                        </div>
+                        
+                        @if(sub.Any())
+                        {
+                            <div class="row g-3">
+                                @foreach(var item in sub)
+                                {
+                                    <div class="col-6 col-md-3">
+                                        <a href="@item.DuongDan" target="_blank" class="text-decoration-none text-dark d-block h-100 p-2 rounded" style="border: 1px solid #f0f0f0; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">
+                                            <img src="@item.AnhMinhHoa" class="w-100 rounded mb-2 border" style="height: 100px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/150x100?text=News'" />
+                                            <p class="m-0 fw-semibold" style="font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">@item.TieuDe</p>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                            <p class="mb-0">Chưa có bài viết nào trong mục này</p>
+                        </div>
+                    }
+                </div>
+            }
+        </main>
+
+        <footer class="portal-footer" id="lien-he">
+            <div>
+                <div class="portal-footer-brand">
+                    <span class="portal-brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
+                    <div>
+                        <strong>eSchool</strong>
+                        <p>Nền tảng quản lý trường học dành cho admin, giáo viên, học sinh và phụ huynh.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="portal-footer-contact">
+                <h3>Liên hệ</h3>
+                <p><i class="bi bi-geo-alt-fill"></i> Hà Nội, Việt Nam</p>
+                <p><i class="bi bi-telephone-fill"></i> 1900 9999</p>
+                <p><i class="bi bi-envelope-fill"></i> support@eschool.local</p>
+            </div>
+        </footer>
+    </div>
+
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content portal-login-modal">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-0 px-4 px-md-5 pb-4 pb-md-5">
+                    <div class="portal-login-logo"><i class="bi bi-mortarboard-fill"></i></div>
+                    <h2>Đăng nhập eSchool</h2>
+                    <p>Đăng nhập để truy cập đúng vai trò của bạn trong hệ thống.</p>
+
+                    @if (TempData["LoginError"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["LoginError"]</div>
+                    }
+
+                    @if (TempData["AuthSuccess"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["AuthSuccess"]</div>
+                    }
+
+                    <form asp-controller="Account" asp-action="Login" method="post" class="portal-login-form">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+                            <input name="username" class="form-control" maxlength="50" autocomplete="username" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                            <input name="password" type="password" class="form-control" autocomplete="current-password" required />
+                        </div>
+                        <button type="submit" class="btn portal-submit-btn w-100">Đăng nhập</button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <button type="button"
+                                class="portal-forgot-link portal-link-button"
+                                data-bs-target="#forgotPasswordModal"
+                                data-bs-toggle="modal"
+                                data-bs-dismiss="modal">
+                            Quên mật khẩu?
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content portal-login-modal">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-0 px-4 px-md-5 pb-4 pb-md-5">
+                    <div class="portal-login-logo"><i class="bi bi-key-fill"></i></div>
+                    <h2>Quên mật khẩu</h2>
+                    <p>Nhập tên đăng nhập để hệ thống tạo mật khẩu mới và gửi về email đã lưu.</p>
+
+                    @if (TempData["ForgotPasswordError"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["ForgotPasswordError"]</div>
+                    }
+
+                    <form asp-controller="Account" asp-action="ForgotPassword" method="post" class="portal-login-form">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+                            <input name="username" class="form-control" maxlength="50" autocomplete="username" required />
+                        </div>
+                        <button type="submit" class="btn portal-submit-btn w-100">Gửi mật khẩu mới</button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <button type="button"
+                                class="portal-forgot-link portal-link-button"
+                                data-bs-target="#loginModal"
+                                data-bs-toggle="modal"
+                                data-bs-dismiss="modal">
+                            Quay lại đăng nhập
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @if (Model.OpenLogin || Model.OpenForgotPassword)
+    {
+        <script>
+            window.addEventListener('load', function () {
+                var modalElement = document.getElementById('@(Model.OpenForgotPassword ? "forgotPasswordModal" : "loginModal")');
+                if (modalElement) {
+                    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                }
+            });
+        </script>
+    }
+
+</body>
+</html>

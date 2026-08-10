@@ -1,0 +1,171 @@
+@model List<eSchool.Models.KyLuat>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Kỷ luật học sinh";
+    var lopHocs = ViewBag.LopHocs as List<eSchool.Models.LopHoc> ?? new List<eSchool.Models.LopHoc>();
+    int? selectedLopId = ViewBag.LopId as int?;
+    string keyword = ViewBag.Keyword as string ?? "";
+}
+
+@if (ViewBag.FilterLopId == null || string.IsNullOrEmpty(ViewBag.FilterNamHoc) || string.IsNullOrEmpty(ViewBag.FilterHocKy))
+{
+    <div class="d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+        <div class="card shadow border-0" style="max-width: 450px; width: 100%; border-radius: 1rem;">
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-shield-exclamation fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">Kỷ luật học sinh</h4>
+                    <p class="text-muted small">Vui lòng chọn thông tin để hiển thị danh sách kỷ luật</p>
+                </div>
+
+                <form method="get">
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-medium">Năm học</label>
+                        <select name="namHoc" asp-items="ViewBag.NamHocs" class="form-select form-select-lg shadow-none border-secondary-subtle" required>
+                            <option value="">-- Chọn năm học --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-medium">Học kỳ</label>
+                        <select name="hocKy" asp-items="ViewBag.HocKys" class="form-select form-select-lg shadow-none border-secondary-subtle" required>
+                            <option value="">-- Chọn học kỳ --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4 text-start">
+                        <label class="form-label fw-medium">Lớp học</label>
+                        <select name="lopId" asp-items="ViewBag.LopHocs" class="form-select form-select-lg shadow-none border-secondary-subtle" required>
+                            <option value="">-- Chọn lớp học --</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3">
+                        <i class="bi bi-search me-2"></i> Hiển thị danh sách
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="student-management-page">
+        <div class="student-admin-page">
+            <div class="student-admin-hero">
+                <div>
+                    <span class="student-admin-eyebrow">Học sinh</span>
+                    <h2>Kỷ luật học sinh</h2>
+                    @{
+                        var selectedLop = (ViewBag.LopHocs as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)?.FirstOrDefault(x => x.Value == ViewBag.FilterLopId?.ToString());
+                    }
+                    <p>Đang hiển thị danh sách kỷ luật của lớp <strong>@(selectedLop?.Text ?? "")</strong> (Năm học @ViewBag.FilterNamHoc, @ViewBag.FilterHocKy).</p>
+                </div>
+            </div>
+
+            <div class="student-admin-card">
+                <div class="student-admin-card-head d-flex justify-content-between align-items-center w-100">
+                    <div>
+                        <h3>Danh sách kỷ luật</h3>
+                        <p>@Model.Count bản ghi được tìm thấy</p>
+                    </div>
+                    <a href="/HocSinh/KyLuat" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i> Chọn lớp khác
+                    </a>
+                </div>
+
+                <form method="get" class="student-admin-filter">
+                    <input type="hidden" name="namHoc" value="@ViewBag.FilterNamHoc" />
+                    <input type="hidden" name="hocKy" value="@ViewBag.FilterHocKy" />
+                    <input type="hidden" name="lopId" value="@ViewBag.FilterLopId" />
+                    
+                    <div class="student-admin-search">
+                        <i class="bi bi-search"></i>
+                        <input name="keyword"
+                               value="@keyword"
+                               placeholder="Tìm theo mã HS, tên HS, lý do..." />
+                    </div>
+
+                    <button type="submit" class="student-admin-filter-btn">
+                        <i class="bi bi-funnel"></i>
+                        Lọc
+                    </button>
+
+                    <a href="/HocSinh/KyLuat?namHoc=@ViewBag.FilterNamHoc&hocKy=@ViewBag.FilterHocKy&lopId=@ViewBag.FilterLopId" class="student-admin-reset-btn">Làm mới</a>
+                </form>
+
+                <div class="student-admin-table-wrap">
+                <table class="student-admin-table">
+                    <thead>
+                        <tr>
+                            <th>Học sinh</th>
+                            <th>Mã HS</th>
+                            <th>Lớp</th>
+                            <th>Ngày vi phạm</th>
+                            <th>Hình thức</th>
+                            <th>Lý do</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7">
+                                    <div class="student-admin-empty">
+                                        <i class="bi bi-shield-check"></i>
+                                        <strong>Không có kỷ luật nào</strong>
+                                        <span>Không tìm thấy biên bản kỷ luật phù hợp với bộ lọc.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="student-admin-profile">
+                                            <img src="@(string.IsNullOrWhiteSpace(item.HocSinh?.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.HocSinh.AnhDaiDien)"
+                                                 alt="Ảnh @item.HocSinh?.HoTen" />
+                                            <div>
+                                                <strong>@item.HocSinh?.HoTen</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="student-admin-code">@item.HocSinh?.MaHS</span></td>
+                                    <td><span class="student-admin-class">@(item.HocSinh?.LopHoc?.TenLop ?? "")</span></td>
+                                    <td>@item.NgayViPham.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @{
+                                            var badgeClass = item.HinhThuc.Contains("Đình chỉ") ? "student-admin-badge unlinked" : 
+                                                            item.HinhThuc.Contains("Cảnh cáo") ? "student-admin-badge" : "student-admin-badge linked";
+                                        }
+                                        <span class="@badgeClass">@item.HinhThuc</span>
+                                    </td>
+                                    <td style="max-width: 250px;" class="text-truncate" title="@item.LyDo">@item.LyDo</td>
+                                    <td>
+                                        <div class="student-admin-actions justify-content-center">
+                                            <form asp-action="XoaKyLuat" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Bạn có chắc muốn xóa biên bản kỷ luật này?')">
+                                                <input type="hidden" name="id" value="@item.IdKyLuat" />
+                                                <button type="submit" class="student-admin-action delete" title="Xóa">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+}

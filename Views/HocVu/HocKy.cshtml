@@ -1,0 +1,56 @@
+@model eSchool.ViewModels.HocKyPageViewModel
+
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = "Học kỳ";
+}
+
+<div class="page-card">
+    <div class="page-tools">
+        <div><h5 class="mb-1">Danh sách học kỳ</h5><small class="text-muted">Mỗi học kỳ phải nằm trong thời gian của năm học.</small></div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSemester"><i class="bi bi-plus-lg"></i> Thêm học kỳ</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>Học kỳ</th><th>Năm học</th><th>Ngày bắt đầu</th><th>Ngày kết thúc</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
+            <tbody>
+                @if (!Model.DanhSach.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">Chưa có học kỳ</td></tr> }
+                @foreach (var item in Model.DanhSach)
+                {
+                    <tr>
+                        <td><strong>@item.TenHocKy</strong></td><td>@item.NamHoc?.TenNamHoc</td>
+                        <td>@item.NgayBatDau.ToString("dd/MM/yyyy")</td><td>@item.NgayKetThuc.ToString("dd/MM/yyyy")</td>
+                        <td><span class="badge @(item.TrangThai ? "text-bg-success" : "text-bg-secondary")">@(item.TrangThai ? "Đang hoạt động" : "Đã khóa")</span></td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSemester-@item.IdHocKy"><i class="bi bi-pencil"></i></button>
+                            <form asp-action="XoaHocKy" asp-route-id="@item.IdHocKy" method="post" class="d-inline" onsubmit="return confirm('Xóa học kỳ này?');">
+                                @Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="createSemester" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form asp-action="TaoHocKy" method="post">
+        @Html.AntiForgeryToken()
+        <div class="modal-header"><h5 class="modal-title">Thêm học kỳ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">@await Html.PartialAsync("_HocKyForm", new eSchool.Models.HocKy { TrangThai = true })</div>
+        <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button><button class="btn btn-primary">Thêm học kỳ</button></div>
+    </form>
+</div></div></div>
+
+@foreach (var item in Model.DanhSach)
+{
+    <div class="modal fade" id="editSemester-@item.IdHocKy" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+        <form asp-action="SuaHocKy" method="post">
+            @Html.AntiForgeryToken()<input type="hidden" name="IdHocKy" value="@item.IdHocKy" />
+            <div class="modal-header"><h5 class="modal-title">Sửa học kỳ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">@await Html.PartialAsync("_HocKyForm", item)</div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button><button class="btn btn-primary">Cập nhật</button></div>
+        </form>
+    </div></div></div>
+}

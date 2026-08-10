@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Mô hình đào tạo";
+    ViewData["ActiveMenu"] = "MoHinhDaoTao";
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            @await Html.PartialAsync("_SidebarGioiThieu")
+        </div>
+        <div class="col-lg-9">
+            <div class="card rounded-0 border-1" style="border-color: #e0e0e0;">
+                <div class="card-header rounded-0 text-white" style="background-color: #e66624; border-bottom: none; font-size: 14px;">
+                    Trang chủ <i class="bi bi-chevron-right" style="font-size: 10px; margin: 0 5px;"></i> Mô hình đào tạo
+                </div>
+                <div class="card-body p-4 pt-3 bg-white">
+                    <h1 class="mb-3 text-uppercase" style="color: #e66624; font-size: 26px;">Mô hình đào tạo</h1>
+                    
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="/image/mohinh.png" alt="Mô hình đào tạo" style="max-width: 100%; height: auto; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+                    </div>
+
+                    <p style="font-family: Roboto, sans-serif; text-align: justify; line-height: 1.6;">
+                        eSchool tự hào tiên phong ứng dụng các phương pháp giảng dạy hiện đại, tích hợp công nghệ, với mục tiêu không chỉ truyền đạt tri thức mà còn khơi dậy tư duy sáng tạo và kỹ năng thực tiễn của học sinh.
+                    </p>
+
+                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">1. Định hướng giáo dục</h4>
+                    <p style="text-align: justify; line-height: 1.6;">
+                        Hệ thống hoạt động theo mô hình trường chất lượng cao, kết hợp chương trình của Bộ GD&ĐT cùng các chương trình chuẩn Quốc tế (như hệ song bằng Cambridge). Sự kết hợp này mang lại cho các em học sinh lợi thế hội nhập, sẵn sàng trở thành công dân toàn cầu.
+                    </p>
+
+                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">2. Phương pháp giảng dạy</h4>
+                    <p style="text-align: justify; line-height: 1.6;">
+                        - <strong>Lấy học sinh làm trung tâm:</strong> Tăng cường các hoạt động khám phá, thực hành, làm việc nhóm, giúp học sinh chủ động hình thành kiến thức và phát triển năng lực tự học.<br>
+                        - <strong>Học đi đôi với hành:</strong> Tổ chức thường xuyên các hoạt động trải nghiệm thực tế, giáo dục kỹ năng sống (STEM, Kỹ năng sinh tồn, Nghệ thuật ứng xử...).<br>
+                        - <strong>Tích hợp công nghệ:</strong> Sử dụng hệ thống quản lý học tập điện tử (eLearning), sổ liên lạc điện tử, kiểm tra đánh giá trên nền tảng số giúp cá nhân hóa lộ trình học tập của từng học sinh.
+                    </p>
+
+                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">3. Chương trình giáo dục toàn diện</h4>
+                    <p style="text-align: justify; line-height: 1.6;">
+                        Hướng tới sự phát triển toàn diện Đức - Trí - Thể - Mỹ, nhà trường xây dựng chương trình phát triển cá nhân với sự tham gia của các CLB năng khiếu: CLB Thể chất (bóng đá, bóng rổ, khiêu vũ...), CLB Nghệ thuật (âm nhạc, hội họa), CLB Khoa học (STEM, Lập trình Robotics). Học sinh được khuyến khích giao lưu trong nước và quốc tế để tăng cường sự tự tin và tư duy phản biện.
+                    </p>
+
+                    <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+                        <img src="/images/mo-hinh-dao-tao.jpg" alt="Mô hình đào tạo eSchool" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 5px;" onerror="this.src='https://via.placeholder.com/800x400?text=Hinh+Anh+Mo+Hinh+Dao+Tao'"/>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

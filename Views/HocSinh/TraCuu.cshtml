@@ -1,0 +1,76 @@
+﻿@model List<eSchool.ViewModels.HocSinhViewModel>
+
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Tra cứu học sinh";
+}
+
+<div class="student-panel">
+    <h3>Tra cứu học sinh</h3>
+
+    <form method="get" class="row mt-3 mb-4">
+        <div class="col-md-5">
+            <input name="keyword" value="@ViewBag.Keyword" class="form-control"
+                   placeholder="Nhập mã, tên, số điện thoại..." />
+        </div>
+
+        <div class="col-md-3">
+            <select name="lopId" class="form-select">
+                <option value="">Tất cả lớp</option>
+                @foreach (var lop in ViewBag.LopHocs)
+                {
+                    <option value="@lop.IdLop">@lop.TenLop</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100">Tra cứu</button>
+        </div>
+
+        <div class="col-md-2">
+            <a asp-action="TraCuu" class="btn btn-secondary w-100">Làm mới</a>
+        </div>
+    </form>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Ảnh</th>
+                <th>Mã HS</th>
+                <th>Tài khoản</th>
+                <th>Họ tên</th>
+                <th>Lớp</th>
+                <th>SĐT</th>
+                <th>Email</th>
+                <th>Trạng thái</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <img src="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
+                             alt="Ảnh @item.HoTen"
+                             style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />
+                    </td>
+                    <td>@item.MaHS</td>
+                    <td>@(item.TenTaiKhoan ?? "Chưa gắn")</td>
+                    <td>@item.HoTen</td>
+                    <td>@item.TenLop</td>
+                    <td>@item.SDT</td>
+                    <td>@item.Email</td>
+                    <td>@(item.TrangThai ? "Đang học" : "Nghỉ học")</td>
+                    <td>
+                        <a asp-action="HoSo" asp-route-id="@item.IdHocSinh" class="btn btn-sm btn-info">
+                            Xem hồ sơ
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,354 @@
+@model List<eSchool.Models.GiaoVien>
+
+@{
+    Layout = Context.Session.GetInt32("RoleId") == 1
+        ? "~/Views/Shared/_AdminLayout.cshtml"
+        : "~/Views/Shared/_TeacherLayout.cshtml";
+    ViewData["Title"] = "Quản lý giáo viên";
+
+    var isAdmin = Context.Session.GetInt32("RoleId") == 1;
+    var danhSach = Model ?? new List<eSchool.Models.GiaoVien>();
+    var tongGiaoVien = danhSach.Count;
+    var coEmail = danhSach.Count(x => !string.IsNullOrWhiteSpace(x.Email));
+    var coSoDienThoai = danhSach.Count(x => !string.IsNullOrWhiteSpace(x.SDT));
+    var daLienKetTaiKhoan = danhSach.Count(x => x.IdTaiKhoan.HasValue);
+}
+
+@if (isAdmin)
+{
+    <div class="teacher-admin-page">
+        <div class="teacher-admin-hero">
+            <div>
+                <span class="teacher-admin-eyebrow">Giáo viên</span>
+                <h2>Quản lý giáo viên</h2>
+                <p>Theo dõi hồ sơ, thông tin liên hệ và tài khoản liên kết của đội ngũ giáo viên.</p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="teacher-admin-primary" data-bs-toggle="modal" data-bs-target="#createTeacherModal">
+                    <i class="bi bi-plus-lg"></i>
+                    Thêm giáo viên
+                </button>
+                <button class="teacher-admin-primary bg-success border-success" data-bs-toggle="modal" data-bs-target="#importTeacherModal">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    Nhập từ Excel
+                </button>
+            </div>
+        </div>
+
+        <div class="teacher-admin-stats">
+            <div class="teacher-admin-stat-card">
+                <div class="teacher-admin-stat-icon blue">
+                    <i class="bi bi-person-video3"></i>
+                </div>
+                <div>
+                    <span>Tổng giáo viên</span>
+                    <strong>@tongGiaoVien</strong>
+                </div>
+            </div>
+
+            <div class="teacher-admin-stat-card">
+                <div class="teacher-admin-stat-icon green">
+                    <i class="bi bi-envelope-check"></i>
+                </div>
+                <div>
+                    <span>Có email</span>
+                    <strong>@coEmail</strong>
+                </div>
+            </div>
+
+            <div class="teacher-admin-stat-card">
+                <div class="teacher-admin-stat-icon orange">
+                    <i class="bi bi-telephone"></i>
+                </div>
+                <div>
+                    <span>Có số điện thoại</span>
+                    <strong>@coSoDienThoai</strong>
+                </div>
+            </div>
+
+            <div class="teacher-admin-stat-card">
+                <div class="teacher-admin-stat-icon purple">
+                    <i class="bi bi-link-45deg"></i>
+                </div>
+                <div>
+                    <span>Đã liên kết tài khoản</span>
+                    <strong>@daLienKetTaiKhoan</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="teacher-admin-card">
+            <div class="teacher-admin-card-head">
+                <div>
+                    <h3>Danh sách giáo viên</h3>
+                    <p>@tongGiaoVien hồ sơ đang có trong hệ thống</p>
+                </div>
+            </div>
+
+            <form method="get" class="teacher-admin-filter">
+                <div class="teacher-admin-search">
+                    <i class="bi bi-search"></i>
+                    <input name="keyword"
+                           value="@ViewBag.Keyword"
+                           placeholder="Tìm theo mã, họ tên hoặc số điện thoại..." />
+                </div>
+
+                <button class="teacher-admin-filter-btn">
+                    <i class="bi bi-funnel"></i>
+                    Tìm
+                </button>
+
+                <a asp-action="Index" class="teacher-admin-reset-btn">Làm mới</a>
+            </form>
+
+            <div class="teacher-admin-table-wrap">
+                <table class="teacher-admin-table">
+                    <thead>
+                        <tr>
+                            <th>Giáo viên</th>
+                            <th>Mã GV</th>
+                            <th>Môn dạy</th>
+                            <th>Ngày sinh</th>
+                            <th>Giới tính</th>
+                            <th>Liên hệ</th>
+                            <th>Tài khoản</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!danhSach.Any())
+                        {
+                            <tr>
+                                <td colspan="7">
+                                    <div class="teacher-admin-empty">
+                                        <i class="bi bi-person-workspace"></i>
+                                        <strong>Chưa có giáo viên</strong>
+                                        <span>Bạn có thể thêm hồ sơ giáo viên mới từ nút phía trên.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in danhSach)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="teacher-admin-profile">
+                                            <span>@item.HoTen.Trim().Substring(0, 1).ToUpper()</span>
+                                            <div>
+                                                <strong>@item.HoTen</strong>
+                                                <small>@(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có email" : item.Email)</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="teacher-admin-code">@item.MaGV</span></td>
+                                    <td><span class="badge bg-info text-dark">@(item.MonHoc?.TenMon ?? "Chưa phân môn")</span></td>
+                                    <td>@item.NgaySinh.ToString("dd/MM/yyyy")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.GioiTinh) ? "-" : item.GioiTinh)</td>
+                                    <td>
+                                        <div class="teacher-admin-contact">
+                                            <span>@(string.IsNullOrWhiteSpace(item.SDT) ? "-" : item.SDT)</span>
+                                            <small>@(string.IsNullOrWhiteSpace(item.DiaChi) ? "Chưa có địa chỉ" : item.DiaChi)</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (item.IdTaiKhoan.HasValue)
+                                        {
+                                            <span class="teacher-admin-badge linked">Đã liên kết</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="teacher-admin-badge unlinked">Chưa liên kết</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="teacher-admin-actions">
+                                            <a class="teacher-admin-action view"
+                                               asp-action="HoSo"
+                                               asp-route-id="@item.IdGiaoVien"
+                                               title="Xem hồ sơ">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="teacher-admin-action edit"
+                                                    title="Sửa"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editTeacherModal-@item.IdGiaoVien">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <form asp-action="Delete"
+                                                  asp-route-id="@item.IdGiaoVien"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Xóa giáo viên này?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="teacher-admin-action delete" title="Xóa">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <div class="modal fade" id="editTeacherModal-@item.IdGiaoVien" tabindex="-1">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        <div class="modal-content teacher-admin-modal">
+                                            <form asp-action="Edit" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="IdGiaoVien" value="@item.IdGiaoVien" />
+                                                <div class="modal-header">
+                                                    <div>
+                                                        <h5 class="modal-title">Sửa giáo viên</h5>
+                                                        <small>Cập nhật lại thông tin hồ sơ giáo viên.</small>
+                                                    </div>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    @await Html.PartialAsync("_Form", new eSchool.ViewModels.GiaoVienFormViewModel
+                                                    {
+                                                        IdGiaoVien = item.IdGiaoVien,
+                                                        MaGV = item.MaGV,
+                                                        HoTen = item.HoTen,
+                                                        NgaySinh = item.NgaySinh,
+                                                        GioiTinh = item.GioiTinh,
+                                                        SDT = item.SDT,
+                                                        Email = item.Email,
+                                                        DiaChi = item.DiaChi,
+                                                        IdMonHoc = item.IdMonHoc
+                                                    })
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                                                    <button class="btn btn-primary">Cập nhật</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createTeacherModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content teacher-admin-modal">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title">Thêm giáo viên</h5>
+                            <small>Tạo mới hồ sơ giáo viên trong hệ thống.</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        @await Html.PartialAsync("_Form", new eSchool.ViewModels.GiaoVienFormViewModel())
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                        <button class="btn btn-primary">Thêm giáo viên</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="importTeacherModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content teacher-admin-modal p-0">
+                <form asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title">Nhập giáo viên từ Excel</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3 text-muted">Vui lòng tải file mẫu để xem định dạng chuẩn trước khi nhập dữ liệu.</p>
+                        <a asp-action="DownloadTemplate" class="btn btn-outline-success mb-4">
+                            <i class="bi bi-download me-1"></i> Tải file mẫu
+                        </a>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Chọn file Excel (.xlsx)</label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload me-1"></i> Nhập dữ liệu
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="page-card">
+        <div class="page-tools">
+            <form method="get">
+                <input name="keyword" value="@ViewBag.Keyword" class="form-control"
+                       placeholder="Tìm mã, tên hoặc số điện thoại..." />
+                <button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Tìm</button>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Giáo viên</th>
+                        <th>Mã GV</th>
+                        <th>Môn dạy</th>
+                        <th>Ngày sinh</th>
+                        <th>Giới tính</th>
+                        <th>Liên hệ</th>
+                        <th>Địa chỉ</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!danhSach.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">Chưa có giáo viên</td></tr>
+                    }
+                    @foreach (var item in danhSach)
+                    {
+                        <tr>
+                            <td>
+                                <div class="teacher-name">
+                                    <span>@item.HoTen.Trim().Substring(0, 1).ToUpper()</span>
+                                    <div>
+                                        <strong>@item.HoTen</strong>
+                                        <small class="d-block text-muted">@item.Email</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@item.MaGV</td>
+                            <td><span class="badge bg-info text-dark">@(item.MonHoc?.TenMon ?? "Chưa phân môn")</span></td>
+                            <td>@item.NgaySinh.ToString("dd/MM/yyyy")</td>
+                            <td>@item.GioiTinh</td>
+                            <td>@item.SDT</td>
+                            <td>@item.DiaChi</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   asp-action="HoSo"
+                                   asp-route-id="@item.IdGiaoVien">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

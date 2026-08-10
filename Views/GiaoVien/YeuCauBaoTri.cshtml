@@ -1,0 +1,164 @@
+@model List<eSchool.Models.BaoTri>
+
+@{
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    ViewData["Title"] = "Yêu cầu bảo trì thiết bị";
+    var danhSachPhong = ViewBag.DanhSachPhong as List<SelectListItem> ?? new List<SelectListItem>();
+    var danhSachThietBi = ViewBag.DanhSachThietBi as IEnumerable<dynamic>;
+}
+
+<div class="page-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-1">Danh sách yêu cầu bảo trì</h4>
+            <p class="text-muted mb-0">Quản lý các yêu cầu bảo trì thiết bị của các lớp do bạn chủ nhiệm</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#taoYeuCauModal">
+            <i class="bi bi-plus-lg"></i> Thêm yêu cầu
+        </button>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-tools fs-1 d-block mb-3"></i>
+            Chưa có yêu cầu bảo trì nào.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã YC</th>
+                        <th>Thiết bị</th>
+                        <th>Phòng học (Lớp)</th>
+                        <th>Ngày yêu cầu</th>
+                        <th>Nội dung lỗi</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><strong>@item.MaBaoTri</strong></td>
+                            <td>@item.ThietBi?.TenTB <br/><small class="text-muted">@item.ThietBi?.MaTB</small></td>
+                            <td>
+                                @item.ThietBi?.PhongHoc?.TenPhong
+                                @if (item.ThietBi?.PhongHoc?.LopHoc != null)
+                                {
+                                    <span class="badge bg-secondary ms-1">@item.ThietBi.PhongHoc.LopHoc.TenLop</span>
+                                }
+                            </td>
+                            <td>@item.NgayBaoTri.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@item.NoiDung</td>
+                            <td>
+                                @if (item.TrangThai == "Hoàn thành")
+                                {
+                                    <span class="badge bg-success">Hoàn thành</span>
+                                }
+                                else if (item.TrangThai == "Đang xử lý")
+                                {
+                                    <span class="badge bg-warning text-dark">Đang xử lý</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Chờ xử lý</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal Tạo Yêu Cầu -->
+<div class="modal fade" id="taoYeuCauModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="TaoYeuCauBaoTri" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h5 class="modal-title">Gửi yêu cầu bảo trì</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (danhSachPhong.Any() && danhSachThietBi != null && danhSachThietBi.Any())
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Chọn phòng <span class="text-danger">*</span></label>
+                        <select id="phongSelect" class="form-select" required onchange="filterThietBi()">
+                            <option value="">-- Chọn phòng --</option>
+                            @foreach (var p in danhSachPhong)
+                            {
+                                <option value="@p.Value">@p.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chọn thiết bị bị hỏng <span class="text-danger">*</span></label>
+                        <select name="IdThietBi" id="thietBiSelect" class="form-select" required disabled>
+                            <option value="">-- Vui lòng chọn phòng trước --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả tình trạng/Nội dung <span class="text-danger">*</span></label>
+                        <textarea name="NoiDung" class="form-control" rows="4" required placeholder="Ví dụ: Máy chiếu không lên hình, quạt trần kêu to..."></textarea>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        Lớp chủ nhiệm của bạn hiện chưa được gán phòng học nào có thiết bị, hoặc bạn chưa chủ nhiệm lớp nào.
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                @if (danhSachPhong.Any() && danhSachThietBi != null && danhSachThietBi.Any())
+                {
+                    <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const allThietBis = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(danhSachThietBi ?? new List<dynamic>()));
+
+        function filterThietBi() {
+            const phongId = document.getElementById('phongSelect').value;
+            const thietBiSelect = document.getElementById('thietBiSelect');
+            
+            thietBiSelect.innerHTML = '<option value="">-- Chọn thiết bị --</option>';
+            
+            if (!phongId) {
+                thietBiSelect.disabled = true;
+                thietBiSelect.innerHTML = '<option value="">-- Vui lòng chọn phòng trước --</option>';
+                return;
+            }
+            
+            thietBiSelect.disabled = false;
+            
+            const filtered = allThietBis.filter(tb => tb.PhongId.toString() === phongId);
+            
+            if (filtered.length === 0) {
+                thietBiSelect.innerHTML = '<option value="">-- Phòng này không có thiết bị --</option>';
+                thietBiSelect.disabled = true;
+                return;
+            }
+            
+            filtered.forEach(tb => {
+                const option = document.createElement('option');
+                option.value = tb.Id;
+                option.textContent = tb.Ten;
+                thietBiSelect.appendChild(option);
+            });
+        }
+    </script>
+}

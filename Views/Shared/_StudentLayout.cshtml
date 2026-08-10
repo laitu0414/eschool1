@@ -1,0 +1,210 @@
+@inject eSchool.Models.AppDbContext DbContext
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var thongBaoHocSinh = DbContext.ThongBaos
+        .Where(x => x.DoiTuongNhan == 0 || x.DoiTuongNhan == 2)
+        .OrderByDescending(x => x.NgayTao)
+        .Take(5)
+        .ToList();
+    var soThongBaoHocSinh = DbContext.ThongBaos.Count(x => x.DoiTuongNhan == 0 || x.DoiTuongNhan == 2);
+
+    string MenuClass(string controller, params string[] actions)
+    {
+        var isActive = string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
+            && (actions.Length == 0 || actions.Any(action =>
+                string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase)));
+
+        return isActive ? "menu-item active" : "menu-item";
+    }
+
+    string HienThiThoiGian(DateTime ngayTao)
+    {
+        var khoangCach = DateTime.Now - ngayTao;
+
+        if (khoangCach.TotalMinutes < 1) return "Vừa xong";
+        if (khoangCach.TotalHours < 1) return $"{(int)khoangCach.TotalMinutes} phút trước";
+        if (khoangCach.TotalDays < 1) return $"{(int)khoangCach.TotalHours} giờ trước";
+        if (khoangCach.TotalDays < 30) return $"{(int)khoangCach.TotalDays} ngày trước";
+
+        return ngayTao.ToString("dd/MM/yyyy HH:mm");
+    }
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - eSchool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/student-layout.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/student.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/footer.css" rel="stylesheet" asp-append-version="true" />
+</head>
+
+<body>
+    <div class="student-app">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="logo-icon"><i class="bi bi-mortarboard-fill"></i></span>
+                <span>
+                    <strong>eSchool</strong>
+                    <small>Cổng học sinh</small>
+                </span>
+            </div>
+
+            <div class="sidebar-title">HỌC SINH</div>
+
+            <nav class="sidebar-menu">
+                <a asp-controller="HocSinh" asp-action="HoSoCaNhan"
+                   class="@MenuClass("HocSinh", "HoSoCaNhan", "HoSo")">
+                    <i class="bi bi-person-vcard-fill"></i>
+                    <span>Hồ sơ học sinh</span>
+                </a>
+
+                <a asp-controller="HocSinh" asp-action="ThoiKhoaBieu"
+                   class="@MenuClass("HocSinh", "ThoiKhoaBieu")">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Thời khóa biểu</span>
+                </a>
+
+                <a asp-controller="KetQuaHocTap" asp-action="XemDiem"
+                   class="@MenuClass("KetQuaHocTap", "XemDiem")">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Xem điểm</span>
+                </a>
+
+                <a asp-controller="KetQuaHocTap" asp-action="XemHocPhi"
+                   class="@MenuClass("KetQuaHocTap", "XemHocPhi")">
+                    <i class="bi bi-cash-coin"></i>
+                    <span>Học phí</span>
+                </a>
+
+                <a asp-controller="KetQuaHocTap" asp-action="XemDiemDanh"
+                   class="@MenuClass("KetQuaHocTap", "XemDiemDanh")">
+                    <i class="bi bi-person-check-fill"></i>
+                    <span>Điểm danh</span>
+                </a>
+
+                <a asp-controller="PhuHuynh" asp-action="Index"
+                   class="@MenuClass("PhuHuynh")">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Thông tin phụ huynh</span>
+                </a>
+
+                <a asp-controller="ChuyenLop" asp-action="LichSu"
+                   class="@MenuClass("ChuyenLop", "LichSu")">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span>Lịch sử chuyển lớp</span>
+                </a>
+
+            </nav>
+
+            <div class="sidebar-bottom">
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="menu-item logout border-0 w-100 text-start">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Đăng xuất</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <span class="page-label">Cổng thông tin học sinh</span>
+                    <h1>@ViewData["Title"]</h1>
+                </div>
+
+                                <div class="student-topbar-actions">
+                    <div class="dropdown portal-notification">
+                        <button class="portal-bell" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
+                            <i class="bi bi-bell-fill"></i>
+                            @if (soThongBaoHocSinh > 0)
+                            {
+                                <span>@soThongBaoHocSinh</span>
+                            }
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end portal-notification-menu">
+                            <div class="portal-notification-title">Thông báo</div>
+                            @if (thongBaoHocSinh.Any())
+                            {
+                                foreach (var thongBao in thongBaoHocSinh)
+                                {
+                                    <div class="portal-notification-item">
+                                        <strong>@thongBao.TieuDe</strong>
+                                        <small>@HienThiThoiGian(thongBao.NgayTao)</small>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="portal-notification-empty">Chưa có thông báo</div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="student-user student-user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="user-avatar"><i class="bi bi-person-fill"></i></span>
+                            <div>
+                                <small>Xin chào</small>
+                                <strong>@(Context.Session.GetString("Username") ?? "Học sinh")</strong>
+                            </div>
+                            <i class="bi bi-chevron-down user-chevron"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end portal-user-menu">
+                            <li>
+                                <a class="dropdown-item" asp-controller="HocSinh" asp-action="HoSoCaNhan">
+                                    <i class="bi bi-person-vcard me-2"></i>Hồ sơ học sinh
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="HocSinh" asp-action="ThoiKhoaBieu">
+                                    <i class="bi bi-calendar3 me-2"></i>Thời khóa biểu
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="KetQuaHocTap" asp-action="XemDiem">
+                                    <i class="bi bi-journal-check me-2"></i>Xem điểm
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="KetQuaHocTap" asp-action="XemHocPhi">
+                                    <i class="bi bi-cash-coin me-2"></i>Học phí
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="KetQuaHocTap" asp-action="XemDiemDanh">
+                                    <i class="bi bi-person-check-fill me-2"></i>Điểm danh
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <section class="content">
+                @RenderBody()
+            </section>
+            @await Html.PartialAsync("_SiteFooter")
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/required-fields.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

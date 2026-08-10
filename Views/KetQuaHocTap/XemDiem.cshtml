@@ -1,0 +1,114 @@
+@using eSchool.Models
+@model eSchool.ViewModels.DiemPageViewModel
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Kết quả học tập";
+
+    var hocSinh = ViewBag.HocSinh as HocSinh;
+    var diemTrungBinh = Model.DanhSach.Where(x => x.DiemTB.HasValue).Select(x => x.DiemTB!.Value).DefaultIfEmpty().Average();
+    var coDiemTrungBinh = Model.DanhSach.Any(x => x.DiemTB.HasValue);
+}
+
+<div class="student-score-page">
+    <div class="student-score-hero">
+        <div>
+            <span class="student-score-eyebrow">Học tập</span>
+            <h2>Bảng điểm của bạn</h2>
+            <p>Theo dõi kết quả học tập theo từng môn, học kỳ và năm học.</p>
+        </div>
+        <div class="student-score-summary">
+            <span>Điểm trung bình chung</span>
+            <strong>@(coDiemTrungBinh ? diemTrungBinh.ToString("0.00") : "-")</strong>
+        </div>
+    </div>
+
+    <div class="student-score-grid">
+        <div class="student-score-card">
+            <span>Học sinh</span>
+            <strong>@(hocSinh?.HoTen ?? "Chưa có dữ liệu")</strong>
+            <small>@hocSinh?.MaHS</small>
+        </div>
+        <div class="student-score-card">
+            <span>Lớp hiện tại</span>
+            <strong>@(hocSinh?.LopHoc?.TenLop ?? "Chưa xếp lớp")</strong>
+            <small>Thông tin lớp học</small>
+        </div>
+        <div class="student-score-card">
+            <span>Số môn có điểm</span>
+            <strong>@Model.DanhSach.Count</strong>
+            <small>Kết quả đã nhập</small>
+        </div>
+    </div>
+
+    <div class="student-score-panel">
+        <div class="student-score-panel-head">
+            <div>
+                <h3>Danh sách điểm</h3>
+                <p>Lọc theo năm học hoặc học kỳ để xem nhanh hơn.</p>
+            </div>
+        </div>
+
+        <form method="get" class="student-score-filter">
+            <select name="namHocId" asp-items="Model.NamHocs" class="form-select">
+                <option value="">Tất cả năm học</option>
+            </select>
+            <select name="hocKyId" asp-items="Model.HocKys" class="form-select">
+                <option value="">Tất cả học kỳ</option>
+            </select>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-funnel me-1"></i>Lọc
+            </button>
+            <a asp-action="XemDiem" class="btn btn-light">Đặt lại</a>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table student-score-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Môn học</th>
+                        <th>Học kỳ</th>
+                        <th>Năm học</th>
+                        <th>15 phút</th>
+                        <th>1 tiết</th>
+                        <th>Giữa kỳ</th>
+                        <th>Cuối kỳ</th>
+                        <th>TB</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.DanhSach.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                Chưa có điểm nào được cập nhật.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.DanhSach)
+                        {
+                            var diemTb = item.DiemTB ?? 0;
+                            <tr>
+                                <td>
+                                    <strong>@item.MonHoc?.TenMon</strong>
+                                </td>
+                                <td>@(item.HocKyInfo?.TenHocKy ?? item.HocKy)</td>
+                                <td>@item.NamHocInfo?.TenNamHoc</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Diem15Phut) ? "-" : item.Diem15Phut)</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Diem1Tiet) ? "-" : item.Diem1Tiet)</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.DiemGiuaKy) ? "-" : item.DiemGiuaKy)</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.DiemCuoiKy) ? "-" : item.DiemCuoiKy)</td>
+                                <td>
+                                    <span class="student-score-badge @(diemTb >= 5 ? "good" : "bad")">
+                                        @(item.DiemTB?.ToString("0.00") ?? "-")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

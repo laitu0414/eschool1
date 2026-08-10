@@ -1,0 +1,17 @@
+@model eSchool.ViewModels.PhieuDiemPageViewModel
+@{ Layout = "~/Views/Shared/_ResultLayout.cshtml"; ViewData["Title"] = "In phiếu điểm"; }
+<div class="row g-4">
+<div class="col-xl-4"><div class="page-card">
+<h5 class="mb-3">Lập phiếu điểm</h5>
+<form asp-action="TaoPhieuDiem" method="post">@Html.AntiForgeryToken()
+<div class="mb-3"><label class="form-label">Học sinh</label><select name="idHocSinh" asp-items="Model.HocSinhs" class="form-select"><option value="">-- Chọn học sinh --</option></select></div>
+<div class="mb-3"><label class="form-label">Năm học</label><select name="idNamHoc" asp-items="Model.NamHocs" class="form-select"><option value="">-- Chọn năm học --</option></select></div>
+<div class="mb-3"><label class="form-label">Học kỳ</label><select name="idHocKy" asp-items="Model.HocKys" class="form-select"><option value="">-- Chọn học kỳ --</option></select></div>
+<button class="btn btn-primary w-100"><i class="bi bi-file-earmark-pdf"></i> Tạo và tải PDF</button>
+</form></div></div>
+<div class="col-xl-8"><div class="page-card"><h5 class="mb-3">Lịch sử phiếu điểm</h5>
+<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Học sinh</th><th>Lớp</th><th>Học kỳ</th><th>Ngày lập</th><th></th></tr></thead><tbody>
+@if(!Model.DanhSach.Any()){<tr><td colspan="5" class="text-center text-muted py-4">Chưa có phiếu điểm</td></tr>}
+@foreach(var item in Model.DanhSach){<tr><td><strong>@item.HocSinh?.HoTen</strong><small class="d-block text-muted">@item.HocSinh?.MaHS</small></td><td>@item.LopHoc?.TenLop</td><td>@item.HocKy?.TenHocKy - @item.NamHoc?.TenNamHoc</td><td>@item.NgayLap.ToString("dd/MM/yyyy HH:mm")</td><td><a asp-action="InPhieuDiem" asp-route-id="@item.IdPhieuDiem" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> PDF</a></td></tr>}
+</tbody></table></div></div></div>
+</div>

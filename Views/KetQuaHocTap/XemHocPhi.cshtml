@@ -1,0 +1,132 @@
+@using eSchool.Models
+@model eSchool.ViewModels.HocPhiPageViewModel
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Học phí";
+
+    var hocSinh = ViewBag.HocSinh as HocSinh;
+    int tongKhoan = Model.DanhSach.Count;
+    int daDong = Model.DanhSach.Count(x => x.TrangThai == 1);
+    int chuaDong = Model.DanhSach.Count(x => x.TrangThai == 0);
+    int quaHan = Model.DanhSach.Count(x => x.TrangThai == 2);
+
+    string Status(int value) => value == 1 ? "Đã đóng" : value == 2 ? "Quá hạn" : "Chưa đóng";
+}
+
+<div class="student-fee-page">
+    <div class="student-fee-hero">
+        <div>
+            <span class="student-fee-eyebrow">Tài chính</span>
+            <h2>Học phí của bạn</h2>
+            <p>Theo dõi các khoản học phí và thanh toán trực tiếp ngay trên hệ thống.</p>
+        </div>
+        <div class="student-fee-hero-meta">
+            <strong>@(hocSinh?.HoTen ?? "Học sinh")</strong>
+            <small>@(hocSinh?.LopHoc?.TenLop ?? "Chưa xếp lớp")</small>
+        </div>
+    </div>
+
+    <div class="student-fee-stats">
+        <div class="student-fee-stat-card">
+            <span>Tổng khoản</span>
+            <strong>@tongKhoan</strong>
+        </div>
+        <div class="student-fee-stat-card success">
+            <span>Đã đóng</span>
+            <strong>@daDong</strong>
+        </div>
+        <div class="student-fee-stat-card warning">
+            <span>Chưa đóng</span>
+            <strong>@chuaDong</strong>
+        </div>
+        <div class="student-fee-stat-card danger">
+            <span>Quá hạn</span>
+            <strong>@quaHan</strong>
+        </div>
+    </div>
+
+    <div class="student-fee-panel">
+        <div class="student-fee-panel-head">
+            <div>
+                <h3>Danh sách học phí</h3>
+                <p>Bạn có thể lọc nhanh theo trạng thái hoặc năm học.</p>
+            </div>
+        </div>
+
+        <form method="get" class="student-fee-filter">
+            <select name="trangThai" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="0" selected="@(ViewBag.TrangThai?.ToString() == "0" ? "selected" : null)">Chưa đóng</option>
+                <option value="1" selected="@(ViewBag.TrangThai?.ToString() == "1" ? "selected" : null)">Đã đóng</option>
+                <option value="2" selected="@(ViewBag.TrangThai?.ToString() == "2" ? "selected" : null)">Quá hạn</option>
+            </select>
+            <select name="namHocId" asp-items="Model.NamHocs" class="form-select">
+                <option value="">Tất cả năm học</option>
+            </select>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-funnel me-1"></i>Lọc
+            </button>
+            <a asp-action="XemHocPhi" class="btn btn-light">Đặt lại</a>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table student-fee-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Năm học</th>
+                        <th>Học kỳ</th>
+                        <th>Số tiền</th>
+                        <th>Hạn đóng</th>
+                        <th>Ngày đóng</th>
+                        <th>Phương thức</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thanh toán</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.DanhSach.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">Chưa có khoản học phí nào.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.DanhSach)
+                        {
+                            <tr>
+                                <td>@item.NamHoc?.TenNamHoc</td>
+                                <td>@(item.HocKyInfo?.TenHocKy ?? item.HocKy)</td>
+                                <td class="student-fee-money">@item.SoTien.ToString("N0") đ</td>
+                                <td>@item.HanDongTien?.ToString("dd/MM/yyyy")</td>
+                                <td>@item.NgayDong?.ToString("dd/MM/yyyy")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.PhuongThuc) ? "-" : item.PhuongThuc)</td>
+                                <td>
+                                    <span class="student-fee-badge @(item.TrangThai == 1 ? "success" : item.TrangThai == 2 ? "danger" : "warning")">
+                                        @Status(item.TrangThai)
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    @if (item.TrangThai == 1)
+                                    {
+                                        <span class="student-fee-paid-label">Đã thanh toán</span>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="DongHocPhi" asp-route-id="@item.IdHocPhi" method="post" class="student-fee-pay-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="phuongThuc" value="QR" />
+                                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Hệ thống sẽ gửi mã QR thanh toán vào email của phụ huynh (hoặc email của bạn nếu chưa có phụ huynh). Bạn có chắc chắn?');">
+                                                <i class="bi bi-qr-code me-1"></i>Thanh toán qua QR
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

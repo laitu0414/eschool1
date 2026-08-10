@@ -1,0 +1,138 @@
+@model List<HocSinh>
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = "Chuyển lớp";
+}
+
+@if (ViewBag.SelectedLopId == null)
+{
+    <div class="card shadow-sm p-4 text-center mx-auto" style="max-width: 600px; border-radius: 12px; margin-top: 2rem;">
+        <div class="mb-3">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle" style="width: 80px; height: 80px;">
+                <i class="bi bi-arrow-left-right fs-1"></i>
+            </div>
+        </div>
+        <h3 class="mb-2 fw-bold">Quản lý chuyển lớp</h3>
+        <p class="text-muted mb-4">Vui lòng chọn thông tin để hiển thị danh sách học sinh</p>
+
+        <form method="get" asp-action="Index">
+            <div class="mb-3 text-start">
+                <label class="form-label fw-semibold">Năm học</label>
+                <select name="namHoc" class="form-select" asp-items="ViewBag.NamHocs">
+                    <option value="">-- Chọn năm học --</option>
+                </select>
+            </div>
+            <div class="mb-4 text-start">
+                <label class="form-label fw-semibold">Lớp học</label>
+                <select name="lopId" class="form-select" asp-items="ViewBag.LopHocs">
+                    <option value="">-- Chọn lớp học --</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-danger w-100 py-2 fs-5">
+                <i class="bi bi-search me-2"></i> Hiển thị danh sách
+            </button>
+        </form>
+    </div>
+}
+else
+{
+    var selectedLopName = (ViewBag.LopHocs as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)?.FirstOrDefault(x => x.Value == ViewBag.SelectedLopId.ToString())?.Text;
+    var selectedNamHoc = ViewBag.SelectedNamHoc?.ToString() ?? "N/A";
+
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Danh sách học sinh</h2>
+            <div class="text-muted">
+                Lớp: <span class="text-primary fw-semibold">@selectedLopName</span> | Năm học: <span class="text-primary fw-semibold">@selectedNamHoc</span>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="LichSu" class="btn btn-outline-info">
+                <i class="bi bi-clock-history me-1"></i> Lịch sử chuyển lớp
+            </a>
+            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                <i class="bi bi-file-earmark-excel me-1"></i> Nhập từ Excel
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Chọn lớp khác
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-center" style="width: 60px;">STT</th>
+                        <th>Học sinh</th>
+                        <th>Lớp</th>
+                        <th>Ngày sinh</th>
+                        <th class="text-center" style="width: 150px;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        int stt = 1;
+                        foreach (var hs in Model)
+                        {
+                            <tr>
+                                <td class="text-center">@stt</td>
+                                <td>
+                                    <div class="fw-bold">@hs.HoTen</div>
+                                    <small class="text-muted">@hs.MaHS</small>
+                                </td>
+                                <td>@selectedLopName</td>
+                                <td>@hs.NgaySinh.ToString("dd/MM/yyyy")</td>
+                                <td class="text-center">
+                                    <a asp-action="Create" asp-route-id="@hs.IdHocSinh" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-arrow-left-right"></i> Chuyển lớp
+                                    </a>
+                                </td>
+                            </tr>
+                            stt++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Không có học sinh nào trong lớp này.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Import Excel -->
+    <div class="modal fade" id="importExcelModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nhập danh sách chuyển lớp từ Excel</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Chọn file Excel (.xlsx)</label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx" required />
+                        </div>
+                        <div class="mb-3">
+                            <a asp-action="DownloadTemplate" class="text-decoration-none">
+                                <i class="bi bi-download"></i> Tải file mẫu
+                            </a>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload"></i> Nhập dữ liệu
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

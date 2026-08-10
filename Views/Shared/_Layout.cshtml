@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - eschool</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/footer.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/eschool.styles.css" asp-append-version="true" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/home-portal.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body>
+    <header class="portal-header">
+        <div class="portal-topbar">
+            <a class="portal-brand" asp-controller="Home" asp-action="Index">
+                <span class="portal-brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
+                <span>
+                    <strong>eSchool</strong>
+                    <small>Hệ thống quản lý trường học</small>
+                </span>
+            </a>
+            <button type="button" class="portal-login-btn" data-bs-toggle="modal" data-bs-target="#loginModal">
+                <i class="bi bi-box-arrow-in-right"></i>
+                <span>Đăng nhập</span>
+            </button>
+        </div>
+        <div class="portal-nav-wrapper">
+            <div class="portal-nav-container">
+                <nav class="portal-nav">
+                    <a href="/#tin-tuc"><i class="bi bi-house-door-fill" style="margin-right: 5px;"></i> Tin tức</a>
+                    <a href="/#thong-bao">Thông báo</a>
+                    <div class="dropdown d-inline-block">
+                        <a href="#gioi-thieu" class="dropdown-toggle" style="text-decoration: none;" data-bs-toggle="dropdown" aria-expanded="false">Giới thiệu</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="ThongDiepHieuTruong" style="text-transform: none; font-weight: normal;">Thông điệp của Hiệu trưởng</a></li>
+                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="TamNhin" style="text-transform: none; font-weight: normal;">Tầm nhìn và sứ mệnh của chúng tôi</a></li>
+                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="DoiNguGiaoVien" style="text-transform: none; font-weight: normal;">Đội ngũ giáo viên</a></li>
+                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="CoSoVatChat" style="text-transform: none; font-weight: normal;">Cơ sở vật chất</a></li>
+                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="MoHinhDaoTao" style="text-transform: none; font-weight: normal;">Mô hình đào tạo</a></li>
+                        </ul>
+                    </div>
+                    <a href="/#lien-he">Liên hệ</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    @await Html.PartialAsync("_SiteFooter")
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,373 @@
+@model eSchool.ViewModels.AdminDiemPageViewModel
+@using Microsoft.AspNetCore.Http
+@{ 
+    var isTeacher = Context.Session.GetInt32("RoleId") == 2;
+    Layout = isTeacher ? "~/Views/Shared/_TeacherLayout.cshtml" : "~/Views/Shared/_ResultLayout.cshtml"; 
+    ViewData["Title"] = "Quản lý điểm"; 
+}
+
+@if (ViewBag.FilterLopId == null || ViewBag.FilterHocKyId == null)
+{
+    <div class="d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+        <div class="card shadow border-0" style="max-width: 450px; width: 100%; border-radius: 1rem;">
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-award fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">Quản lý điểm số</h4>
+                    <p class="text-muted small">Vui lòng chọn thông tin để hiển thị danh sách học sinh</p>
+                </div>
+
+                <form method="get" id="filterFormFull">
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-medium">Lớp học</label>
+                        <select name="lopId" asp-items="Model.LopHocs" class="form-select form-select-lg shadow-none border-secondary-subtle" id="lopSelectFull">
+                            <option value="">-- Chọn lớp học --</option>
+                        </select>
+                    </div>
+                    
+                    <div id="step2Full" class="d-none">
+                        <div class="mb-4 text-start">
+                            <label class="form-label fw-medium">Học kỳ</label>
+                            <select name="hocKyId" asp-items="Model.HocKys" class="form-select form-select-lg shadow-none border-secondary-subtle" id="hocKySelectFull">
+                                <option value="">-- Chọn học kỳ --</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3" id="btnFilterFull">
+                            <i class="bi bi-search me-2"></i> Hiển thị danh sách
+                        </button>
+                    </div>
+
+                    <button type="button" class="btn btn-primary btn-lg w-100 rounded-3" id="btnNextFull">
+                        Tiếp tục <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h4 class="mb-1 text-dark fw-bold">Danh sách học sinh</h4>
+            @{
+                var selectedLop = Model.LopHocs.FirstOrDefault(x => x.Value == ViewBag.FilterLopId?.ToString());
+                var selectedHocKy = Model.HocKys.FirstOrDefault(x => x.Value == ViewBag.FilterHocKyId?.ToString());
+            }
+            <p class="text-muted mb-0">
+                Lớp: <span class="fw-medium text-primary">@(selectedLop?.Text ?? "")</span> 
+                <span class="mx-2 text-secondary">|</span> 
+                Học kỳ: <span class="fw-medium text-primary">@(selectedHocKy?.Text ?? "")</span>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            @if (!isTeacher)
+            {
+                <a href="/KetQuaHocTap/NhatKySuaDiem" class="btn btn-outline-info px-4">
+                    <i class="bi bi-journal-text me-2"></i> Lịch sử sửa điểm
+                </a>
+            }
+            <button class="btn btn-outline-success px-4" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                <i class="bi bi-file-earmark-excel me-2"></i> Nhập từ Excel
+            </button>
+            <a href="/KetQuaHocTap/Diem" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-arrow-left me-2"></i> Chọn lớp khác
+            </a>
+        </div>
+    </div>
+    
+    <div class="table-responsive bg-white rounded shadow-sm border border-light">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Học sinh</th>
+                    <th>Lớp</th>
+                    @foreach(var mon in Model.MonHocsList)
+                    {
+                        <th class="text-center" style="white-space: nowrap;">@mon.TenMon</th>
+                    }
+                    <th class="text-center" style="white-space: nowrap;">Điểm TB Học Kỳ</th>
+                    <th class="text-end pe-4" style="white-space: nowrap;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.DanhSach.Any())
+                {
+                    <tr>
+                        <td colspan="@(4 + Model.MonHocsList.Count)" class="text-center text-muted py-5">
+                            <div class="mb-3"><i class="bi bi-folder-x text-secondary" style="font-size: 3rem;"></i></div>
+                            <span class="fs-5">Chưa có dữ liệu học sinh cho lớp này</span>
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model.DanhSach)
+                {
+                    <tr>
+                        <td class="ps-4">
+                            <strong>@item.HocSinh?.HoTen</strong>
+                            <small class="d-block text-muted">@item.HocSinh?.MaHS</small>
+                        </td>
+                        <td>@item.HocSinh?.LopHoc?.TenLop</td>
+                        @foreach(var mon in Model.MonHocsList)
+                        {
+                            <td class="text-center fw-medium">
+                                @if (item.DiemTBMon.ContainsKey(mon.IdMonHoc) && item.DiemTBMon[mon.IdMonHoc].HasValue)
+                                {
+                                    <span class="@(item.DiemTBMon[mon.IdMonHoc] >= 8 ? "text-success" : item.DiemTBMon[mon.IdMonHoc] >= 5 ? "text-primary" : "text-danger")">@item.DiemTBMon[mon.IdMonHoc].Value.ToString("0.0")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                        }
+                        <td class="text-center">
+                            @if (item.DiemTBHocKy.HasValue)
+                            {
+                                <span class="badge @(item.DiemTBHocKy >= 8 ? "bg-success" : item.DiemTBHocKy >= 5 ? "bg-primary" : "bg-danger") px-3 py-2 fs-6 rounded-pill">@item.DiemTBHocKy.Value.ToString("0.00")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-primary btn-nhap-diem px-3" 
+                                    data-id="@item.IdHocSinh" 
+                                    data-name="@item.HocSinh?.HoTen" 
+                                    data-hocky="@ViewBag.FilterHocKyId">
+                                <i class="bi bi-pencil-square"></i> Nhập điểm
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+</div>
+
+<!-- Modal Nhập từ Excel -->
+<div class="modal fade" id="importExcelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="ImportDiemExcel" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="lopId" value="@ViewBag.FilterLopId" />
+                <input type="hidden" name="hocKyId" value="@ViewBag.FilterHocKyId" />
+                
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-success"><i class="bi bi-file-earmark-excel me-2"></i>Nhập điểm từ Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3 text-muted">Vui lòng tải file mẫu để xem định dạng chuẩn trước khi nhập dữ liệu.</p>
+                    <a asp-action="DownloadDiemTemplate" asp-route-lopId="@ViewBag.FilterLopId" class="btn btn-outline-success mb-4 w-100">
+                        <i class="bi bi-download me-1"></i> Tải file mẫu danh sách lớp
+                    </a>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Môn học cần nhập điểm</label>
+                        <select name="monHocId" class="form-select" required>
+                            <option value="">-- Chọn môn học --</option>
+                            @foreach(var item in (ViewBag.MonHocs as SelectList ?? new SelectList(new List<SelectListItem>())))
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn file Excel (.xlsx)</label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx" required />
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-upload me-1"></i> Nhập dữ liệu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="scoreModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nhập điểm cho <span id="studentNameTitle" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <input type="hidden" id="modalStudentId" />
+                <input type="hidden" id="modalHocKyId" />
+                <input type="hidden" id="modalNamHocId" />
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0" id="gradesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 5%" class="text-center">STT</th>
+                                <th>Môn học</th>
+                                <th style="width: 15%">15 phút</th>
+                                <th style="width: 15%">1 tiết</th>
+                                <th style="width: 15%">Giữa kỳ</th>
+                                <th style="width: 15%">Cuối kỳ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradesTableBody">
+                            <tr><td colspan="6" class="text-center py-4">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="btnSaveGrades">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    Lưu tất cả
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Full screen filter logic
+            const btnNextFull = document.getElementById('btnNextFull');
+            if (btnNextFull) {
+                const lopSelectFull = document.getElementById('lopSelectFull');
+                const step2Full = document.getElementById('step2Full');
+                const hocKySelectFull = document.getElementById('hocKySelectFull');
+                
+                btnNextFull.addEventListener('click', function () {
+                    if (!lopSelectFull.value) {
+                        alert('Vui lòng chọn lớp học trước khi tiếp tục!');
+                        return;
+                    }
+                    btnNextFull.classList.add('d-none');
+                    step2Full.classList.remove('d-none');
+                    hocKySelectFull.focus();
+                });
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('scoreModal'));
+            const tbody = document.getElementById('gradesTableBody');
+            const btnSave = document.getElementById('btnSaveGrades');
+
+            document.querySelectorAll('.btn-nhap-diem').forEach(btn => {
+                btn.addEventListener('click', async function () {
+                    const studentId = this.dataset.id;
+                    const studentName = this.dataset.name;
+                    let hocKyId = this.dataset.hocky;
+
+                    if (!hocKyId || hocKyId === '') {
+                        alert('Vui lòng chọn Học kỳ ở bộ lọc bên trên trước khi nhập điểm!');
+                        return;
+                    }
+
+                    document.getElementById('studentNameTitle').textContent = studentName;
+                    document.getElementById('modalStudentId').value = studentId;
+                    document.getElementById('modalHocKyId').value = hocKyId;
+                    
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+                    modal.show();
+
+                    try {
+                        const response = await fetch(`/KetQuaHocTap/GetDiemHocSinh?idHocSinh=${studentId}&idHocKy=${hocKyId}`);
+                        const data = await response.json();
+                        
+                        document.getElementById('modalNamHocId').value = data.idNamHoc;
+                        
+                        tbody.innerHTML = '';
+                        let stt = 1;
+                        data.diemMonHocs.forEach(m => {
+                            if (!m.isEditable) return; // Ẩn hoàn toàn các môn bị khóa đối với giáo viên
+                            
+                            const tr = document.createElement('tr');
+                            
+                            tr.innerHTML = `
+                                <td class="text-center align-middle">${stt++}</td>
+                                <td class="align-middle fw-medium">
+                                    ${m.tenMon}
+                                    <input type="hidden" class="inp-monhoc" value="${m.idMonHoc}" />
+                                </td>
+                                <td><input type="text" class="form-control form-control-sm inp-15p" placeholder="vd: 8, 9" value="${m.diem15Phut !== null ? m.diem15Phut : ''}" /></td>
+                                <td><input type="text" class="form-control form-control-sm inp-1t" placeholder="vd: 8, 9" value="${m.diem1Tiet !== null ? m.diem1Tiet : ''}" /></td>
+                                <td><input type="text" class="form-control form-control-sm inp-gk" placeholder="vd: 8.5" value="${m.diemGiuaKy !== null ? m.diemGiuaKy : ''}" /></td>
+                                <td><input type="text" class="form-control form-control-sm inp-ck" placeholder="vd: 9" value="${m.diemCuoiKy !== null ? m.diemCuoiKy : ''}" /></td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } catch (error) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Lỗi khi tải dữ liệu.</td></tr>';
+                    }
+                });
+            });
+
+            btnSave.addEventListener('click', async function () {
+                const spinner = this.querySelector('.spinner-border');
+                const studentId = document.getElementById('modalStudentId').value;
+                const hocKyId = document.getElementById('modalHocKyId').value;
+                const namHocId = document.getElementById('modalNamHocId').value;
+
+                const diemMonHocs = [];
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    const idMonHoc = tr.querySelector('.inp-monhoc')?.value;
+                    if (!idMonHoc) return;
+
+                    const d15p = tr.querySelector('.inp-15p').value.trim();
+                    const d1t = tr.querySelector('.inp-1t').value.trim();
+                    const dgk = tr.querySelector('.inp-gk').value.trim();
+                    const dck = tr.querySelector('.inp-ck').value.trim();
+
+                    diemMonHocs.push({
+                        IdMonHoc: parseInt(idMonHoc),
+                        Diem15Phut: d15p !== '' ? d15p : null,
+                        Diem1Tiet: d1t !== '' ? d1t : null,
+                        DiemGiuaKy: dgk !== '' ? dgk : null,
+                        DiemCuoiKy: dck !== '' ? dck : null
+                    });
+                });
+
+                const payload = {
+                    IdHocSinh: parseInt(studentId),
+                    IdHocKy: parseInt(hocKyId),
+                    IdNamHoc: parseInt(namHocId),
+                    DiemMonHocs: diemMonHocs
+                };
+
+                btnSave.disabled = true;
+                spinner.classList.remove('d-none');
+
+                try {
+                    const response = await fetch('/KetQuaHocTap/LuuDiemHocSinh', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        modal.hide();
+                        window.location.reload();
+                    } else {
+                        alert(result.message || 'Có lỗi xảy ra khi lưu.');
+                    }
+                } catch (error) {
+                    alert('Lỗi kết nối mạng.');
+                } finally {
+                    btnSave.disabled = false;
+                    spinner.classList.add('d-none');
+                }
+            });
+        });
+    </script>
+}

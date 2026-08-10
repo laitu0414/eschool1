@@ -1,0 +1,24 @@
+﻿@model eSchool.ViewModels.HocSinhViewModel
+
+@{
+    Layout = Context.Session.GetInt32("RoleId") == 1
+        ? "~/Views/Shared/_AdminLayout.cshtml"
+        : "~/Views/Shared/_StudentLayout.cshtml";
+    ViewData["Title"] = "Sửa học sinh";
+}
+
+<div class="student-page">
+    <div class="form-box">
+        <h3 class="form-title">Sửa học sinh</h3>
+
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="IdHocSinh" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            @await Html.PartialAsync("_Form", Model)
+
+            <button class="btn btn-primary">Cập nhật</button>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </form>
+    </div>
+</div>
