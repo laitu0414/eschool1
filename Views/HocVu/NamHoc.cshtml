@@ -22,9 +22,13 @@
                         <td>@(item.HocKys?.Count ?? 0)</td>
                         <td><span class="badge @(item.TrangThai ? "text-bg-success" : "text-bg-secondary")">@(item.TrangThai ? "Đang hoạt động" : "Đã khóa")</span></td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editYear-@item.IdNamHoc"><i class="bi bi-pencil"></i></button>
+                            <form asp-action="TongKetNamHoc" asp-route-idNamHoc="@item.IdNamHoc" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn tổng kết năm học này? Hệ thống sẽ tự động xét lên lớp/ở lại lớp cho tất cả học sinh.');">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-success" title="Tổng kết năm học, xét lên lớp"><i class="bi bi-check2-all"></i></button>
+                            </form>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editYear-@item.IdNamHoc" title="Sửa"><i class="bi bi-pencil"></i></button>
                             <form asp-action="XoaNamHoc" asp-route-id="@item.IdNamHoc" method="post" class="d-inline" onsubmit="return confirm('Xóa năm học này?');">
-                                @Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                @Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></button>
                             </form>
                         </td>
                     </tr>

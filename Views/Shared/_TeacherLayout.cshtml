@@ -64,6 +64,9 @@
                 <a asp-controller="GiaoVien" asp-action="QuanLyKyLuat" class="@MenuClass("QuanLyKyLuat")">
                     <i class="bi bi-shield-exclamation"></i><span>Kỷ luật lớp CN</span>
                 </a>
+                <a asp-controller="GiaoVien" asp-action="QuanLyHocPhi" class="@MenuClass("QuanLyHocPhi")">
+                    <i class="bi bi-cash-stack"></i><span>Học phí lớp</span>
+                </a>
                 <a asp-controller="GiaoVien" asp-action="YeuCauBaoTri" class="@MenuClass("YeuCauBaoTri")">
                     <i class="bi bi-tools"></i><span>Yêu cầu bảo trì thiết bị</span>
                 </a>
@@ -137,6 +140,11 @@
                             <li>
                                 <a class="dropdown-item" asp-controller="GiaoVien" asp-action="QuanLyKyLuat">
                                     <i class="bi bi-shield-exclamation me-2"></i>Kỷ luật lớp CN
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="GiaoVien" asp-action="QuanLyHocPhi">
+                                    <i class="bi bi-cash-stack me-2"></i>Học phí lớp CN
                                 </a>
                             </li>
                             <li>

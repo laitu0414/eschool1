@@ -1,0 +1,100 @@
+@model eSchool.ViewModels.HocPhiPageViewModel
+
+@{
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    ViewData["Title"] = "Học phí lớp";
+}
+
+<div class="page-card">
+    <div class="mb-4">
+        <h5 class="mb-1">Quản lý học phí lớp chủ nhiệm</h5>
+        <p class="text-muted mb-0">Theo dõi và cập nhật trạng thái học phí của học sinh lớp chủ nhiệm.</p>
+    </div>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label class="form-label">Năm học</label>
+            <select name="namHocId" class="form-select" asp-items="Model.NamHocs" onchange="this.form.submit()">
+                <option value="">-- Tất cả --</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Học kỳ</label>
+            <select name="hocKyId" class="form-select" asp-items="Model.HocKys" onchange="this.form.submit()">
+                <option value="">-- Tất cả --</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Lớp</label>
+            <select name="lopId" class="form-select" asp-items="ViewBag.LopHocs" onchange="this.form.submit()">
+                <option value="">-- Tất cả --</option>
+            </select>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Học sinh</th>
+                    <th>Lớp</th>
+                    <th>Kỳ học</th>
+                    <th>Năm học</th>
+                    <th>Số tiền</th>
+                    <th>Trạng thái hiện tại</th>
+                    <th>Cập nhật trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.DanhSach == null || !Model.DanhSach.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu học phí.</td></tr>
+                }
+                else
+                {
+                    foreach (var hp in Model.DanhSach)
+                    {
+                        <tr>
+                            <td>
+                                <div><strong>@hp.HocSinh?.HoTen</strong></div>
+                                <small class="text-muted">@hp.HocSinh?.MaHS</small>
+                            </td>
+                            <td>@hp.HocSinh?.LopHoc?.TenLop</td>
+                            <td>@hp.HocKyInfo?.TenHocKy</td>
+                            <td>@hp.NamHoc?.TenNamHoc</td>
+                            <td>@hp.SoTien.ToString("N0") đ</td>
+                            <td>
+                                @if (hp.TrangThai == 1)
+                                {
+                                    <span class="badge bg-success">Đã đóng</span>
+                                }
+                                else if (hp.TrangThai == 2)
+                                {
+                                    <span class="badge bg-danger">Quá hạn</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Chưa đóng</span>
+                                }
+                            </td>
+                            <td>
+                                <form asp-action="CapNhatTrangThaiHocPhi" method="post" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="IdHocPhi" value="@hp.IdHocPhi" />
+                                    <input type="hidden" name="namHocId" value="@ViewBag.NamHocId" />
+                                    <input type="hidden" name="hocKyId" value="@ViewBag.HocKyId" />
+                                    <input type="hidden" name="lopId" value="@ViewBag.LopId" />
+                                    <select name="TrangThai" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="0" selected="@(hp.TrangThai == 0 || hp.TrangThai == 2)">Chưa đóng</option>
+                                        <option value="1" selected="@(hp.TrangThai == 1)">Đã đóng</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-primary">Lưu</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

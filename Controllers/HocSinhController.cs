@@ -281,6 +281,22 @@ namespace eSchool.Controllers
             var diff = (7 + (selectedDate.Value.DayOfWeek - DayOfWeek.Monday)) % 7;
             var startOfWeek = selectedDate.Value.AddDays(-diff);
             var endDate = startOfWeek.AddDays(6);
+            
+            var currentNamHoc = _context.NamHocs.FirstOrDefault(n => selectedDate.Value.Date >= n.NgayBatDau.Date && selectedDate.Value.Date <= n.NgayKetThuc.Date);
+            if (currentNamHoc == null)
+            {
+                ViewBag.HocSinh = hocSinh;
+                ViewBag.HocKy = hocKy;
+                ViewBag.NamHoc = namHoc;
+                ViewBag.Tuan = selectedDate.Value.ToString("yyyy-MM-dd");
+                ViewBag.StartOfWeek = startOfWeek.ToString("yyyy-MM-dd");
+                ViewBag.ThayDois = new List<LichHocThayDoi>();
+                ViewBag.TenLop = "Ngoài thời gian năm học";
+                return View(new List<PhanCongGiangDay>());
+            }
+
+            namHoc = currentNamHoc.TenNamHoc;
+
             var thayDois = _context.LichHocThayDois
                 .Where(x => x.Ngay >= startOfWeek && x.Ngay <= endDate)
                 .ToList();

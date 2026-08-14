@@ -249,6 +249,37 @@ namespace eSchool.Controllers
                     .FirstOrDefault();
             }
 
+            var selectedDate = tuan ?? DateTime.Today;
+            var diff = (7 + (selectedDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+            var startOfWeek = selectedDate.AddDays(-diff);
+            var endDate = startOfWeek.AddDays(6);
+
+            var currentNamHoc = _context.NamHocs.FirstOrDefault(n => selectedDate.Date >= n.NgayBatDau.Date && selectedDate.Date <= n.NgayKetThuc.Date);
+            if (currentNamHoc == null)
+            {
+                ViewBag.GiaoVienId = giaoVienId;
+                ViewBag.HocKy = hocKy;
+                ViewBag.NamHoc = namHoc;
+                ViewBag.Tuan = selectedDate.ToString("yyyy-MM-dd");
+                ViewBag.StartOfWeek = startOfWeek.ToString("yyyy-MM-dd");
+                ViewBag.ThayDois = new List<LichHocThayDoi>();
+                ViewBag.PhongHocMap = new Dictionary<int, string>();
+                if (IsTeacher() && giaoVienId.HasValue)
+                {
+                    var currentTeacher = _context.GiaoViens.Find(giaoVienId.Value);
+                    ViewBag.GiaoViens = currentTeacher != null 
+                        ? new List<SelectListItem> { new SelectListItem($"{currentTeacher.MaGV} - {currentTeacher.HoTen}", currentTeacher.IdGiaoVien.ToString()) }
+                        : new List<SelectListItem>();
+                }
+                else
+                {
+                    ViewBag.GiaoViens = GetGiaoVienSelectList();
+                }
+                return View(new List<PhanCongGiangDay>());
+            }
+
+            namHoc = currentNamHoc.TenNamHoc;
+
             var query = _context.PhanCongGiangDays
                 .Include(x => x.GiaoVien)
                 .Include(x => x.MonHoc)
@@ -270,14 +301,9 @@ namespace eSchool.Controllers
             ViewBag.HocKy = hocKy;
             ViewBag.NamHoc = namHoc;
             
-            var selectedDate = tuan ?? DateTime.Today;
-            var diff = (7 + (selectedDate.DayOfWeek - DayOfWeek.Monday)) % 7;
-            var startOfWeek = selectedDate.AddDays(-diff);
-            
             ViewBag.Tuan = selectedDate.ToString("yyyy-MM-dd");
             ViewBag.StartOfWeek = startOfWeek.ToString("yyyy-MM-dd");
             
-            var endDate = startOfWeek.AddDays(6);
             var thayDois = _context.LichHocThayDois
                 .Where(x => x.Ngay >= startOfWeek && x.Ngay <= endDate)
                 .ToList();
@@ -371,6 +397,98 @@ namespace eSchool.Controllers
                 TempData["Success"] = "Đã xóa kỷ luật.";
             }
             return RedirectToAction(nameof(QuanLyKyLuat));
+        }
+
+        [RoleAuthorize(2)]
+        public IActionResult QuanLyHocPhi(int? namHocId, int? hocKyId, int? lopId)
+        {
+            var giaoVienId = GetCurrentGiaoVienId();
+            if (!giaoVienId.HasValue) return NotFound("Tài khoản này chưa được liên kết với hồ sơ giáo viên.");
+
+            var dsLopCN = _context.LopHocs.Where(x => x.IdGiaoVienCN == giaoVienId.Value).ToList();
+            if (!dsLopCN.Any())
+            {
+                TempData["Error"] = "Bạn chưa được phân công chủ nhiệm lớp nào.";
+                return View(new HocPhiPageViewModel()); // Return empty view model
+            }
+
+            var lopHocIds = dsLopCN.Select(x => x.IdLop).ToList();
+
+            var query = _context.HocPhis
+                .Include(x => x.HocSinh).ThenInclude(x => x!.LopHoc)
+                .Include(x => x.NamHoc)
+                .Include(x => x.HocKyInfo)
+                .Where(x => x.HocSinh != null && x.HocSinh.IdLopHoc.HasValue && lopHocIds.Contains(x.HocSinh.IdLopHoc.Value))
+                .AsQueryable();
+
+            if (namHocId.HasValue)
+            {
+                query = query.Where(x => x.IdNamHoc == namHocId.Value);
+            }
+            if (hocKyId.HasValue)
+            {
+                query = query.Where(x => x.IdHocKy == hocKyId.Value);
+            }
+            if (lopId.HasValue)
+            {
+                query = query.Where(x => x.HocSinh != null && x.HocSinh.IdLopHoc == lopId.Value);
+            }
+
+            var vm = new HocPhiPageViewModel
+            {
+                DanhSach = query.OrderByDescending(x => x.HanDongTien).ToList(),
+                NamHocs = _context.NamHocs.OrderByDescending(x => x.TenNamHoc)
+                    .Select(x => new SelectListItem { Text = x.TenNamHoc, Value = x.IdNamHoc.ToString(), Selected = x.IdNamHoc == namHocId })
+                    .ToList(),
+                HocKys = _context.HocKys.OrderBy(x => x.TenHocKy)
+                    .Select(x => new SelectListItem { Text = x.TenHocKy, Value = x.IdHocKy.ToString(), Selected = x.IdHocKy == hocKyId })
+                    .ToList()
+            };
+
+            ViewBag.LopHocs = dsLopCN.OrderBy(x => x.TenLop).Select(x => new SelectListItem { Text = x.TenLop, Value = x.IdLop.ToString(), Selected = x.IdLop == lopId }).ToList();
+            ViewBag.NamHocId = namHocId;
+            ViewBag.HocKyId = hocKyId;
+            ViewBag.LopId = lopId;
+            return View(vm);
+        }
+
+        [RoleAuthorize(2)]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CapNhatTrangThaiHocPhi(int IdHocPhi, int TrangThai, int? namHocId, int? hocKyId, int? lopId)
+        {
+            var giaoVienId = GetCurrentGiaoVienId();
+            if (!giaoVienId.HasValue) return NotFound();
+
+            var hocPhi = _context.HocPhis.Include(x => x.HocSinh).FirstOrDefault(x => x.IdHocPhi == IdHocPhi);
+            if (hocPhi == null || hocPhi.HocSinh == null || !hocPhi.HocSinh.IdLopHoc.HasValue)
+            {
+                TempData["Error"] = "Khoản học phí không tồn tại hoặc dữ liệu không hợp lệ.";
+                return RedirectToAction(nameof(QuanLyHocPhi), new { namHocId, hocKyId, lopId });
+            }
+
+            // Check if teacher is homeroom teacher of this class
+            var isHomeroomTeacher = _context.LopHocs.Any(x => x.IdLop == hocPhi.HocSinh.IdLopHoc.Value && x.IdGiaoVienCN == giaoVienId.Value);
+            if (!isHomeroomTeacher)
+            {
+                TempData["Error"] = "Bạn không có quyền cập nhật học phí của học sinh này.";
+                return RedirectToAction(nameof(QuanLyHocPhi), new { namHocId, hocKyId, lopId });
+            }
+
+            // Update to selected status (0 = Chưa đóng, 1 = Đã đóng)
+            hocPhi.TrangThai = TrangThai;
+            if (TrangThai == 1) // Đã đóng
+            {
+                hocPhi.NgayDong = DateTime.Now;
+            }
+            else
+            {
+                hocPhi.NgayDong = null;
+            }
+
+            _context.SaveChanges();
+            TempData["Success"] = "Cập nhật trạng thái học phí thành công.";
+            return RedirectToAction(nameof(QuanLyHocPhi), new { namHocId, hocKyId, lopId });
         }
 
         [RoleAuthorize(2)]

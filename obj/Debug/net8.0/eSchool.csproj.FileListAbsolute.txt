@@ -489,3 +489,4 @@ C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\refint\eSchool.dll
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.pdb
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.genruntimeconfig.cache
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\ref\eSchool.dll
+C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.sourcelink.json

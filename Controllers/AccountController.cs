@@ -38,13 +38,13 @@ namespace eSchool.Controllers
 
             if (account == null || !account.TrangThai)
             {
-                TempData["ForgotPasswordError"] = "Tai khoan khong ton tai hoac dang bi khoa";
+                TempData["ForgotPasswordError"] = "Tài khon không tồn tại hoặc ảđang bị khoá";
                 return RedirectToAction("Index", "Home", new { openForgotPassword = true });
             }
 
             if (string.IsNullOrWhiteSpace(account.Email))
             {
-                TempData["ForgotPasswordError"] = "Tai khoan nay chua co Gmail/Email de nhan mat khau moi";
+                TempData["ForgotPasswordError"] = "Tài khoản này chưa có Email để nhận mật khẩu mới";
                 return RedirectToAction("Index", "Home", new { openForgotPassword = true });
             }
 
@@ -53,18 +53,18 @@ namespace eSchool.Controllers
             {
                 await _emailSender.SendAsync(
                     account.Email,
-                    "eSchool - Mat khau moi",
-                    $"Xin chao {account.Username},\n\nMat khau tam thoi cua ban la: {newPassword}\n\nSau khi dang nhap, he thong se yeu cau ban doi mat khau moi.");
+                    "eSchool - Mật khẩu mới",
+                    $"Xin chào {account.Username},\n\nMật khẩu tạm thời của bạn là: {newPassword}\n\nSau khi đăng nhập, hệ thống sẽ yêu cầu bạn đổi mật khẩu mới.");
             }
             catch (Exception ex)
             {
-                TempData["ForgotPasswordError"] = $"Khong gui duoc email: {ex.Message}";
+                TempData["ForgotPasswordError"] = $"Không gửi được email: {ex.Message}";
                 return RedirectToAction("Index", "Home", new { openForgotPassword = true });
             }
 
             _accountService.ResetPasswordAndRequireChange(account.IdTaiKhoan, newPassword);
-            _nhatKyService.GhiLog(account.Username, "Quen mat khau", "Da dat lai mat khau tam va yeu cau doi mat khau");
-            TempData["AuthSuccess"] = "Mat khau tam da duoc gui ve email. Sau khi dang nhap, ban can doi mat khau moi.";
+            _nhatKyService.GhiLog(account.Username, "Quên mật khẩu", "Đã đặt lại mật khẩu tạm và yêu cầu đổi mật khẩu");
+            TempData["AuthSuccess"] = "Mật khẩu tạm đã được gửi về email. Sau khi đăng nhập, bạn cần đổi mật khẩu mới.";
             return RedirectToAction(nameof(Login));
         }
 

@@ -889,6 +889,104 @@ namespace eSchool.Controllers
             return RedirectWithSuccess(nameof(NamHoc), "Đã xóa năm học.");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult TongKetNamHoc(int idNamHoc)
+        {
+            var namHoc = _context.NamHocs.Find(idNamHoc);
+            if (namHoc == null) return NotFound();
+
+            var hocSinhs = _context.HocSinhs
+                .Include(x => x.LopHoc)
+                .Where(x => x.TrangThai == true && x.IdLopHoc != null)
+                .ToList();
+
+            var diems = _context.Diems
+                .Where(x => x.IdNamHoc == idNamHoc && x.DiemTB.HasValue)
+                .ToList();
+
+            int passCount = 0;
+            int failCount = 0;
+            int gradCount = 0;
+
+            foreach (var hs in hocSinhs)
+            {
+                var hsDiems = diems.Where(x => x.IdHocSinh == hs.IdHocSinh).ToList();
+                decimal avg = hsDiems.Any() ? hsDiems.Average(x => x.DiemTB.Value) : 0;
+                
+                if (avg >= 5.0m)
+                {
+                    var currentTenLop = hs.LopHoc?.TenLop ?? "";
+                    var match = System.Text.RegularExpressions.Regex.Match(currentTenLop, @"^(\d+)(.*)$");
+                    if (match.Success)
+                    {
+                        int currentGrade = int.Parse(match.Groups[1].Value);
+                        int nextGrade = currentGrade + 1;
+
+                        if (nextGrade > 12)
+                        {
+                            _context.ChuyenLops.Add(new ChuyenLop
+                            {
+                                IdHocSinh = hs.IdHocSinh,
+                                IdLopCu = hs.IdLopHoc.Value,
+                                IdLopMoi = hs.IdLopHoc.Value,
+                                NgayChuyen = DateTime.Now,
+                                LyDo = "Tốt nghiệp",
+                                GhiChu = $"Học sinh {hs.HoTen} tốt nghiệp ra trường (ĐTB: {Math.Round(avg, 2)})"
+                            });
+                            hs.TrangThai = false;
+                            gradCount++;
+                        }
+                        else
+                        {
+                            var nextTenLop = $"{nextGrade}{match.Groups[2].Value}";
+                            var nextLop = _context.LopHocs.FirstOrDefault(x => x.TenLop.ToLower() == nextTenLop.ToLower());
+                            if (nextLop == null)
+                            {
+                                nextLop = new LopHoc
+                                {
+                                    MaLop = nextTenLop,
+                                    TenLop = nextTenLop,
+                                    Khoi = nextGrade.ToString(),
+                                    NamHoc = namHoc.TenNamHoc
+                                };
+                                _context.LopHocs.Add(nextLop);
+                                _context.SaveChanges();
+                            }
+
+                            _context.ChuyenLops.Add(new ChuyenLop
+                            {
+                                IdHocSinh = hs.IdHocSinh,
+                                IdLopCu = hs.IdLopHoc.Value,
+                                IdLopMoi = nextLop.IdLop,
+                                NgayChuyen = DateTime.Now,
+                                LyDo = "Lên lớp",
+                                GhiChu = $"Học sinh {hs.HoTen} lên lớp {nextTenLop} (ĐTB: {Math.Round(avg, 2)})"
+                            });
+                            hs.IdLopHoc = nextLop.IdLop;
+                            passCount++;
+                        }
+                    }
+                }
+                else
+                {
+                    _context.ChuyenLops.Add(new ChuyenLop
+                    {
+                        IdHocSinh = hs.IdHocSinh,
+                        IdLopCu = hs.IdLopHoc.Value,
+                        IdLopMoi = hs.IdLopHoc.Value,
+                        NgayChuyen = DateTime.Now,
+                        LyDo = "Ở lại lớp",
+                        GhiChu = $"Học sinh {hs.HoTen} ở lại lớp {hs.LopHoc?.TenLop} (ĐTB: {Math.Round(avg, 2)})"
+                    });
+                    failCount++;
+                }
+            }
+            
+            _context.SaveChanges();
+            return RedirectWithSuccess(nameof(NamHoc), $"Tổng kết năm học hoàn tất. Lên lớp: {passCount}, Ở lại lớp: {failCount}, Tốt nghiệp: {gradCount}.");
+        }
+
         public IActionResult HocKy()
         {
             var vm = new HocKyPageViewModel
