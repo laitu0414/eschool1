@@ -8,50 +8,135 @@
     string keyword = ViewBag.Keyword as string ?? "";
 }
 
-@if (ViewBag.FilterLopId == null || string.IsNullOrEmpty(ViewBag.FilterNamHoc) || string.IsNullOrEmpty(ViewBag.FilterHocKy))
-{
-    <div class="d-flex align-items-center justify-content-center" style="min-height: 70vh;">
-        <div class="card shadow border-0" style="max-width: 450px; width: 100%; border-radius: 1rem;">
-            <div class="card-body p-5 text-center">
-                <div class="mb-4">
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-shield-exclamation fs-1"></i>
-                    </div>
-                    <h4 class="fw-bold text-dark">Kỷ luật học sinh</h4>
-                    <p class="text-muted small">Vui lòng chọn thông tin để hiển thị danh sách kỷ luật</p>
-                </div>
+<style>
+    .filter-wrapper {
+        min-height: 70vh;
+        background: radial-gradient(circle at top right, rgba(238, 242, 247, 0.6), transparent),
+                    radial-gradient(circle at bottom left, rgba(226, 232, 240, 0.4), transparent);
+        border-radius: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .filter-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+        border-radius: 24px;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+    .filter-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.07), 0 5px 15px rgba(0,0,0,0.03);
+    }
+    .icon-wrapper {
+        width: 85px; 
+        height: 85px; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 25px;
+        box-shadow: 0 10px 25px rgba(118, 75, 162, 0.3);
+        transform: rotate(-3deg);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .filter-card:hover .icon-wrapper {
+        transform: rotate(0deg) scale(1.05);
+    }
+    .icon-wrapper i {
+        color: #fff;
+        font-size: 2.2rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .custom-floating > .form-select {
+        height: 3.8rem;
+        border-radius: 14px;
+        border: 2px solid #e2e8f0;
+        background-color: #f8fafc;
+        font-weight: 500;
+        color: #334155;
+        transition: all 0.3s ease;
+        padding-top: 1.625rem;
+        padding-bottom: 0.625rem;
+    }
+    .custom-floating > .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        background-color: #ffffff;
+    }
+    .custom-floating > label {
+        color: #64748b;
+        font-weight: 500;
+        padding-left: 1rem;
+    }
+    .btn-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        border-radius: 14px;
+        padding: 14px 20px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        font-size: 0.95rem;
+    }
+    .btn-gradient:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        box-shadow: 0 8px 20px rgba(118, 75, 162, 0.35);
+        transform: translateY(-2px);
+        color: white;
+    }
+    .btn-gradient:active {
+        transform: translateY(0);
+        box-shadow: 0 4px 10px rgba(118, 75, 162, 0.3);
+    }
+</style>
 
-                <form method="get">
-                    <div class="mb-3 text-start">
-                        <label class="form-label fw-medium">Năm học</label>
-                        <select name="namHoc" asp-items="ViewBag.NamHocs" class="form-select form-select-lg shadow-none border-secondary-subtle" required>
-                            <option value="">-- Chọn năm học --</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3 text-start">
-                        <label class="form-label fw-medium">Học kỳ</label>
-                        <select name="hocKy" asp-items="ViewBag.HocKys" class="form-select form-select-lg shadow-none border-secondary-subtle" required>
-                            <option value="">-- Chọn học kỳ --</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4 text-start">
-                        <label class="form-label fw-medium">Lớp học</label>
-                        <select name="lopId" asp-items="ViewBag.LopHocs" class="form-select form-select-lg shadow-none border-secondary-subtle" required>
-                            <option value="">-- Chọn lớp học --</option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3">
-                        <i class="bi bi-search me-2"></i> Hiển thị danh sách
-                    </button>
-                </form>
+    <div class="d-flex align-items-center justify-content-center filter-wrapper py-5" style="@(ViewBag.FilterLopId != null ? "min-height: auto;" : "")">
+        <div class="filter-card p-5 text-center" style="max-width: 800px; width: 100%; margin: 0 15px;">
+            <div class="icon-wrapper">
+                <i class="bi bi-shield-exclamation"></i>
             </div>
+            <h3 class="fw-bolder text-dark mb-2" style="letter-spacing: -0.5px;">Kỷ Luật Học Sinh</h3>
+            <p class="text-muted mb-4 pb-2" style="font-size: 0.95rem;">Lựa chọn thông tin để hiển thị danh sách kỷ luật của học sinh.</p>
+
+            <form method="get">
+                <div class="row g-3 text-start mb-4">
+                    <div class="col-md-4">
+                        <div class="form-floating custom-floating">
+                            <select name="namHoc" asp-items="ViewBag.NamHocs" class="form-select" id="namHocSelect" required>
+                                <option value="" disabled selected>-- Chọn năm học --</option>
+                            </select>
+                            <label for="namHocSelect"><i class="bi bi-clock-history me-1 text-primary"></i> Năm học</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating custom-floating">
+                            <select name="hocKy" asp-items="ViewBag.HocKys" class="form-select" id="hocKySelect" required>
+                                <option value="" disabled selected>-- Chọn học kỳ --</option>
+                            </select>
+                            <label for="hocKySelect"><i class="bi bi-calendar-check me-1 text-primary"></i> Học kỳ</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating custom-floating">
+                            <select name="lopId" asp-items="ViewBag.LopHocs" class="form-select" id="lopSelect" required>
+                                <option value="" disabled selected>-- Chọn lớp học --</option>
+                            </select>
+                            <label for="lopSelect"><i class="bi bi-people-fill me-1 text-primary"></i> Lớp học</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-gradient btn-lg w-100 mt-2">
+                    <i class="bi bi-search me-2"></i> Hiển thị danh sách
+                </button>
+            </form>
         </div>
     </div>
-}
-else
+@if (ViewBag.FilterLopId != null && !string.IsNullOrEmpty(ViewBag.FilterNamHoc) && !string.IsNullOrEmpty(ViewBag.FilterHocKy))
 {
     <div class="student-management-page">
         <div class="student-admin-page">

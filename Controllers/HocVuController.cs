@@ -912,7 +912,32 @@ namespace eSchool.Controllers
             foreach (var hs in hocSinhs)
             {
                 var hsDiems = diems.Where(x => x.IdHocSinh == hs.IdHocSinh).ToList();
-                decimal avg = hsDiems.Any() ? hsDiems.Average(x => x.DiemTB.Value) : 0;
+                
+                var diemsHK1 = hsDiems.Where(x => x.HocKy == "Học kỳ 1" || x.HocKyInfo?.TenHocKy == "Học kỳ 1").ToList();
+                var diemsHK2 = hsDiems.Where(x => x.HocKy == "Học kỳ 2" || x.HocKyInfo?.TenHocKy == "Học kỳ 2").ToList();
+
+                decimal avg1 = diemsHK1.Any() ? diemsHK1.Average(x => x.DiemTB.Value) : 0;
+                decimal avg2 = diemsHK2.Any() ? diemsHK2.Average(x => x.DiemTB.Value) : 0;
+
+                decimal avg = 0;
+                if (diemsHK1.Any() && diemsHK2.Any())
+                {
+                    // If both semesters have grades, calculate (HK1 + HK2 * 2) / 3
+                    avg = (avg1 + avg2 * 2) / 3;
+                }
+                else if (diemsHK1.Any())
+                {
+                    avg = avg1;
+                }
+                else if (diemsHK2.Any())
+                {
+                    avg = avg2;
+                }
+                else
+                {
+                    // Fallback to simple average if no semester info matches
+                    avg = hsDiems.Any() ? hsDiems.Average(x => x.DiemTB.Value) : 0;
+                }
                 
                 if (avg >= 5.0m)
                 {
