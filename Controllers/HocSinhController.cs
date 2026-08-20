@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 namespace eSchool.Controllers
 {
-    [RoleAuthorize(1, 3)]
+    [RoleAuthorize(1, 3, 4)]
     public class HocSinhController : Controller
     {
         private static readonly HashSet<string> AllowedImageExtensions =
@@ -243,7 +243,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(KyLuat));
         }
 
-        [RoleAuthorize(3)]
+        [RoleAuthorize(3, 4)]
         public IActionResult HoSoCaNhan()
         {
             var hocSinhId = GetCurrentHocSinhId();
@@ -257,7 +257,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(HoSo), new { id = hocSinh.IdHocSinh });
         }
 
-        [RoleAuthorize(3)]
+        [RoleAuthorize(3, 4)]
         public IActionResult ThoiKhoaBieu(string? hocKy, string? namHoc, DateTime? tuan)
         {
             var selectedDate = tuan;
@@ -502,6 +502,18 @@ namespace eSchool.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             var username = HttpContext.Session.GetString("Username");
+            var roleId = HttpContext.Session.GetInt32("RoleId");
+
+            if (roleId == 4)
+            {
+                var ph = _context.PhuHuynhs.FirstOrDefault(x => x.IdTaiKhoan == userId);
+                if (ph != null)
+                {
+                    var hsp = _context.HocSinhPhuHuynhs.FirstOrDefault(x => x.IdPhuHuynh == ph.IdPhuHuynh);
+                    if (hsp != null) return hsp.IdHocSinh;
+                }
+                return null;
+            }
 
             var hocSinhId = _context.HocSinhs
                 .Where(x => x.IdTaiKhoan == userId)

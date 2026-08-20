@@ -53,19 +53,55 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var khoiSelect = document.getElementById('Khoi');
-        var buoiHocSelect = document.getElementById('BuoiHocSelect');
-        
-        if (khoiSelect && buoiHocSelect) {
-            khoiSelect.addEventListener('change', function () {
-                var val = this.value;
-                if (val === 'Khối 6' || val === 'Khối 7') {
-                    buoiHocSelect.value = 'Sáng';
-                } else if (val === 'Khối 8' || val === 'Khối 9') {
-                    buoiHocSelect.value = 'Chiều';
+    if (!window.lopFormScriptLoaded) {
+        window.lopFormScriptLoaded = true;
+
+        document.addEventListener('change', function (e) {
+            if (e.target.matches('select[name="Khoi"]')) {
+                var form = e.target.closest('.row');
+                if (!form) return;
+                var buoiHocSelect = form.querySelector('select[name="BuoiHoc"]');
+                if (buoiHocSelect) {
+                    var val = e.target.value;
+                    if (val === 'Khối 6' || val === 'Khối 7') {
+                        buoiHocSelect.value = 'Sáng';
+                    } else if (val === 'Khối 8' || val === 'Khối 9') {
+                        buoiHocSelect.value = 'Chiều';
+                    }
                 }
-            });
+            }
+            
+            if (e.target.matches('select[name="NamHoc"]')) {
+                generateMaLopForForm(e.target);
+            }
+        });
+
+        document.addEventListener('input', function (e) {
+            if (e.target.matches('input[name="TenLop"]')) {
+                generateMaLopForForm(e.target);
+            }
+        });
+
+        function generateMaLopForForm(element) {
+            var form = element.closest('.row');
+            if (!form) return;
+            
+            var namHocSelect = form.querySelector('select[name="NamHoc"]');
+            var tenLopInput = form.querySelector('input[name="TenLop"]');
+            var maLopInput = form.querySelector('input[name="MaLop"]');
+            
+            if (!namHocSelect || !tenLopInput || !maLopInput) return;
+            
+            var namHocText = namHocSelect.options[namHocSelect.selectedIndex]?.text;
+            var tenLopVal = tenLopInput.value;
+
+            if (namHocText && namHocText.includes('-') && tenLopVal) {
+                var year = namHocText.split('-')[0].trim(); 
+                if (year.length === 4) {
+                    var k = "K" + year.substring(2); 
+                    maLopInput.value = k + "_" + tenLopVal.trim().toUpperCase();
+                }
+            }
         }
-    });
+    }
 </script>

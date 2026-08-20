@@ -838,15 +838,46 @@ namespace eSchool.Controllers
             if (_context.NamHocs.Any(x => x.TenNamHoc == model.TenNamHoc))
                 return RedirectWithError(nameof(NamHoc), "Năm học đã tồn tại.");
 
-            _context.NamHocs.Add(new NamHoc
+            var newNamHoc = new NamHoc
             {
                 TenNamHoc = model.TenNamHoc.Trim(),
                 NgayBatDau = model.NgayBatDau,
                 NgayKetThuc = model.NgayKetThuc,
                 TrangThai = model.TrangThai
-            });
+            };
+            
+            _context.NamHocs.Add(newNamHoc);
             _context.SaveChanges();
-            return RedirectWithSuccess(nameof(NamHoc), "Đã thêm năm học.");
+
+            // Tự động tạo 2 học kỳ nếu đúng định dạng (VD: 2026-2027)
+            var match = System.Text.RegularExpressions.Regex.Match(newNamHoc.TenNamHoc, @"^(\d{4})-(\d{4})$");
+            if (match.Success)
+            {
+                if (int.TryParse(match.Groups[1].Value, out int startYear) && int.TryParse(match.Groups[2].Value, out int endYear))
+                {
+                    _context.HocKys.Add(new HocKy
+                    {
+                        IdNamHoc = newNamHoc.IdNamHoc,
+                        TenHocKy = "Học kỳ 1",
+                        NgayBatDau = new DateTime(startYear, 9, 5),
+                        NgayKetThuc = new DateTime(startYear, 12, 31),
+                        TrangThai = true
+                    });
+
+                    _context.HocKys.Add(new HocKy
+                    {
+                        IdNamHoc = newNamHoc.IdNamHoc,
+                        TenHocKy = "Học kỳ 2",
+                        NgayBatDau = new DateTime(endYear, 1, 1),
+                        NgayKetThuc = new DateTime(endYear, 5, 31),
+                        TrangThai = true
+                    });
+
+                    _context.SaveChanges();
+                }
+            }
+
+            return RedirectWithSuccess(nameof(NamHoc), "Đã thêm năm học và tự động tạo 2 học kỳ.");
         }
 
         [HttpPost]

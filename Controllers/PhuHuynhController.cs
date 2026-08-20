@@ -21,7 +21,21 @@ namespace eSchool.Controllers
         private HocSinh? GetCurrentHocSinh()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
+            var roleId = HttpContext.Session.GetInt32("RoleId");
             if (userId == null) return null;
+
+            if (roleId == 4)
+            {
+                var ph = _context.PhuHuynhs.FirstOrDefault(x => x.IdTaiKhoan == userId);
+                if (ph != null)
+                {
+                    var hsp = _context.HocSinhPhuHuynhs.FirstOrDefault(x => x.IdPhuHuynh == ph.IdPhuHuynh);
+                    if (hsp != null)
+                        return _context.HocSinhs.FirstOrDefault(x => x.IdHocSinh == hsp.IdHocSinh);
+                }
+                return null;
+            }
+
             return _context.HocSinhs.FirstOrDefault(x => x.IdTaiKhoan == userId);
         }
 
@@ -82,6 +96,21 @@ namespace eSchool.Controllers
                 NgheNghiep = vm.NgheNghiep,
                 TrangThai = vm.TrangThai
             };
+            if (!string.IsNullOrWhiteSpace(vm.SDT) && !_context.TaiKhoans.Any(x => x.Username == vm.SDT))
+            {
+                var taiKhoan = new TaiKhoan
+                {
+                    Username = vm.SDT,
+                    Password = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    IdChucVu = 4,
+                    TrangThai = true,
+                    BatBuocDoiMatKhau = true
+                };
+                _context.TaiKhoans.Add(taiKhoan);
+                _context.SaveChanges();
+                ph.IdTaiKhoan = taiKhoan.IdTaiKhoan;
+            }
+
             _context.PhuHuynhs.Add(ph);
             _context.SaveChanges();
 

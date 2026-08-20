@@ -1,7 +1,8 @@
 @using eSchool.Models
+@using Microsoft.AspNetCore.Http
 @model eSchool.ViewModels.HocPhiPageViewModel
 @{
-    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    Layout = Context.Session.GetInt32("RoleId") switch { 1 => "~/Views/Shared/_AdminLayout.cshtml", 4 => "~/Views/Shared/_ParentLayout.cshtml", _ => "~/Views/Shared/_StudentLayout.cshtml" };
     ViewData["Title"] = "Học phí";
 
     var hocSinh = ViewBag.HocSinh as HocSinh;
@@ -75,12 +76,15 @@
                     <tr>
                         <th>Năm học</th>
                         <th>Học kỳ</th>
-                        <th>Số tiền</th>
-                        <th>Hạn đóng</th>
-                        <th>Ngày đóng</th>
-                        <th>Phương thức</th>
-                        <th>Trạng thái</th>
-                        <th class="text-end">Thanh toán</th>
+                        @if (Context.Session.GetInt32("RoleId") == 4)
+                        {
+                            <th>Số tiền</th>
+                            <th class="text-end">Thanh toán</th>
+                        }
+                        else
+                        {
+                            <th>Trạng thái</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -97,31 +101,30 @@
                             <tr>
                                 <td>@item.NamHoc?.TenNamHoc</td>
                                 <td>@(item.HocKyInfo?.TenHocKy ?? item.HocKy)</td>
-                                <td class="student-fee-money">@item.SoTien.ToString("N0") đ</td>
-                                <td>@item.HanDongTien?.ToString("dd/MM/yyyy")</td>
-                                <td>@item.NgayDong?.ToString("dd/MM/yyyy")</td>
-                                <td>@(string.IsNullOrWhiteSpace(item.PhuongThuc) ? "-" : item.PhuongThuc)</td>
-                                <td>
-                                    <span class="student-fee-badge @(item.TrangThai == 1 ? "success" : item.TrangThai == 2 ? "danger" : "warning")">
-                                        @Status(item.TrangThai)
-                                    </span>
-                                </td>
-                                <td class="text-end">
-                                    @if (item.TrangThai == 1)
-                                    {
-                                        <span class="student-fee-paid-label">Đã thanh toán</span>
-                                    }
-                                    else
-                                    {
-                                        <form asp-action="DongHocPhi" asp-route-id="@item.IdHocPhi" method="post" class="student-fee-pay-form">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="phuongThuc" value="QR" />
-                                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Hệ thống sẽ gửi mã QR thanh toán vào email của phụ huynh (hoặc email của bạn nếu chưa có phụ huynh). Bạn có chắc chắn?');">
-                                                <i class="bi bi-qr-code me-1"></i>Thanh toán qua QR
+                                @if (Context.Session.GetInt32("RoleId") == 4)
+                                {
+                                    <td class="student-fee-money">@item.SoTien.ToString("N0") đ</td>
+                                    <td class="text-end">
+                                        @if (item.TrangThai == 1)
+                                        {
+                                            <span class="student-fee-paid-label text-success"><i class="bi bi-check-circle-fill me-1"></i>Đã thanh toán</span>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#payModal_@item.IdHocPhi">
+                                                <i class="bi bi-credit-card me-1"></i>Thanh toán
                                             </button>
-                                        </form>
-                                    }
-                                </td>
+                                        }
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td>
+                                        <span class="student-fee-badge @(item.TrangThai == 1 ? "success" : item.TrangThai == 2 ? "danger" : "warning")">
+                                            @Status(item.TrangThai)
+                                        </span>
+                                    </td>
+                                }
                             </tr>
                         }
                     }
@@ -130,3 +133,48 @@
         </div>
     </div>
 </div>
+
+@if (Context.Session.GetInt32("RoleId") == 4)
+{
+    @foreach (var item in Model.DanhSach.Where(x => x.TrangThai != 1))
+    {
+        <div class="modal fade" id="payModal_@item.IdHocPhi" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow" style="border-radius: 12px; overflow: hidden;">
+                    <div class="modal-header text-white" style="background: linear-gradient(90deg, #ff5722 0%, #f44336 100%); border-bottom: none;">
+                        <h5 class="modal-title fw-bold">Chọn phương thức thanh toán</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="p-3 mb-4" style="background: #fffcf5; border: 1px solid #ffecb3; border-radius: 8px;">
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Năm học</small>
+                                <strong class="fs-6 text-dark">@item.NamHoc?.TenNamHoc</strong>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Học kỳ</small>
+                                <strong class="fs-6 text-dark">@(item.HocKyInfo?.TenHocKy ?? item.HocKy)</strong>
+                            </div>
+                            <div class="pt-2" style="border-top: 1px dashed #e0e0e0;">
+                                <small class="text-muted d-block">Số tiền thanh toán</small>
+                                <strong class="fs-3" style="color: #d32f2f;">@item.SoTien.ToString("N0") <span class="fs-5 text-decoration-underline">đ</span></strong>
+                            </div>
+                        </div>
+
+                        <form asp-action="DongHocPhi" asp-route-id="@item.IdHocPhi" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="phuongThuc" value="VNPAY" />
+                            <button type="submit" class="btn w-100 mb-3 py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(90deg, #1976d2 0%, #7b1fa2 100%); border: none; border-radius: 8px;">
+                                <i class="bi bi-credit-card me-2"></i>Thanh toán Online (VNPAY)
+                            </button>
+                        </form>
+
+                        <div class="alert mb-0" style="background-color: #f5f8fc; border: none; color: #5c728e; border-radius: 8px;">
+                            <i class="bi bi-info-circle me-1 text-primary"></i> <strong>Thanh toán Online:</strong> Bạn sẽ được chuyển đến trang VNPAY để chọn ngân hàng và hoàn tất thanh toán.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}

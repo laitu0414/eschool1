@@ -168,7 +168,7 @@ namespace eSchool.Controllers
                 1 => RedirectToAction("Index", "Admin"),
                 2 => RedirectToAction("HoSoCaNhan", "GiaoVien"),
                 3 => RedirectToAction("HoSoCaNhan", "HocSinh"),
-                4 => RedirectToAction("Index", "PhuHuynh"),
+                4 => RedirectToAction("HoSoCaNhan", "HocSinh"),
                 5 => RedirectToAction("Index", "Admin"),
                 _ => InvalidRole()
             };

@@ -12,7 +12,7 @@ using ClosedXML.Excel;
 
 namespace eSchool.Controllers
 {
-    [RoleAuthorize(1, 2, 3)]
+    [RoleAuthorize(1, 2, 3, 4)]
     public class KetQuaHocTapController : Controller
     {
         private readonly AppDbContext _context;
@@ -385,7 +385,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(Diem), new { lopId, hocKyId });
         }
 
-        [RoleAuthorize(3)]
+        [RoleAuthorize(3, 4)]
         public IActionResult XemDiem(int? namHocId, int? hocKyId)
         {
             var hocSinh = GetCurrentHocSinh();
@@ -681,7 +681,7 @@ namespace eSchool.Controllers
             });
         }
 
-        [RoleAuthorize(3)]
+        [RoleAuthorize(3, 4)]
         public IActionResult XemDiemDanh(int? idMonHoc)
         {
             var hocSinh = GetCurrentHocSinh();
@@ -825,7 +825,7 @@ namespace eSchool.Controllers
             return View(vm);
         }
 
-        [RoleAuthorize(3)]
+        [RoleAuthorize(3, 4)]
         public async Task<IActionResult> XemHocPhi(int? trangThai, int? namHocId)
         {
             await UpdateQuaHanHocPhi();
@@ -1199,7 +1199,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(3)]
+        [RoleAuthorize(3, 4)]
         public async Task<IActionResult> DongHocPhi(int id, string? phuongThuc)
         {
             var hocSinh = GetCurrentHocSinh();
@@ -1217,6 +1217,46 @@ namespace eSchool.Controllers
             if (hocPhi.TrangThai == 1)
             {
                 return Success(nameof(XemHocPhi), "Khoản học phí này đã được thanh toán trước đó.");
+            }
+            
+            if (phuongThuc == "VNPAY")
+            {
+                string vnp_Returnurl = Url.Action("VnPayReturn", "KetQuaHocTap", new { id = hocPhi.IdHocPhi }, Request.Scheme) ?? "";
+                string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+                string vnp_TmnCode = "8241VKPZ"; // Mã website tại VNPAY (dummy)
+                string vnp_HashSecret = "BPKRATFNMZUPZTLNAVOAMUVDAALOMZKN"; // Chuỗi bí mật (dummy)
+
+                var vnpayData = new SortedList<string, string>(new VnPayCompare())
+                {
+                    { "vnp_Version", "2.1.0" },
+                    { "vnp_Command", "pay" },
+                    { "vnp_TmnCode", vnp_TmnCode },
+                    { "vnp_Amount", ((long)(hocPhi.SoTien * 100)).ToString() },
+                    { "vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss") },
+                    { "vnp_CurrCode", "VND" },
+                    { "vnp_IpAddr", HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1" },
+                    { "vnp_Locale", "vn" },
+                    { "vnp_OrderInfo", $"Thanh toan hoc phi {hocPhi.HocKy}" },
+                    { "vnp_OrderType", "other" },
+                    { "vnp_ReturnUrl", vnp_Returnurl },
+                    { "vnp_TxnRef", DateTime.Now.Ticks.ToString() }
+                };
+
+                var queryString = new System.Text.StringBuilder();
+                foreach (var kv in vnpayData)
+                {
+                    if (!string.IsNullOrEmpty(kv.Value))
+                    {
+                        queryString.Append(System.Net.WebUtility.UrlEncode(kv.Key) + "=" + System.Net.WebUtility.UrlEncode(kv.Value) + "&");
+                    }
+                }
+                
+                string signDataStr = queryString.ToString().TrimEnd('&');
+                string vnp_SecureHash = HmacSHA512(vnp_HashSecret, signDataStr);
+                queryString.Append("vnp_SecureHash=" + vnp_SecureHash);
+                
+                string paymentUrl = vnp_Url + "?" + queryString.ToString();
+                return Redirect(paymentUrl);
             }
 
             if (phuongThuc != "QR")
@@ -1254,6 +1294,55 @@ namespace eSchool.Controllers
             return Success(nameof(XemHocPhi), "Đã gửi mã QR thanh toán vào email của phụ huynh.");
         }
 
+        [RoleAuthorize(3, 4)]
+        public IActionResult VnPayReturn(int id)
+        {
+            var vnp_ResponseCode = Request.Query["vnp_ResponseCode"].ToString();
+            
+            if (vnp_ResponseCode == "00")
+            {
+                // Payment success
+                var hocPhi = _context.HocPhis.Find(id);
+                if (hocPhi != null && hocPhi.TrangThai != 1)
+                {
+                    hocPhi.TrangThai = 1;
+                    hocPhi.NgayDong = DateTime.Today;
+                    hocPhi.PhuongThuc = "VNPAY";
+                    _context.SaveChanges();
+                    return Success(nameof(XemHocPhi), "Thanh toán qua VNPAY thành công.");
+                }
+            }
+            
+            return Error(nameof(XemHocPhi), "Thanh toán qua VNPAY thất bại hoặc bị hủy.");
+        }
+
+        private string HmacSHA512(string key, string inputData)
+        {
+            var hash = new System.Text.StringBuilder();
+            byte[] keyBytes = System.Text.Encoding.UTF8.GetBytes(key);
+            byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(inputData);
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(keyBytes))
+            {
+                byte[] hashValue = hmac.ComputeHash(inputBytes);
+                foreach (var theByte in hashValue)
+                {
+                    hash.Append(theByte.ToString("x2"));
+                }
+            }
+            return hash.ToString();
+        }
+
+        public class VnPayCompare : IComparer<string>
+        {
+            public int Compare(string? x, string? y)
+            {
+                if (x == y) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+                var Compare = System.Globalization.CompareInfo.GetCompareInfo("en-US");
+                return Compare.Compare(x, y, System.Globalization.CompareOptions.Ordinal);
+            }
+        }
         [RoleAuthorize(1)]
         public IActionResult PhieuDiem()
         {
@@ -1566,6 +1655,23 @@ namespace eSchool.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             var username = HttpContext.Session.GetString("Username");
+            var roleId = HttpContext.Session.GetInt32("RoleId");
+
+            if (roleId == 4)
+            {
+                var ph = _context.PhuHuynhs.FirstOrDefault(x => x.IdTaiKhoan == userId);
+                if (ph != null)
+                {
+                    var hsp = _context.HocSinhPhuHuynhs.FirstOrDefault(x => x.IdPhuHuynh == ph.IdPhuHuynh);
+                    if (hsp != null)
+                    {
+                        return _context.HocSinhs
+                            .Include(x => x.LopHoc)
+                            .FirstOrDefault(x => x.IdHocSinh == hsp.IdHocSinh);
+                    }
+                }
+                return null;
+            }
 
             var hocSinh = _context.HocSinhs
                 .Include(x => x.LopHoc)

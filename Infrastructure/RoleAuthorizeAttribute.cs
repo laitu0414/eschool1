@@ -44,7 +44,7 @@ namespace eSchool.Infrastructure
                 1 => new RedirectToActionResult("Index", "Admin", null),
                 2 => new RedirectToActionResult("HoSoCaNhan", "GiaoVien", null),
                 3 => new RedirectToActionResult("HoSoCaNhan", "HocSinh", null),
-                4 => new RedirectToActionResult("Index", "PhuHuynh", null),
+                4 => new RedirectToActionResult("HoSoCaNhan", "HocSinh", null),
                 5 => new RedirectToActionResult("Index", "Admin", null),
                 _ => new RedirectToActionResult("Login", "Account", null)
             };

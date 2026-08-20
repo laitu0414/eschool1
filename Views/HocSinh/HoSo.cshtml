@@ -1,9 +1,7 @@
-﻿@model eSchool.ViewModels.HocSinhViewModel
+@model eSchool.ViewModels.HocSinhViewModel
 
 @{
-    Layout = Context.Session.GetInt32("RoleId") == 1
-        ? "~/Views/Shared/_AdminLayout.cshtml"
-        : "~/Views/Shared/_StudentLayout.cshtml";
+    Layout = Context.Session.GetInt32("RoleId") switch { 1 => "~/Views/Shared/_AdminLayout.cshtml", 4 => "~/Views/Shared/_ParentLayout.cshtml", _ => "~/Views/Shared/_StudentLayout.cshtml" };
     ViewData["Title"] = "Hồ sơ học sinh";
 }
 
@@ -43,10 +41,13 @@
                     <td>@Model.TenLop</td>
                 </tr>
 
-                <tr>
-                    <th>Tài khoản</th>
-                    <td>@(Model.TenTaiKhoan ?? "Chưa liên kết")</td>
-                </tr>
+                @if (Context.Session.GetInt32("RoleId") != 4)
+                {
+                    <tr>
+                        <th>Tài khoản</th>
+                        <td>@(Model.TenTaiKhoan ?? "Chưa liên kết")</td>
+                    </tr>
+                }
 
                 <tr>
                     <th>SĐT</th>
@@ -69,7 +70,10 @@
                 </tr>
             </table>
 
-            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            @if (Context.Session.GetInt32("RoleId") != 4)
+            {
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            }
         </div>
     </div>
 </div>

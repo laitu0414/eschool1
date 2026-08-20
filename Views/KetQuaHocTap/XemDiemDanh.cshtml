@@ -1,6 +1,6 @@
 @model eSchool.ViewModels.HocSinhDiemDanhPageViewModel
 @{
-    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    Layout = Context.Session.GetInt32("RoleId") switch { 1 => "~/Views/Shared/_AdminLayout.cshtml", 4 => "~/Views/Shared/_ParentLayout.cshtml", _ => "~/Views/Shared/_StudentLayout.cshtml" };
     ViewData["Title"] = "Điểm danh";
 }
 

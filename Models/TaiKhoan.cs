@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace eSchool.Models
@@ -32,6 +32,8 @@ namespace eSchool.Models
         public GiaoVien? GiaoVien { get; set; }
 
         public HocSinh? HocSinh { get; set; }
+
+        public PhuHuynh? PhuHuynh { get; set; }
 
         public ICollection<ThongBao>? ThongBaos { get; set; }
     }
