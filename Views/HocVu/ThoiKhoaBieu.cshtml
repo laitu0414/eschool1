@@ -434,38 +434,60 @@
                                     continue;
                                 }
 
-                                var item = Model.DanhSach.FirstOrDefault(x => x.IdLop == lop.IdLop && x.Thu == thu && x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet);
-                                
-                                if (item != null)
+                                var replacement = thayDois.FirstOrDefault(x => x.Ngay.Date == currentDateForCell.Date && x.IdLop == lop.IdLop && x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet && !x.IsNghi && x.GhiChu != null && x.GhiChu.StartsWith("Dạy bù"));
+                                if (replacement != null)
                                 {
-                                    if (item.TietBatDau == tiet)
+                                    if (replacement.TietBatDau == tiet)
                                     {
-                                        <td rowspan="@(item.SoTiet ?? 1)" class="position-relative hover-show-actions" style="background-color: #f8f9fa;">
-                                            <div class="fw-bold text-primary">@(item.MonHoc?.TenMon ?? "Trống")</div>
-                                            <div class="text-muted small">@(item.GiaoVien?.HoTen ?? "Chưa phân GV")</div>
+                                        <td rowspan="@(replacement.SoTiet ?? 1)" class="position-relative hover-show-actions" style="background-color: #d1fae5; border: 2px dashed #10b981;">
+                                            <div class="fw-bold text-primary">@(replacement.MonHocThayThe?.TenMon ?? "Trống")</div>
+                                            <div class="text-muted small">@(replacement.GiaoVienThayThe?.HoTen ?? "Chưa phân GV")</div>
                                             @{
-                                                var doiPhongThayDoi = thayDois.FirstOrDefault(x => x.Ngay.Date == currentDateForCell.Date && x.IdLop == lop.IdLop && !x.IsNghi && x.GhiChu != null && x.GhiChu.StartsWith("Đổi phòng: "));
-                                                var roomCode = item.PhongHoc?.MaPhong;
-                                                if (doiPhongThayDoi != null)
-                                                {
-                                                    roomCode = doiPhongThayDoi.GhiChu.Replace("Đổi phòng: ", "");
-                                                }
+                                                string roomCode = replacement.GhiChu?.Replace("Dạy bù | Phòng: ", "");
                                             }
-                                            @if (!string.IsNullOrEmpty(roomCode))
+                                            @if (!string.IsNullOrEmpty(roomCode) && roomCode != "Dạy bù")
                                             {
                                                 <div class="text-info small fw-bold mt-1"><i class="bi bi-geo-alt-fill"></i> @roomCode</div>
                                             }
-                                            
-                                            <form asp-action="XoaLich" asp-route-id="@item.IdPhanCong" method="post" class="position-absolute top-0 end-0 p-1 d-none action-btn" onsubmit="return confirm('Xóa lịch này?');">
-                                                @Html.AntiForgeryToken()
-                                                <button class="btn btn-sm text-danger p-0"><i class="bi bi-x-circle-fill"></i></button>
-                                            </form>
+                                            <div class="badge bg-success mt-1">Dạy bù / Chuyển đến</div>
                                         </td>
                                     }
                                 }
                                 else
                                 {
-                                    <td></td>
+                                    var item = Model.DanhSach.FirstOrDefault(x => x.IdLop == lop.IdLop && x.Thu == thu && x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet);
+                                    
+                                    if (item != null)
+                                    {
+                                        if (item.TietBatDau == tiet)
+                                        {
+                                            <td rowspan="@(item.SoTiet ?? 1)" class="position-relative hover-show-actions" style="background-color: #f8f9fa;">
+                                                <div class="fw-bold text-primary">@(item.MonHoc?.TenMon ?? "Trống")</div>
+                                                <div class="text-muted small">@(item.GiaoVien?.HoTen ?? "Chưa phân GV")</div>
+                                                @{
+                                                    var doiPhongThayDoi = thayDois.FirstOrDefault(x => x.Ngay.Date == currentDateForCell.Date && x.IdLop == lop.IdLop && !x.IsNghi && x.GhiChu != null && x.GhiChu.StartsWith("Đổi phòng: "));
+                                                    var roomCode = item.PhongHoc?.MaPhong;
+                                                    if (doiPhongThayDoi != null)
+                                                    {
+                                                        roomCode = doiPhongThayDoi.GhiChu.Replace("Đổi phòng: ", "");
+                                                    }
+                                                }
+                                                @if (!string.IsNullOrEmpty(roomCode))
+                                                {
+                                                    <div class="text-info small fw-bold mt-1"><i class="bi bi-geo-alt-fill"></i> @roomCode</div>
+                                                }
+                                                
+                                                <form asp-action="XoaLich" asp-route-id="@item.IdPhanCong" method="post" class="position-absolute top-0 end-0 p-1 d-none action-btn" onsubmit="return confirm('Xóa lịch này?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button class="btn btn-sm text-danger p-0"><i class="bi bi-x-circle-fill"></i></button>
+                                                </form>
+                                            </td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+                                    }
                                 }
                             }
                         </tr>

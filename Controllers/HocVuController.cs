@@ -641,6 +641,8 @@ namespace eSchool.Controllers
             var startOfWeek = selectedDate.Value.AddDays(-diff);
             var endDate = startOfWeek.AddDays(6);
             var thayDois = _context.LichHocThayDois
+                .Include(x => x.MonHocThayThe)
+                .Include(x => x.GiaoVienThayThe)
                 .Where(x => x.Ngay >= startOfWeek && x.Ngay <= endDate)
                 .ToList();
 
@@ -1614,6 +1616,260 @@ namespace eSchool.Controllers
                 if (!isTaken) return roomId;
             }
             return null;
+        }
+        public IActionResult ChuyenLich(string? namHoc, int? lopId, DateTime? tuan)
+        {
+            var selectedDate = tuan ?? DateTime.Today;
+            
+            ViewBag.FilterNamHoc = namHoc;
+            ViewBag.FilterLopId = lopId;
+            ViewBag.Tuan = selectedDate.ToString("yyyy-MM-dd");
+            ViewBag.NamHocs = GetNamHocSelectList();
+            
+            var classes = new List<LopHoc>();
+            if (!string.IsNullOrEmpty(namHoc))
+            {
+                classes = _context.LopHocs
+                    .Where(x => x.NamHoc == namHoc)
+                    .OrderBy(x => x.TenLop)
+                    .ToList();
+            }
+            ViewBag.Classes = classes;
+
+            if (lopId.HasValue)
+            {
+                var lop = _context.LopHocs.Find(lopId.Value);
+                ViewBag.SelectedClass = lop;
+                
+                var diff = (7 + (selectedDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+                var startOfWeek = selectedDate.AddDays(-diff);
+                var endDate = startOfWeek.AddDays(6);
+
+                var schedules = _context.PhanCongGiangDays
+                    .Include(x => x.GiaoVien)
+                    .Include(x => x.MonHoc)
+                    .Include(x => x.PhongHoc)
+                    .Where(x => x.IdLop == lopId.Value && x.NamHoc == namHoc)
+                    .ToList();
+                
+                ViewBag.Schedules = schedules;
+                ViewBag.StartOfWeek = startOfWeek.ToString("yyyy-MM-dd");
+                
+                var thayDois = _context.LichHocThayDois
+                    .Include(x => x.MonHocThayThe)
+                    .Include(x => x.GiaoVienThayThe)
+                    .Where(x => x.IdLop == lopId.Value && x.Ngay >= startOfWeek && x.Ngay <= endDate)
+                    .ToList();
+                ViewBag.ThayDois = thayDois;
+                
+                var lichSu = _context.LichHocThayDois
+                    .Include(x => x.LopHoc)
+                    .Include(x => x.MonHocThayThe)
+                    .Include(x => x.GiaoVienThayThe)
+                    .Where(x => x.IdLop == lopId.Value)
+                    .OrderByDescending(x => x.Ngay)
+                    .ToList();
+                ViewBag.LichSu = lichSu;
+
+                var phongHocMap = _context.PhongHocs.Where(x => x.IdLop == lopId.Value).ToDictionary(x => x.IdLop.Value, x => !string.IsNullOrEmpty(x.TenPhong) ? x.TenPhong : (!string.IsNullOrEmpty(x.MaPhong) ? x.MaPhong : "-"));
+                ViewBag.PhongHocMap = phongHocMap;
+            }
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult XuLyChuyenLich(string NamHoc, int LopId, DateTime CurDate, int CurPeriod, DateTime TarDate, int TarPeriod, string LyDo)
+        {
+            int oldThu = (int)CurDate.DayOfWeek + 1 == 1 ? 8 : (int)CurDate.DayOfWeek + 1;
+            int newThu = (int)TarDate.DayOfWeek + 1 == 1 ? 8 : (int)TarDate.DayOfWeek + 1;
+
+            var oldSchedule = _context.PhanCongGiangDays
+                .Include(x => x.MonHoc)
+                .Include(x => x.GiaoVien)
+                .Include(x => x.PhongHoc)
+                .FirstOrDefault(x => x.IdLop == LopId && x.Thu == oldThu && x.TietBatDau <= CurPeriod && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= CurPeriod);
+
+            if (oldSchedule != null)
+            {
+                string phong = oldSchedule.PhongHoc?.TenPhong ?? oldSchedule.PhongHoc?.MaPhong;
+                if (string.IsNullOrEmpty(phong))
+                {
+                    var defaultRoom = _context.PhongHocs.FirstOrDefault(x => x.IdLop == LopId);
+                    phong = defaultRoom?.TenPhong ?? defaultRoom?.MaPhong ?? "-";
+                }
+
+                // Lưu lịch sử: Tiết cũ bị đổi
+                var thayDoiNghi = new LichHocThayDoi
+                {
+                    Ngay = CurDate.Date.Add(DateTime.Now.TimeOfDay),
+                    IdLop = LopId,
+                    TietBatDau = CurPeriod,
+                    SoTiet = oldSchedule.SoTiet ?? 1,
+                    IsNghi = true,
+                    GhiChu = $"Chuyển sang {TarDate:dd/MM/yyyy} Tiết {TarPeriod} | Môn: {oldSchedule.MonHoc?.TenMon ?? "-"} | GV: {oldSchedule.GiaoVien?.HoTen ?? "-"} | Phòng: {phong} | Lý do: {LyDo}"
+                };
+                _context.LichHocThayDois.Add(thayDoiNghi);
+
+                // Kiểm tra xem tiết đích có lịch chưa, nếu có thì có thể là hoán đổi
+                var targetSchedule = _context.PhanCongGiangDays
+                    .Include(x => x.MonHoc)
+                    .Include(x => x.GiaoVien)
+                    .Include(x => x.PhongHoc)
+                    .FirstOrDefault(x => x.IdLop == LopId && x.Thu == newThu && x.TietBatDau == TarPeriod);
+                
+                if (targetSchedule != null)
+                {
+                    string targetPhong = targetSchedule.PhongHoc?.TenPhong ?? targetSchedule.PhongHoc?.MaPhong;
+                    if (string.IsNullOrEmpty(targetPhong))
+                    {
+                        var defaultRoom = _context.PhongHocs.FirstOrDefault(x => x.IdLop == LopId);
+                        targetPhong = defaultRoom?.TenPhong ?? defaultRoom?.MaPhong ?? "-";
+                    }
+
+                    // Tiết đích cũ nghỉ học
+                    var targetNghi = new LichHocThayDoi
+                    {
+                        Ngay = TarDate.Date.AddSeconds(1),
+                        IdLop = LopId,
+                        TietBatDau = TarPeriod,
+                        SoTiet = targetSchedule.SoTiet ?? 1,
+                        IsNghi = true,
+                        GhiChu = $"Chuyển sang {CurDate:dd/MM/yyyy} Tiết {CurPeriod} | Môn: {targetSchedule.MonHoc?.TenMon ?? "-"} | GV: {targetSchedule.GiaoVien?.HoTen ?? "-"} | Phòng: {targetPhong} | Lý do: Hoán đổi với lịch {oldSchedule.MonHoc?.TenMon}"
+                    };
+                    _context.LichHocThayDois.Add(targetNghi);
+
+                    // Dạy bù cho tiết cũ
+                    var targetDayBu = new LichHocThayDoi
+                    {
+                        Ngay = TarDate.Date.AddSeconds(2),
+                        IdLop = LopId,
+                        TietBatDau = TarPeriod,
+                        SoTiet = oldSchedule.SoTiet ?? 1,
+                        IsNghi = false,
+                        IdMonHocThayThe = oldSchedule.IdMonHoc,
+                        IdGiaoVienThayThe = oldSchedule.IdGiaoVien,
+                        GhiChu = $"Dạy bù | Phòng: {targetPhong}"
+                    };
+                    _context.LichHocThayDois.Add(targetDayBu);
+
+                    // Dạy bù cho tiết đích
+                    var oldDayBu = new LichHocThayDoi
+                    {
+                        Ngay = CurDate.Date.AddSeconds(2),
+                        IdLop = LopId,
+                        TietBatDau = CurPeriod,
+                        SoTiet = targetSchedule.SoTiet ?? 1,
+                        IsNghi = false,
+                        IdMonHocThayThe = targetSchedule.IdMonHoc,
+                        IdGiaoVienThayThe = targetSchedule.IdGiaoVien,
+                        GhiChu = $"Dạy bù | Phòng: {phong}"
+                    };
+                    _context.LichHocThayDois.Add(oldDayBu);
+                }
+                else
+                {
+                    // Dạy bù cho tiết cũ tại ngày đích
+                    var dayBu = new LichHocThayDoi
+                    {
+                        Ngay = TarDate.Date.AddSeconds(2),
+                        IdLop = LopId,
+                        TietBatDau = TarPeriod,
+                        SoTiet = oldSchedule.SoTiet ?? 1,
+                        IsNghi = false,
+                        IdMonHocThayThe = oldSchedule.IdMonHoc,
+                        IdGiaoVienThayThe = oldSchedule.IdGiaoVien,
+                        GhiChu = $"Dạy bù | Phòng: {phong}"
+                    };
+                    _context.LichHocThayDois.Add(dayBu);
+                }
+
+                _context.SaveChanges();
+                TempData["Success"] = "Chuyển lịch trong tuần thành công!";
+            }
+            else
+            {
+                TempData["Error"] = "Không tìm thấy tiết học cần chuyển.";
+            }
+
+            return RedirectToAction(nameof(ChuyenLich), new { namHoc = NamHoc, lopId = LopId });
+        }
+
+        [HttpPost]
+        public IActionResult KiemTraXungDot(int lopId, string curDate, int curPeriod, string tarDate, int tarPeriod)
+        {
+            try
+            {
+                DateTime dtCur = DateTime.Parse(curDate);
+                DateTime dtTar = DateTime.Parse(tarDate);
+
+                int oldThu = (int)dtCur.DayOfWeek + 1 == 1 ? 8 : (int)dtCur.DayOfWeek + 1;
+                int newThu = (int)dtTar.DayOfWeek + 1 == 1 ? 8 : (int)dtTar.DayOfWeek + 1;
+
+                var oldSchedule = _context.PhanCongGiangDays
+                    .Include(x => x.LopHoc)
+                    .FirstOrDefault(x => x.IdLop == lopId && x.Thu == oldThu && x.TietBatDau <= curPeriod && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= curPeriod);
+
+                if (oldSchedule == null)
+                    return Json(new { success = false, message = "Không tìm thấy tiết học." });
+
+                // Kiểm tra lớp: Vì đổi trong cùng 1 lớp (hoặc hoán đổi với môn khác của cùng lớp) nên lớp không bao giờ xung đột với chính nó.
+                bool classOk = true;
+                string classMsg = "Không xung đột";
+
+                // Kiểm tra giáo viên: Giáo viên có đang dạy lớp KHÁC vào tiết mới và CÙNG BUỔI không?
+                bool gvOk = true;
+                string gvMsg = "Không xung đột";
+                if (oldSchedule.IdGiaoVien.HasValue)
+                {
+                    var teacherConflict = _context.PhanCongGiangDays
+                        .Include(x => x.LopHoc)
+                        .FirstOrDefault(x => x.IdGiaoVien == oldSchedule.IdGiaoVien.Value && x.Thu == newThu && x.TietBatDau == tarPeriod && x.IdLop != lopId && x.LopHoc.BuoiHoc == oldSchedule.LopHoc.BuoiHoc);
+                    
+                    if (teacherConflict != null)
+                    {
+                        gvOk = false;
+                        gvMsg = $"Giáo viên đang dạy lớp {teacherConflict.LopHoc?.TenLop}";
+                    }
+                }
+
+                // Kiểm tra phòng: Phòng học có đang được lớp KHÁC sử dụng vào tiết mới và CÙNG BUỔI không?
+                bool roomOk = true;
+                string roomMsg = "Không xung đột";
+                if (oldSchedule.IdPhongHoc.HasValue)
+                {
+                    var roomConflict = _context.PhanCongGiangDays
+                        .Include(x => x.LopHoc)
+                        .FirstOrDefault(x => x.IdPhongHoc == oldSchedule.IdPhongHoc.Value && x.Thu == newThu && x.TietBatDau == tarPeriod && x.IdLop != lopId && x.LopHoc.BuoiHoc == oldSchedule.LopHoc.BuoiHoc);
+                    
+                    if (roomConflict != null)
+                    {
+                        roomOk = false;
+                        roomMsg = $"Phòng đang được dùng bởi {roomConflict.LopHoc?.TenLop}";
+                    }
+                }
+
+                // Tiết mới luôn hợp lệ vì giao diện chỉ cho chọn tiết 1-5
+                bool tietOk = true;
+                string tietMsg = "Hợp lệ";
+
+                bool isValid = classOk && gvOk && roomOk && tietOk;
+
+                return Json(new
+                {
+                    success = true,
+                    isValid = isValid,
+                    chkLop = new { ok = classOk, msg = classMsg },
+                    chkGv = new { ok = gvOk, msg = gvMsg },
+                    chkPhong = new { ok = roomOk, msg = roomMsg },
+                    chkTiet = new { ok = tietOk, msg = tietMsg }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 }

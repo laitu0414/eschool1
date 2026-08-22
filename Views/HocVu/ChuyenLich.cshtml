@@ -1,0 +1,907 @@
+@model dynamic
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = "Chuyển lịch";
+    
+    var namHoc = ViewBag.FilterNamHoc as string;
+    var lopId = ViewBag.FilterLopId as int?;
+    var classes = ViewBag.Classes as List<eSchool.Models.LopHoc> ?? new List<eSchool.Models.LopHoc>();
+    var selectedClass = ViewBag.SelectedClass as eSchool.Models.LopHoc;
+    
+    var schedules = ViewBag.Schedules as List<eSchool.Models.PhanCongGiangDay> ?? new List<eSchool.Models.PhanCongGiangDay>();
+    DateTime startOfWeek = ViewBag.StartOfWeek != null ? DateTime.Parse(ViewBag.StartOfWeek) : DateTime.Today;
+    var phongHocMap = ViewBag.PhongHocMap as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var thayDois = ViewBag.ThayDois as List<eSchool.Models.LichHocThayDoi> ?? new List<eSchool.Models.LichHocThayDoi>();
+}
+
+<style>
+    .filter-wrapper {
+        min-height: @(lopId.HasValue ? "auto" : "70vh");
+        background: radial-gradient(circle at top right, rgba(238, 242, 247, 0.6), transparent),
+                    radial-gradient(circle at bottom left, rgba(226, 232, 240, 0.4), transparent);
+        border-radius: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .filter-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+        border-radius: 24px;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        height: 100%;
+    }
+    .icon-wrapper {
+        width: 85px; 
+        height: 85px; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 25px;
+        box-shadow: 0 10px 25px rgba(118, 75, 162, 0.3);
+        transform: rotate(-3deg);
+    }
+    .icon-wrapper i { color: #fff; font-size: 2.2rem; }
+    
+    .custom-floating > .form-select, .custom-floating > .form-control {
+        height: 3.8rem;
+        border-radius: 14px;
+        border: 2px solid #e2e8f0;
+        background-color: #f8fafc;
+        font-weight: 500;
+        color: #334155;
+        padding-top: 1.625rem;
+        padding-bottom: 0.625rem;
+    }
+    .custom-floating > label {
+        color: #64748b; font-weight: 500; padding-left: 1rem;
+    }
+    .btn-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none; color: white; border-radius: 14px; padding: 14px 20px; font-weight: 600; text-transform: uppercase;
+    }
+    
+    /* Chuyển lịch UI */
+    .schedule-cell {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent !important;
+    }
+    .schedule-cell:hover { background-color: #f1f5f9; }
+    .schedule-cell.selected-current {
+        border-color: #f59e0b !important;
+        background-color: #fef3c7 !important;
+    }
+    .schedule-cell.selected-target {
+        border-color: #10b981 !important;
+        background-color: #d1fae5 !important;
+    }
+    .info-panel {
+        background-color: #fffbeb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #fde68a;
+    }
+</style>
+
+@if (!lopId.HasValue)
+{
+    <div class="row align-items-center justify-content-center filter-wrapper py-5 px-3">
+        <div class="col-md-6 col-lg-5 p-0">
+            <div class="filter-card w-100 p-4 p-md-5 text-center d-flex flex-column">
+                <div class="mb-4">
+                    <div class="icon-wrapper mx-auto">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </div>
+                    <h3 class="fw-bolder text-dark mb-2">Chuyển Lịch</h3>
+                    <p class="text-muted small pb-2">Vui lòng chọn năm học để hiển thị danh sách lớp</p>
+                </div>
+
+                <form method="get" class="mt-auto">
+                    <div class="mb-4 text-start form-floating custom-floating">
+                        <select name="namHoc" asp-items="ViewBag.NamHocs" class="form-select" id="namHocSelect" required onchange="this.form.submit()">
+                            <option value="" disabled selected>-- Chọn năm học --</option>
+                        </select>
+                        <label for="namHocSelect"><i class="bi bi-clock-history me-1 text-primary"></i> Năm học</label>
+                    </div>
+                </form>
+
+                @if (!string.IsNullOrEmpty(namHoc) && classes.Any())
+                {
+                    <hr />
+                    <div class="text-start mt-3">
+                        <h5 class="fw-bold mb-3">Danh sách lớp năm học @namHoc</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var cls in classes)
+                            {
+                                <a href="?namHoc=@namHoc&lopId=@cls.IdLop" class="btn btn-outline-primary rounded-pill px-4">
+                                    @cls.TenLop <i class="bi bi-arrow-right ms-2"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(namHoc))
+                {
+                    <div class="text-muted mt-3">Không có lớp nào trong năm học này.</div>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0"><i class="bi bi-calendar-event text-primary me-2"></i> CHUYỂN LỊCH - Lớp @selectedClass?.TenLop</h4>
+        <a href="?namHoc=@namHoc" class="btn btn-light shadow-sm"><i class="bi bi-arrow-left me-2"></i> Trở lại chọn lớp</a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Thông tin chuyển lịch (Trái) -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100 rounded-4">
+                <div class="card-body p-4">
+                    
+                    <h5 class="fw-bold text-primary mb-4">1. THÔNG TIN TIẾT HỌC HIỆN TẠI</h5>
+                    
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-4 text-secondary">Năm học</div>
+                        <div class="col-8"><input type="text" class="form-control bg-light" value="@namHoc" readonly /></div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-4 text-secondary">Lớp</div>
+                        <div class="col-8"><input type="text" class="form-control bg-light" value="@selectedClass?.TenLop" readonly /></div>
+                    </div>
+                    
+                    <div id="currentInfoEmpty" class="text-center p-4 text-muted border border-dashed rounded-3 mb-4">
+                        <i class="bi bi-hand-index-thumb fs-2 d-block mb-2 text-secondary"></i>
+                        Vui lòng chọn tiết học cần chuyển từ lịch bên phải
+                    </div>
+
+                    <div id="currentInfoForm" class="d-none">
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-4 text-secondary">Ngày</div>
+                            <div class="col-8"><input type="text" id="curDate" class="form-control bg-light" readonly /></div>
+                        </div>
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-4 text-secondary">Tiết</div>
+                            <div class="col-8"><input type="text" id="curPeriod" class="form-control bg-light" readonly /></div>
+                        </div>
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-4 text-secondary">Môn học</div>
+                            <div class="col-8"><input type="text" id="curSubject" class="form-control bg-light" readonly /></div>
+                        </div>
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-4 text-secondary">Giáo viên</div>
+                            <div class="col-8"><input type="text" id="curTeacher" class="form-control bg-light" readonly /></div>
+                        </div>
+                        <div class="row mb-4 align-items-center">
+                            <div class="col-4 text-secondary">Phòng học</div>
+                            <div class="col-8"><input type="text" id="curRoom" class="form-control bg-light" readonly /></div>
+                        </div>
+
+                        <div class="info-panel shadow-sm">
+                            <h6 class="fw-bold mb-3">LỊCH HIỆN TẠI</h6>
+                            <div class="d-flex flex-column gap-2 text-dark">
+                                <div><i class="bi bi-calendar3 me-2"></i> Thứ: <strong id="lblThu"></strong></div>
+                                <div><i class="bi bi-clock me-2"></i> Tiết: <strong id="lblTiet"></strong></div>
+                                <div><i class="bi bi-book me-2"></i> Môn: <strong id="lblMon"></strong></div>
+                                <div><i class="bi bi-person me-2"></i> Giáo viên: <strong id="lblGV"></strong></div>
+                                <div><i class="bi bi-door-open me-2"></i> Phòng: <strong id="lblPhong"></strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+                    <h5 class="fw-bold text-primary mb-4 d-flex align-items-center">2. CHUYỂN ĐẾN <i class="bi bi-arrow-right text-primary ms-auto"></i></h5>
+                    
+                    <form id="frmChuyenLich" method="post" action="@Url.Action("XuLyChuyenLich", "HocVu")">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="NamHoc" value="@namHoc" />
+                        <input type="hidden" name="LopId" value="@lopId" />
+                        <input type="hidden" id="hdnCurDate" name="CurDate" />
+                        <input type="hidden" id="hdnCurPeriod" name="CurPeriod" />
+                        <input type="hidden" id="hdnTarDate" name="TarDate" />
+                        <input type="hidden" id="hdnTarPeriod" name="TarPeriod" />
+
+                        <div id="targetInfoEmpty" class="text-center p-4 text-muted border border-dashed rounded-3">
+                            <i class="bi bi-calendar-plus fs-2 d-block mb-2 text-secondary"></i>
+                            Vui lòng chọn một ô trống trên lịch để chuyển đến
+                        </div>
+
+                        <div id="targetInfoForm" class="d-none">
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-4 text-secondary">Ngày chuyển</div>
+                                <div class="col-5">
+                                    <input type="text" id="tarDate" class="form-select bg-light form-select-sm" style="background-image: none; appearance: none;" readonly />
+                                </div>
+                                <div class="col-1 text-secondary text-center px-0">Tiết</div>
+                                <div class="col-2">
+                                    <input type="text" id="tarPeriod" class="form-select bg-light form-select-sm" style="background-image: none; appearance: none;" readonly />
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-4 text-secondary">Phòng học</div>
+                                <div class="col-8">
+                                    <input type="text" id="tarRoomDisplay" class="form-select bg-light form-select-sm" style="background-image: none; appearance: none;" readonly />
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-4 text-secondary">Lý do</div>
+                                <div class="col-8">
+                                    <input type="text" name="LyDo" class="form-control form-control-sm" placeholder="Nhập lý do chuyển..." required />
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 mt-4">
+                                <button type="button" class="btn btn-outline-secondary px-3" onclick="resetSelection()" title="Hủy bỏ"><i class="bi bi-x-lg me-1"></i> Hủy bỏ</button>
+                                <button type="button" class="btn btn-primary flex-grow-1" id="btnCheckConflict" onclick="checkConflict()"><i class="bi bi-search me-1"></i> Kiểm tra xung đột</button>
+                                <button type="submit" class="btn btn-success flex-grow-1 d-none" id="btnConfirmTransfer"><i class="bi bi-check-lg me-1"></i> Xác nhận chuyển lịch</button>
+                            </div>
+
+                            <!-- Khu vực hiển thị kết quả kiểm tra -->
+                            <div id="conflictResult" class="mt-3 d-none">
+                                <ul class="list-unstyled mb-2 small text-muted ms-1" id="conflictSteps">
+                                    <!-- Trạng thái kiểm tra sẽ được JS điền vào đây -->
+                                </ul>
+                                <div id="conflictFinalResult" class="p-2 rounded-2 text-center fw-medium d-none"></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lịch (Phải) -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-primary">XEM LỊCH LỚP @selectedClass?.TenLop - TUẦN (@startOfWeek.ToString("dd/MM") - @startOfWeek.AddDays(6).ToString("dd/MM/yyyy"))</h5>
+                    <form method="get" class="d-flex align-items-center">
+                        <input type="hidden" name="namHoc" value="@namHoc" />
+                        <input type="hidden" name="lopId" value="@lopId" />
+                        <input type="date" name="tuan" value="@ViewBag.Tuan" class="form-control form-control-sm" onchange="this.form.submit()" />
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle text-center mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Tiết</th>
+                                    @for (int i = 2; i <= 7; i++)
+                                    {
+                                        <th>
+                                            <div>Thứ @i</div>
+                                            <small class="text-muted fw-normal">@startOfWeek.AddDays(i - 2).ToString("dd/MM")</small>
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int tiet = 1; tiet <= 5; tiet++)
+                                {
+                                    <tr>
+                                        <td class="fw-bold bg-light">@tiet</td>
+                                        @for (int thu = 2; thu <= 7; thu++)
+                                        {
+                                            var dt = startOfWeek.AddDays(thu - 2);
+                                            var isHoliday = thayDois.Any(x => x.Ngay.Date == dt.Date && x.IsNghi && x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet);
+                                            var replacement = thayDois.FirstOrDefault(x => x.Ngay.Date == dt.Date && !x.IsNghi && x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet && x.GhiChu != null && x.GhiChu.StartsWith("Dạy bù"));
+                                            
+                                            var dateStr = $"Thứ {thu}, {dt.ToString("dd/MM/yyyy")}";
+                                            var rawDate = dt.ToString("yyyy-MM-dd");
+
+                                            if (isHoliday)
+                                            {
+                                                if (!thayDois.Any(x => x.Ngay.Date == dt.Date && x.IsNghi && x.TietBatDau < tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet))
+                                                {
+                                                    <td rowspan="1" class="schedule-cell bg-light text-muted" style="cursor: not-allowed; opacity: 0.6;">
+                                                        <div class="fw-bold">ĐÃ CHUYỂN</div>
+                                                        <div class="small">Không thể thao tác</div>
+                                                    </td>
+                                                }
+                                                continue;
+                                            }
+
+                                            if (replacement != null)
+                                            {
+                                                if (replacement.TietBatDau == tiet)
+                                                {
+                                                    string rRoomCode = replacement.GhiChu?.Replace("Dạy bù | Phòng: ", "") ?? "-";
+                                                    <td rowspan="@(replacement.SoTiet ?? 1)" class="schedule-cell has-schedule" 
+                                                        style="background-color: #d1fae5; border: 2px dashed #10b981;"
+                                                        data-date="@dateStr"
+                                                        data-rawdate="@rawDate"
+                                                        data-period="@tiet"
+                                                        data-mon="@(replacement.MonHocThayThe?.TenMon)"
+                                                        data-gv="@(replacement.GiaoVienThayThe?.HoTen)"
+                                                        data-phong="@rRoomCode"
+                                                        data-thu="@thu"
+                                                        data-hasschedule="true"
+                                                        onclick="handleCellClick(this)">
+                                                        <div class="fw-bold text-primary">@(replacement.MonHocThayThe?.TenMon ?? "Trống")</div>
+                                                        <div class="small">@(replacement.GiaoVienThayThe?.HoTen)</div>
+                                                        <div class="small text-muted">@rRoomCode</div>
+                                                        <div class="badge bg-success mt-1">(Sau chuyển)</div>
+                                                        <div class="badge bg-warning text-dark status-badge current-badge d-none mt-1">(Hiện tại)</div>
+                                                        <div class="badge bg-success status-badge target-badge d-none mt-1">(Đổi với tiết này)</div>
+                                                    </td>
+                                                }
+                                                continue;
+                                            }
+
+                                            var item = schedules.FirstOrDefault(x => x.Thu == thu && x.TietBatDau <= tiet && (x.TietBatDau + (x.SoTiet ?? 1) - 1) >= tiet);
+                                            
+                                            if (item != null && item.TietBatDau == tiet)
+                                            {
+                                                <td rowspan="@(item.SoTiet ?? 1)" class="schedule-cell has-schedule" 
+                                                    data-date="@dateStr"
+                                                    data-rawdate="@rawDate"
+                                                    data-period="@tiet"
+                                                    data-mon="@(item.MonHoc?.TenMon)"
+                                                    data-gv="@(item.GiaoVien?.HoTen)"
+                                                    data-phong="@(!string.IsNullOrEmpty(item.PhongHoc?.TenPhong) ? item.PhongHoc.TenPhong : (!string.IsNullOrEmpty(item.PhongHoc?.MaPhong) ? item.PhongHoc.MaPhong : (phongHocMap.ContainsKey(item.IdLop) ? phongHocMap[item.IdLop] : "-")))"
+                                                    data-thu="@thu"
+                                                    data-hasschedule="true"
+                                                    onclick="handleCellClick(this)">
+                                                    <div class="fw-bold">@(item.MonHoc?.TenMon ?? "Trống")</div>
+                                                    <div class="small">@(item.GiaoVien?.HoTen)</div>
+                                                    <div class="small text-muted">@(!string.IsNullOrEmpty(item.PhongHoc?.TenPhong) ? item.PhongHoc.TenPhong : (!string.IsNullOrEmpty(item.PhongHoc?.MaPhong) ? item.PhongHoc.MaPhong : (phongHocMap.ContainsKey(item.IdLop) ? phongHocMap[item.IdLop] : "-")))</div>
+                                                    <div class="badge bg-warning text-dark status-badge current-badge d-none mt-1">(Hiện tại)</div>
+                                                    <div class="badge bg-success status-badge target-badge d-none mt-1">(Đổi với tiết này)</div>
+                                                </td>
+                                            }
+                                            else if (item == null)
+                                            {
+                                                <td class="schedule-cell empty-schedule text-muted" 
+                                                    data-date="@dateStr"
+                                                    data-rawdate="@rawDate"
+                                                    data-period="@tiet"
+                                                    data-thu="@thu"
+                                                    data-hasschedule="false"
+                                                    onclick="handleCellClick(this)">
+                                                    <div class="target-content d-none">
+                                                        <div class="fw-bold target-mon"></div>
+                                                        <div class="small target-gv"></div>
+                                                        <div class="small target-phong text-muted"></div>
+                                                        <div class="badge bg-success status-badge mt-1">(Sau chuyển)</div>
+                                                    </div>
+                                                </td>
+                                            }
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white p-3 d-flex gap-4 text-muted small border-top">
+                    <div class="d-flex align-items-center"><div style="width: 20px; height: 20px; border: 2px solid #f59e0b; background-color: #fef3c7; border-radius: 4px;" class="me-2"></div> Tiết học hiện tại</div>
+                    <div class="d-flex align-items-center"><div style="width: 20px; height: 20px; border: 2px dashed #10b981; background-color: #d1fae5; border-radius: 4px;" class="me-2"></div> Tiết học sau khi chuyển</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. LỊCH SỬ CHUYỂN LỊCH -->
+    <div class="card shadow-sm border-0 rounded-4 mt-4 mb-4">
+        <div class="card-header bg-white border-bottom p-4">
+            <h5 class="fw-bold mb-0 text-primary">3. LỊCH SỬ CHUYỂN LỊCH</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 60px;">STT</th>
+                            <th>Thời gian</th>
+                            <th>Lớp</th>
+                            <th>Môn học</th>
+                            <th>Tiết cũ</th>
+                            <th style="width: 40px;"></th>
+                            <th>Tiết mới</th>
+                            <th>Lý do</th>
+                            <th>Người thực hiện</th>
+                            <th style="width: 60px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.LichSu != null)
+                        {
+                            var lichSuList = (List<eSchool.Models.LichHocThayDoi>)ViewBag.LichSu;
+                            if (!lichSuList.Any())
+                            {
+                                <tr><td colspan="10" class="text-muted py-4">Chưa có lịch sử thay đổi nào</td></tr>
+                            }
+                            else
+                            {
+                                int stt = 1;
+                                foreach (var item in lichSuList)
+                                {
+                                    var ghiChu = item.GhiChu ?? "";
+                                    var tarDateStr = "";
+                                    var tarPeriodStr = "";
+                                    var tarThuStr = "";
+                                    var lyDo = ghiChu;
+                                    var monHoc = item.MonHocThayThe?.TenMon ?? "Theo TKB";
+
+                                    var newFormatMatch = System.Text.RegularExpressions.Regex.Match(ghiChu, @"Chuyển sang (\d{2}/\d{2}/\d{4}) Tiết (\d+) \| Môn: (.*?) \| GV: (.*?) \| Phòng: (.*?) \| Lý do: (.*)");
+                                    var oldFormatMatch = System.Text.RegularExpressions.Regex.Match(ghiChu, @"Chuyển sang (\d{2}/\d{2}/\d{4}) Tiết (\d+) \((.*)\)");
+                                    
+                                    if (newFormatMatch.Success)
+                                    {
+                                        tarDateStr = newFormatMatch.Groups[1].Value;
+                                        tarPeriodStr = newFormatMatch.Groups[2].Value;
+                                        monHoc = newFormatMatch.Groups[3].Value;
+                                        lyDo = newFormatMatch.Groups[6].Value;
+                                    }
+                                    else if (oldFormatMatch.Success)
+                                    {
+                                        tarDateStr = oldFormatMatch.Groups[1].Value;
+                                        tarPeriodStr = oldFormatMatch.Groups[2].Value;
+                                        lyDo = oldFormatMatch.Groups[3].Value;
+                                    }
+
+                                    if (!string.IsNullOrEmpty(tarDateStr) && DateTime.TryParseExact(tarDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedTarDate))
+                                    {
+                                        int tThu = (int)parsedTarDate.DayOfWeek + 1;
+                                        tarThuStr = tThu == 1 ? "Chủ nhật" : $"Thứ {tThu}";
+                                    }
+
+                                    int cThu = (int)item.Ngay.DayOfWeek + 1;
+                                    string curThuStr = cThu == 1 ? "Chủ nhật" : $"Thứ {cThu}";
+                                    string curDateStr = item.Ngay.ToString("dd/MM/yyyy");
+                                    string curPeriodStr = item.TietBatDau?.ToString() ?? "";
+
+                                    <tr>
+                                        <td class="fw-medium">@stt</td>
+                                        <td>@item.Ngay.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        <td class="fw-bold">@item.LopHoc?.TenLop</td>
+                                        <td>@monHoc</td>
+                                        <td class="text-secondary">@curThuStr - Tiết @curPeriodStr (@curDateStr)</td>
+                                        <td><i class="bi bi-arrow-right fw-bold"></i></td>
+                                        <td class="text-dark fw-medium">
+                                            @if(!string.IsNullOrEmpty(tarDateStr)) {
+                                                <text>@tarThuStr - Tiết @tarPeriodStr (@tarDateStr)</text>
+                                            } else {
+                                                <text>@(item.IsNghi ? "Nghỉ học" : "Thay đổi")</text>
+                                            }
+                                        </td>
+                                        <td>@lyDo</td>
+                                        <td>Admin</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#historyDetailModal_@item.IdThayDoi">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    stt++;
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ViewBag.LichSu != null)
+{
+    var lichSuList = (List<eSchool.Models.LichHocThayDoi>)ViewBag.LichSu;
+    foreach (var item in lichSuList)
+    {
+        <!-- Modal Chi Tiết Lịch Sử -->
+        <div class="modal fade" id="historyDetailModal_@item.IdThayDoi" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header border-bottom bg-light rounded-top-4 p-4">
+                        <h5 class="modal-title fw-bold text-dark">CHI TIẾT LỊCH SỬ CHUYỂN LỊCH</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        
+                        @{
+                            var ghiChu = item.GhiChu ?? "";
+                            var tarDateStr = "";
+                            var tarPeriodStr = "";
+                            var tarThuStr = "";
+                            var lyDo = ghiChu;
+                            var monHoc = item.MonHocThayThe?.TenMon ?? "-";
+                            var gv = "-";
+                            var phong = "-";
+
+                            // Thử parse định dạng mới (có chứa dấu '|')
+                            var newFormatMatch = System.Text.RegularExpressions.Regex.Match(ghiChu, @"Chuyển sang (\d{2}/\d{2}/\d{4}) Tiết (\d+) \| Môn: (.*?) \| GV: (.*?) \| Phòng: (.*?) \| Lý do: (.*)");
+                            // Thử parse định dạng cũ
+                            var oldFormatMatch = System.Text.RegularExpressions.Regex.Match(ghiChu, @"Chuyển sang (\d{2}/\d{2}/\d{4}) Tiết (\d+) \((.*)\)");
+                            
+                            var matchSuccess = false;
+
+                            if (newFormatMatch.Success)
+                            {
+                                matchSuccess = true;
+                                tarDateStr = newFormatMatch.Groups[1].Value;
+                                tarPeriodStr = newFormatMatch.Groups[2].Value;
+                                monHoc = newFormatMatch.Groups[3].Value;
+                                gv = newFormatMatch.Groups[4].Value;
+                                phong = newFormatMatch.Groups[5].Value;
+                                lyDo = newFormatMatch.Groups[6].Value;
+                            }
+                            else if (oldFormatMatch.Success)
+                            {
+                                matchSuccess = true;
+                                tarDateStr = oldFormatMatch.Groups[1].Value;
+                                tarPeriodStr = oldFormatMatch.Groups[2].Value;
+                                lyDo = oldFormatMatch.Groups[3].Value;
+                            }
+
+                            if (matchSuccess)
+                            {
+                                if (DateTime.TryParseExact(tarDateStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime parsedTarDate))
+                                {
+                                    int tThu = (int)parsedTarDate.DayOfWeek + 1;
+                                    tarThuStr = tThu == 1 ? "Chủ nhật" : $"Thứ {tThu}";
+                                }
+                            }
+
+                            int cThu = (int)item.Ngay.DayOfWeek + 1;
+                            string curThuStr = cThu == 1 ? "Chủ nhật" : $"Thứ {cThu}";
+                            string curDateStr = item.Ngay.ToString("dd/MM/yyyy");
+                            string curPeriodStr = item.TietBatDau?.ToString() ?? "";
+
+                            string GetTimeFromPeriod(string p) {
+                                switch (p) {
+                                    case "1": return "07:00 - 07:45";
+                                    case "2": return "07:50 - 08:35";
+                                    case "3": return "08:50 - 09:35";
+                                    case "4": return "09:40 - 10:25";
+                                    case "5": return "10:30 - 11:15";
+                                    default: return "-";
+                                }
+                            }
+                        }
+
+                        <h6 class="text-primary fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>THÔNG TIN CHUNG</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="row mb-2"><div class="col-4 text-secondary">Lớp</div><div class="col-8 fw-medium">@item.LopHoc?.TenLop</div></div>
+                                <div class="row mb-2"><div class="col-4 text-secondary">Môn học</div><div class="col-8 fw-medium">@monHoc</div></div>
+                                <div class="row mb-2"><div class="col-4 text-secondary">Giáo viên</div><div class="col-8 fw-medium">@gv</div></div>
+                                <div class="row mb-2"><div class="col-4 text-secondary">Phòng học</div><div class="col-8 fw-medium">@phong</div></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row mb-2"><div class="col-4 text-secondary">Ngày chuyển</div><div class="col-8 fw-medium">@item.Ngay.ToString("dd/MM/yyyy HH:mm")</div></div>
+                                <div class="row mb-2"><div class="col-4 text-secondary">Người thực hiện</div><div class="col-8 fw-medium">Admin</div></div>
+                                <div class="row mb-2"><div class="col-4 text-secondary">Lý do</div><div class="col-8 fw-medium">@lyDo</div></div>
+                                <div class="row mb-2"><div class="col-4 text-secondary">Trạng thái</div><div class="col-8"><span class="badge bg-success bg-opacity-10 text-success border border-success">Đã chuyển</span></div></div>
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-5">
+                                <div class="p-3 bg-warning bg-opacity-10 border border-warning rounded-3 h-100">
+                                    <h6 class="text-warning-emphasis fw-bold mb-3"><i class="bi bi-calendar-minus me-2"></i>LỊCH CŨ (TRƯỚC KHI CHUYỂN)</h6>
+                                    <div class="row mb-1"><div class="col-4 text-secondary">Thứ</div><div class="col-8 fw-medium">@curThuStr</div></div>
+                                    <div class="row mb-1"><div class="col-4 text-secondary">Ngày</div><div class="col-8 fw-medium">@curDateStr</div></div>
+                                    <div class="row mb-1"><div class="col-4 text-secondary">Tiết</div><div class="col-8 fw-medium">Tiết @curPeriodStr</div></div>
+                                    <div class="row mb-1"><div class="col-4 text-secondary">Thời gian</div><div class="col-8 fw-medium">@GetTimeFromPeriod(curPeriodStr)</div></div>
+                                    <div class="row mb-1"><div class="col-4 text-secondary">Phòng học</div><div class="col-8 fw-medium">@phong</div></div>
+                                    <div class="row mb-1"><div class="col-4 text-secondary">Ghi chú</div><div class="col-8 fw-medium">-</div></div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center text-primary fs-3"><i class="bi bi-arrow-right fw-bold"></i></div>
+                            <div class="col-md-5">
+                                <div class="p-3 bg-success bg-opacity-10 border border-success rounded-3 h-100">
+                                    <h6 class="text-success fw-bold mb-3"><i class="bi bi-calendar-plus me-2"></i>LỊCH MỚI (SAU KHI CHUYỂN)</h6>
+                                    @if (matchSuccess)
+                                    {
+                                        <div class="row mb-1"><div class="col-4 text-secondary">Thứ</div><div class="col-8 fw-medium">@tarThuStr</div></div>
+                                        <div class="row mb-1"><div class="col-4 text-secondary">Ngày</div><div class="col-8 fw-medium">@tarDateStr</div></div>
+                                        <div class="row mb-1"><div class="col-4 text-secondary">Tiết</div><div class="col-8 fw-medium">Tiết @tarPeriodStr</div></div>
+                                        <div class="row mb-1"><div class="col-4 text-secondary">Thời gian</div><div class="col-8 fw-medium">@GetTimeFromPeriod(tarPeriodStr)</div></div>
+                                        <div class="row mb-1"><div class="col-4 text-secondary">Phòng học</div><div class="col-8 fw-medium">@phong</div></div>
+                                        <div class="row mb-1"><div class="col-4 text-secondary">Ghi chú</div><div class="col-8 fw-medium">-</div></div>
+                                    }
+                                    else
+                                    {
+                                        <div class="row mb-1"><div class="col-4 text-secondary">Nội dung</div><div class="col-8 fw-medium">@(item.IsNghi ? "Nghỉ học" : "Đổi phòng/GV")</div></div>
+                                        <div class="row mb-1"><div class="col-4 text-secondary">Ghi chú</div><div class="col-8 fw-medium">@item.GhiChu</div></div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="text-primary fw-bold mb-3"><i class="bi bi-diagram-3 me-2"></i>ẢNH HƯỞNG LIÊN QUAN</h6>
+                        <table class="table table-bordered mb-4 text-center">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-medium text-start bg-light w-25">Lớp học</td>
+                                    <td class="text-success"><i class="bi bi-check-lg me-1"></i> Không xung đột</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-medium text-start bg-light">Giáo viên</td>
+                                    <td class="text-success"><i class="bi bi-check-lg me-1"></i> Không xung đột</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-medium text-start bg-light">Phòng học</td>
+                                    <td class="text-success"><i class="bi bi-check-lg me-1"></i> Không xung đột</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h6 class="text-primary fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>LỊCH SỬ THAO TÁC</h6>
+                        <table class="table table-striped table-hover mb-0 text-center border">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Người thực hiện</th>
+                                    <th class="text-start">Nội dung</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>@item.Ngay.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                    <td>Admin</td>
+                                    <td class="text-start">Tạo phiếu chuyển lịch</td>
+                                </tr>
+                                <tr>
+                                    <td>@item.Ngay.AddSeconds(1).ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                    <td>Admin</td>
+                                    <td class="text-start">Kiểm tra xung đột: Không có xung đột</td>
+                                </tr>
+                                <tr>
+                                    <td>@item.Ngay.AddSeconds(2).ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                    <td>Admin</td>
+                                    <td class="text-start">Xác nhận và áp dụng chuyển lịch</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+                    <div class="modal-footer border-top p-3 text-end d-block">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<script>
+    let curMon = '', curGv = '', curPhong = '';
+    let currentSelected = null;
+    let targetSelected = null;
+
+    function handleCellClick(el) {
+        const hasSchedule = el.dataset.hasschedule === 'true';
+        const date = el.dataset.date;
+        const period = el.dataset.period;
+        const subject = el.dataset.mon || '';
+        const teacher = el.dataset.gv || '';
+        const room = el.dataset.phong || '';
+        const thu = el.dataset.thu;
+
+        // Hủy chọn nếu click lại ô tiết hiện tại
+        if (el === currentSelected) {
+            resetSelection();
+            return;
+        }
+
+        // Hủy chọn nếu click lại ô tiết chuyển đến
+        if (el === targetSelected) {
+            el.classList.remove('selected-target');
+            const content = el.querySelector('.target-content');
+            if (content) content.classList.add('d-none');
+            document.getElementById('targetInfoEmpty').classList.remove('d-none');
+            document.getElementById('targetInfoForm').classList.add('d-none');
+            targetSelected = null;
+            return;
+        }
+
+        if (!currentSelected) {
+            // LẦN 1: Chọn tiết hiện tại
+            if (!hasSchedule) {
+                alert('Vui lòng chọn một tiết học đang có lịch để chuyển!');
+                return;
+            }
+
+            currentSelected = el;
+            el.classList.add('selected-current');
+            const cBadge = el.querySelector('.current-badge');
+            if (cBadge) cBadge.classList.remove('d-none');
+
+            document.getElementById('currentInfoEmpty').classList.add('d-none');
+            document.getElementById('currentInfoForm').classList.remove('d-none');
+            
+            document.getElementById('curDate').value = date;
+            document.getElementById('curPeriod').value = period;
+            document.getElementById('curSubject').value = subject;
+            document.getElementById('curTeacher').value = teacher;
+            document.getElementById('curRoom').value = room;
+
+            document.getElementById('hdnCurDate').value = el.dataset.rawdate;
+            document.getElementById('hdnCurPeriod').value = period;
+
+            document.getElementById('lblThu').innerText = thu;
+            document.getElementById('lblTiet').innerText = period;
+            document.getElementById('lblMon').innerText = subject;
+            document.getElementById('lblGV').innerText = teacher;
+            document.getElementById('lblPhong').innerText = room;
+
+            curMon = subject; curGv = teacher; curPhong = room;
+        } else {
+            // Hủy ô đích cũ nếu đã chọn
+            if (targetSelected) {
+                targetSelected.classList.remove('selected-target');
+                const oldContent = targetSelected.querySelector('.target-content');
+                if (oldContent) oldContent.classList.add('d-none');
+                const oldTBadge = targetSelected.querySelector('.target-badge');
+                if (oldTBadge) oldTBadge.classList.add('d-none');
+            }
+
+            targetSelected = el;
+            el.classList.add('selected-target');
+            
+            if (hasSchedule) {
+                const tBadge = el.querySelector('.target-badge');
+                if (tBadge) tBadge.classList.remove('d-none');
+            } else {
+                const content = el.querySelector('.target-content');
+                if (content) {
+                    content.classList.remove('d-none');
+                    content.querySelector('.target-mon').innerText = curMon;
+                    content.querySelector('.target-gv').innerText = curGv;
+                    content.querySelector('.target-phong').innerText = curPhong;
+                }
+            }
+
+            document.getElementById('targetInfoEmpty').classList.add('d-none');
+            document.getElementById('targetInfoForm').classList.remove('d-none');
+
+            document.getElementById('tarDate').value = date;
+            document.getElementById('tarPeriod').value = period;
+            document.getElementById('tarRoomDisplay').value = curPhong;
+            document.getElementById('hdnTarDate').value = el.dataset.rawdate;
+            document.getElementById('hdnTarPeriod').value = period;
+            resetConflictUI();
+        }
+    }
+
+    function resetConflictUI() {
+        document.getElementById('btnCheckConflict').classList.remove('d-none');
+        document.getElementById('btnCheckConflict').disabled = false;
+        document.getElementById('btnConfirmTransfer').classList.add('d-none');
+        document.getElementById('conflictResult').classList.add('d-none');
+        document.getElementById('conflictSteps').innerHTML = '';
+        document.getElementById('conflictFinalResult').className = 'd-none';
+    }
+
+    async function checkConflict() {
+        const btnCheck = document.getElementById('btnCheckConflict');
+        const btnConfirm = document.getElementById('btnConfirmTransfer');
+        const resultBox = document.getElementById('conflictResult');
+        const stepsBox = document.getElementById('conflictSteps');
+        const finalResult = document.getElementById('conflictFinalResult');
+
+        // Lấy dữ liệu
+        const lopId = document.querySelector('input[name="LopId"]').value;
+        const curDate = document.getElementById('hdnCurDate').value;
+        const curPeriod = document.getElementById('hdnCurPeriod').value;
+        const tarDate = document.getElementById('hdnTarDate').value;
+        const tarPeriod = document.getElementById('hdnTarPeriod').value;
+
+        btnCheck.disabled = true;
+        resultBox.classList.remove('d-none');
+        stepsBox.innerHTML = '';
+        finalResult.className = 'd-none';
+        
+        let stepUIs = [
+            { id: 'chkLop', text: 'Kiểm tra lớp...' },
+            { id: 'chkGv', text: 'Kiểm tra giáo viên...' },
+            { id: 'chkPhong', text: 'Kiểm tra phòng...' },
+            { id: 'chkTiet', text: 'Kiểm tra tiết mới...' }
+        ];
+
+        stepUIs.forEach((step) => {
+            const li = document.createElement('li');
+            li.id = step.id;
+            li.className = 'mb-2';
+            li.innerHTML = `<span class="spinner-border spinner-border-sm me-2 text-primary" role="status"></span> ${step.text}`;
+            stepsBox.appendChild(li);
+        });
+
+        try {
+            // Gọi API thật
+            const formData = new FormData();
+            formData.append('lopId', lopId);
+            formData.append('curDate', curDate);
+            formData.append('curPeriod', curPeriod);
+            formData.append('tarDate', tarDate);
+            formData.append('tarPeriod', tarPeriod);
+
+            const response = await fetch('@Url.Action("KiemTraXungDot", "HocVu")', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                alert(result.message || 'Lỗi khi kiểm tra xung đột!');
+                resetConflictUI();
+                return;
+            }
+
+            // Dữ liệu từ API
+            let steps = [
+                { id: 'chkLop', result: result.chkLop },
+                { id: 'chkGv', result: result.chkGv },
+                { id: 'chkPhong', result: result.chkPhong },
+                { id: 'chkTiet', result: result.chkTiet }
+            ];
+
+            // Hiển thị lần lượt
+            let currentStep = 0;
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    const stepData = steps[currentStep];
+                    const li = document.getElementById(stepData.id);
+                    const uiText = stepUIs[currentStep].text.replace('...', '');
+                    
+                    if (stepData.result.ok) {
+                        li.innerHTML = `<i class="bi bi-check-circle-fill text-success me-2"></i> ${uiText}: <span class="text-success fw-medium">${stepData.result.msg}</span>`;
+                    } else {
+                        li.innerHTML = `<i class="bi bi-x-circle-fill text-danger me-2"></i> ${uiText}: <span class="text-danger fw-medium">${stepData.result.msg}</span>`;
+                    }
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                    btnCheck.classList.add('d-none');
+                    
+                    if (result.isValid) {
+                        btnConfirm.classList.remove('d-none');
+                        finalResult.className = 'p-2 mt-3 rounded-2 text-center fw-medium bg-success bg-opacity-10 text-success border border-success';
+                        finalResult.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Không có xung đột. Có thể chuyển lịch.';
+                    } else {
+                        btnCheck.classList.remove('d-none');
+                        btnCheck.disabled = false;
+                        btnCheck.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Thử lại';
+                        finalResult.className = 'p-2 mt-3 rounded-2 text-center fw-medium bg-danger bg-opacity-10 text-danger border border-danger';
+                        finalResult.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Có xung đột. Vui lòng chọn lịch khác!';
+                    }
+                }
+            }, 300);
+            
+        } catch (error) {
+            console.error(error);
+            alert('Lỗi kết nối đến máy chủ.');
+            resetConflictUI();
+        }
+    }
+
+    function resetSelection() {
+        document.querySelectorAll('.schedule-cell').forEach(c => {
+            c.classList.remove('selected-current', 'selected-target');
+            const b1 = c.querySelector('.current-badge');
+            if (b1) b1.classList.add('d-none');
+            const b2 = c.querySelector('.target-badge');
+            if (b2) b2.classList.add('d-none');
+            const b3 = c.querySelector('.target-content');
+            if (b3) b3.classList.add('d-none');
+        });
+
+        document.getElementById('currentInfoEmpty').classList.remove('d-none');
+        document.getElementById('currentInfoForm').classList.add('d-none');
+        document.getElementById('targetInfoEmpty').classList.remove('d-none');
+        document.getElementById('targetInfoForm').classList.add('d-none');
+
+        curMon = ''; curGv = ''; curPhong = '';
+        currentSelected = null;
+        targetSelected = null;
+        resetConflictUI();
+    }
+</script>
