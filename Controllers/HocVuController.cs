@@ -1871,5 +1871,85 @@ namespace eSchool.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult TaoNamHocTuDong(NamHoc model)
+        {
+            if (!ModelState.IsValid || model.NgayKetThuc <= model.NgayBatDau)
+            {
+                TempData["Error"] = "Thông tin năm học chưa hợp lệ.";
+                return RedirectToAction("Index", "LenLop");
+            }
+
+            if (_context.NamHocs.Any(x => x.TenNamHoc == model.TenNamHoc))
+            {
+                TempData["Error"] = "Năm học đã tồn tại.";
+                return RedirectToAction("Index", "LenLop");
+            }
+
+            var newNamHoc = new NamHoc
+            {
+                TenNamHoc = model.TenNamHoc.Trim(),
+                NgayBatDau = model.NgayBatDau,
+                NgayKetThuc = model.NgayKetThuc,
+                TrangThai = model.TrangThai
+            };
+            
+            _context.NamHocs.Add(newNamHoc);
+            _context.SaveChanges();
+
+            var match = System.Text.RegularExpressions.Regex.Match(newNamHoc.TenNamHoc, @"^(\d{4})-(\d{4})$");
+            if (match.Success)
+            {
+                if (int.TryParse(match.Groups[1].Value, out int startYear) && int.TryParse(match.Groups[2].Value, out int endYear))
+                {
+                    _context.HocKys.Add(new HocKy
+                    {
+                        IdNamHoc = newNamHoc.IdNamHoc,
+                        TenHocKy = "Học kỳ 1",
+                        NgayBatDau = new DateTime(startYear, 9, 5),
+                        NgayKetThuc = new DateTime(startYear, 12, 31),
+                        TrangThai = true
+                    });
+
+                    _context.HocKys.Add(new HocKy
+                    {
+                        IdNamHoc = newNamHoc.IdNamHoc,
+                        TenHocKy = "Học kỳ 2",
+                        NgayBatDau = new DateTime(endYear, 1, 1),
+                        NgayKetThuc = new DateTime(endYear, 5, 31),
+                        TrangThai = true
+                    });
+
+                    _context.SaveChanges();
+
+                    string prefix = startYear.ToString().Substring(2, 2);
+                    for (int khoi = 6; khoi <= 9; khoi++)
+                    {
+                        for (int i = 1; i <= 5; i++)
+                        {
+                            string className = $"{khoi}A{i}";
+                            string classCode = $"K{prefix}_{className}";
+                            
+                            var newLop = new LopHoc
+                            {
+                                MaLop = classCode,
+                                TenLop = className,
+                                Khoi = khoi.ToString(),
+                                BuoiHoc = (khoi == 6 || khoi == 7) ? "Sáng" : "Chiều",
+                                NamHoc = newNamHoc.TenNamHoc
+                            };
+                            _context.LopHocs.Add(newLop);
+                            _context.SaveChanges();
+
+                            AutoGenerateSchedule(newLop);
+                        }
+                    }
+                }
+            }
+
+            TempData["Success"] = "Đã thêm năm học, tạo 20 lớp và xếp TKB thành công.";
+            return RedirectToAction("Index", "LenLop");
+        }
     }
 }

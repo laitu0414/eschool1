@@ -1,0 +1,1027 @@
+@using eSchool.Controllers
+@{
+    ViewData["Title"] = "Xét Lên Lớp / Tốt Nghiệp";
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    
+    var lopStats = ViewBag.LopStats as List<LopStat> ?? new List<LopStat>();
+    var khoiStats = ViewBag.KhoiStats as List<KhoiStat> ?? new List<KhoiStat>();
+    var hocSinhs = ViewBag.HocSinhs as List<HocSinh> ?? new List<HocSinh>();
+
+    int totalHS = ViewBag.TotalHS ?? 0;
+    int duDieuKien = ViewBag.DuDieuKien ?? 0;
+    int chuaDuDieuKien = ViewBag.ChuaDuDieuKien ?? 0;
+    int boHoc = ViewBag.BoHoc ?? 0;
+    
+    int daDuyet = ViewBag.DaDuyet ?? 0;
+    int choDuyet = ViewBag.ChoDuyet ?? 0;
+    double tyleDuyet = ViewBag.TyLeDuyet ?? 0;
+    
+    bool isLocked = TempData["IsLocked"] != null && (bool)TempData["IsLocked"];
+}
+
+<style>
+    .xet-duyet-container {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8fafc;
+        padding: 20px;
+        min-height: 100vh;
+    }
+    .wizard-step { display: none; }
+    .wizard-step.active { display: block; }
+
+    /* Titles */
+    .step-title-container {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;
+    }
+    .step-title {
+        font-size: 1.25rem; font-weight: 700; color: #1e293b;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .step-title span {
+        display: inline-flex; justify-content: center; align-items: center;
+        width: 28px; height: 28px; border-radius: 50%; background: #e0e7ff; color: #4f46e5; font-size: 1rem;
+    }
+
+    /* Cards */
+    .card-box {
+        background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px;
+    }
+    .card-stat {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc;
+    }
+    .card-stat.blue { border-left: 4px solid #3b82f6; }
+    .card-stat.green { border-left: 4px solid #10b981; }
+    .card-stat.orange { border-left: 4px solid #f59e0b; }
+    .card-stat.purple { border-left: 4px solid #8b5cf6; }
+
+    .stat-val { font-size: 1.5rem; font-weight: bold; }
+    .stat-label { font-size: 0.875rem; color: #64748b; font-weight: 600; margin-bottom: 4px;}
+
+    .badge-soft-success { background-color: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+
+    /* Tables */
+    .table-custom { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .table-custom th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; font-size: 0.875rem; }
+    .table-custom td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #334155; font-size: 0.875rem; }
+    
+    .btn-action { margin-top: 20px; text-align: right; }
+    
+    /* Progress ring for step 3 */
+    .circular-chart { display: block; margin: 0 auto; max-width: 120px; max-height: 120px; }
+    .circle-bg { fill: none; stroke: #eee; stroke-width: 3.8; }
+    .circle { fill: none; stroke-width: 3.8; stroke-linecap: round; animation: progress 1s ease-out forwards; }
+    .percentage { fill: #333; font-family: sans-serif; font-size: 0.5em; text-anchor: middle; font-weight: bold; }
+    
+    .lock-icon-container {
+        text-align: center; margin: 40px 0;
+    }
+    .lock-icon {
+        width: 80px; height: 80px; background: #eff6ff; color: #3b82f6;
+        border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-size: 2rem;
+    }
+    
+    .finish-icon {
+        width: 80px; height: 80px; background: #ecfdf5; color: #10b981;
+        border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-size: 2.5rem; margin-bottom: 10px;
+    }
+</style>
+
+<div class="xet-duyet-container">
+
+    <!-- STEP 1 -->
+    <div id="step1" class="wizard-step active">
+        <div class="step-title-container">
+            <div class="step-title"><span>1</span> 1. TỔNG KẾT KẾT QUẢ HỌC TẬP</div>
+            <button class="btn btn-light border btn-sm text-primary"><i class="bi bi-info-circle"></i> Xem hướng dẫn</button>
+        </div>
+        <p class="text-muted small mb-4">Lấy dữ liệu điểm, hạnh kiểm, rèn luyện và tổng kết năm học</p>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card-box h-100 mb-0 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted fw-bold small">Trạng thái</span>
+                        <span class="badge-soft-success">Đã hoàn thành</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Hoàn thành lúc:</span>
+                        <span class="fw-bold">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Người thực hiện:</span>
+                        <span class="fw-bold">Hệ thống</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card-stat blue h-100">
+                            <div>
+                                <div class="stat-label text-primary">Tổng số học sinh</div>
+                                <div class="stat-val text-primary"><i class="bi bi-people-fill me-2"></i>@totalHS</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-stat green h-100">
+                            <div>
+                                <div class="stat-label text-success">Đã tổng kết</div>
+                                <div class="stat-val text-success"><i class="bi bi-check-circle-fill me-2"></i>@totalHS <span class="fs-6 fw-normal text-muted">(100%)</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-stat orange h-100">
+                            <div>
+                                <div class="stat-label text-warning">Chưa tổng kết</div>
+                                <div class="stat-val text-warning"><i class="bi bi-person-fill-exclamation me-2"></i>0 <span class="fs-6 fw-normal text-muted">(0%)</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-box mb-4">
+            <h6 class="fw-bold mb-3">Số liệu tổng hợp</h6>
+            <div class="row text-center border-top pt-3">
+                <div class="col-3 border-end">
+                    <div class="text-success small fw-bold mb-1"><i class="bi bi-check2"></i> Đã đủ điểm HK1, HK2</div>
+                    <div class="d-flex justify-content-center align-items-end gap-2">
+                        <span class="fs-4 fw-bold">@totalHS</span> <span class="text-muted small mb-1">100%</span>
+                    </div>
+                </div>
+                <div class="col-3 border-end">
+                    <div class="text-success small fw-bold mb-1"><i class="bi bi-check2"></i> Đã xếp loại hạnh kiểm</div>
+                    <div class="d-flex justify-content-center align-items-end gap-2">
+                        <span class="fs-4 fw-bold">@totalHS</span> <span class="text-muted small mb-1">100%</span>
+                    </div>
+                </div>
+                <div class="col-3 border-end">
+                    <div class="text-success small fw-bold mb-1"><i class="bi bi-check2"></i> Đã xếp loại rèn luyện</div>
+                    <div class="d-flex justify-content-center align-items-end gap-2">
+                        <span class="fs-4 fw-bold">@totalHS</span> <span class="text-muted small mb-1">100%</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="text-success small fw-bold mb-1"><i class="bi bi-check2"></i> Đã tổng kết năm học</div>
+                    <div class="d-flex justify-content-center align-items-end gap-2">
+                        <span class="fs-4 fw-bold">@totalHS</span> <span class="text-muted small mb-1">100%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-box">
+            <h6 class="fw-bold mb-3">Danh sách lớp</h6>
+            <div class="table-responsive">
+                <table class="table-custom text-center">
+                    <thead>
+                        <tr>
+                            <th>Khối</th>
+                            <th>Lớp</th>
+                            <th>Sĩ số</th>
+                            <th>Đã tổng kết</th>
+                            <th>Tỷ lệ</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var l in lopStats)
+                        {
+                            <tr>
+                                <td>@l.Khoi</td>
+                                <td class="fw-bold">@l.TenLop</td>
+                                <td>@l.SiSo</td>
+                                <td>@l.DaTongKet</td>
+                                <td>100%</td>
+                                <td><span class="badge-soft-success">@l.TrangThai</span></td>
+                                <td><button class="btn btn-sm btn-light text-primary border"><i class="bi bi-eye"></i></button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button class="btn btn-light text-primary fw-bold border bg-white">Xem chi tiết tổng kết</button>
+            <button class="btn btn-primary fw-bold" onclick="nextStep(2)">Tiếp theo: Xét điều kiện <i class="bi bi-arrow-right ms-1"></i></button>
+        </div>
+    </div>
+
+
+    <!-- STEP 2 -->
+    <div id="step2" class="wizard-step">
+        <div class="step-title-container">
+            <div class="step-title"><span>2</span> 2. XÉT ĐIỀU KIỆN</div>
+        </div>
+        <p class="text-muted small mb-4">Hệ thống tự động xét điều kiện lên lớp / tốt nghiệp dựa trên quy định</p>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card-box h-100 mb-0 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted fw-bold small">Trạng thái</span>
+                        <span class="badge-soft-success">Đã hoàn thành</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Hoàn thành lúc:</span>
+                        <span class="fw-bold">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Người thực hiện:</span>
+                        <span class="fw-bold">Hệ thống</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card-stat green h-100">
+                            <div>
+                                <div class="stat-label text-success">Đủ điều kiện</div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="stat-val text-success"><i class="bi bi-person-check-fill me-2"></i>@(duDieuKien)</div>
+                                </div>
+                                <div class="text-muted small mt-1">@((totalHS > 0 ? ((double)duDieuKien/totalHS*100) : 0).ToString("0.00"))%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-stat orange h-100">
+                            <div>
+                                <div class="stat-label text-warning">Chưa đủ điều kiện</div>
+                                <div class="stat-val text-warning"><i class="bi bi-person-x-fill me-2"></i>@(chuaDuDieuKien)</div>
+                                <div class="text-muted small mt-1">@((totalHS > 0 ? ((double)chuaDuDieuKien/totalHS*100) : 0).ToString("0.00"))%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-stat purple h-100">
+                            <div>
+                                <div class="stat-label text-purple" style="color: #8b5cf6;">Chuyển trường / Bỏ học</div>
+                                <div class="stat-val text-purple" style="color: #8b5cf6;">@boHoc</div>
+                                <div class="text-muted small mt-1">@((totalHS > 0 ? ((double)boHoc/totalHS*100) : 0).ToString("0.00"))%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card-box h-100">
+                    <h6 class="fw-bold mb-4">Điều kiện xét</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-3 text-success fw-bold small"><i class="bi bi-check-circle me-2"></i> Hạnh kiểm năm học đạt từ Khá trở lên</li>
+                        <li class="mb-3 text-success fw-bold small"><i class="bi bi-check-circle me-2"></i> Học lực năm học đạt từ Trung bình trở lên</li>
+                        <li class="mb-3 text-success fw-bold small"><i class="bi bi-check-circle me-2"></i> Hoàn thành chương trình lớp học</li>
+                        <li class="text-success fw-bold small"><i class="bi bi-check-circle me-2"></i> Không vi phạm quy chế trong kỳ thi TN (nếu có)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card-box h-100">
+                    <h6 class="fw-bold mb-3">Kết quả xét theo khối</h6>
+                    <div class="table-responsive">
+                        <table class="table-custom text-center">
+                            <thead>
+                                <tr>
+                                    <th>Khối</th>
+                                    <th>Tổng số HS</th>
+                                    <th>Đủ điều kiện</th>
+                                    <th>Chưa đủ ĐK</th>
+                                    <th>Chuyển/Bỏ</th>
+                                    <th>Tỷ lệ Đủ ĐK</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach(var k in khoiStats)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@k.Khoi</td>
+                                        <td>@k.TongSoHS</td>
+                                        <td>@k.DuDieuKien</td>
+                                        <td>@k.ChuaDuDieuKien</td>
+                                        <td>@k.BoHoc</td>
+                                        <td class="fw-bold">@k.TyLe.ToString("0.00")%</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button class="btn btn-light text-primary fw-bold border bg-white">Xem danh sách chi tiết</button>
+            <button class="btn btn-primary fw-bold" onclick="nextStep(3)">Tiếp theo: Kiểm tra & duyệt kết quả <i class="bi bi-arrow-right ms-1"></i></button>
+        </div>
+    </div>
+
+
+    <!-- STEP 3 -->
+    <div id="step3" class="wizard-step">
+        <div class="step-title-container">
+            <div class="step-title"><span>3</span> 3. KIỂM TRA & DUYỆT KẾT QUẢ</div>
+        </div>
+        <p class="text-muted small mb-4">Ban giám hiệu kiểm tra danh sách và duyệt kết quả xét</p>
+
+        <div class="row mb-4 align-items-stretch">
+            <div class="col-md-8">
+                <div class="row g-3 h-100">
+                    <div class="col-md-4">
+                        <div class="card-box h-100 mb-0 d-flex flex-column justify-content-center">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted fw-bold small">Trạng thái</span>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary rounded-pill px-3 py-2"><i class="bi bi-circle-fill me-2" style="font-size:8px;"></i> Đang thực hiện</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-stat green h-100 flex-column align-items-start justify-content-center">
+                            <div class="stat-label text-success">Đã duyệt</div>
+                            <div class="stat-val text-dark fs-3">@daDuyet</div>
+                            <div class="text-muted small mt-1">@tyleDuyet.ToString("0.00")%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card-stat orange h-100 flex-column align-items-start justify-content-center">
+                            <div class="stat-label text-warning">Chờ duyệt</div>
+                            <div class="stat-val text-warning fs-3">@choDuyet</div>
+                            <div class="text-muted small mt-1">@((totalHS > 0 ? ((double)choDuyet/totalHS*100) : 0).ToString("0.00"))%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card-box h-100 mb-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold mb-2">Tỷ lệ duyệt</div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <div style="width:10px;height:10px;background:#10b981;border-radius:50%;"></div>
+                            <small class="text-muted">Đã duyệt (@daDuyet)</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:10px;height:10px;background:#f59e0b;border-radius:50%;"></div>
+                            <small class="text-muted">Chờ duyệt (@choDuyet)</small>
+                        </div>
+                    </div>
+                    <div style="position: relative;">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg"
+                            d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path class="circle"
+                            stroke-dasharray="@tyleDuyet, 100"
+                            stroke="#10b981"
+                            d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <text x="18" y="20.35" class="percentage">@tyleDuyet%</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-box">
+            <div class="d-flex gap-2 mb-3">
+                <input type="text" class="form-control form-control-sm w-25" placeholder="Tìm kiếm học sinh...">
+                <select class="form-select form-select-sm w-auto"><option>Khối: Tất cả</option></select>
+                <select class="form-select form-select-sm w-auto"><option>Lớp: Tất cả</option></select>
+                <select class="form-select form-select-sm w-auto"><option>Trạng thái: Tất cả</option></select>
+                <button class="btn btn-primary btn-sm px-4"><i class="bi bi-search"></i> Tìm kiếm</button>
+            </div>
+            
+            <form id="duyetForm" method="post">
+                <input type="hidden" name="ids" id="selectedIds">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table-custom text-center align-middle">
+                        <thead style="position: sticky; top: 0; z-index: 1;">
+                            <tr>
+                                <th><input type="checkbox" id="checkAll"></th>
+                                <th>STT</th>
+                                <th>Mã học sinh</th>
+                                <th class="text-start">Họ và tên</th>
+                                <th>Lớp</th>
+                                <th>Kết quả xét</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int stt = 1; }
+                            @foreach(var hs in hocSinhs)
+                            {
+                                bool isEligible = hs.TrangThai && (hs.GhiChu == null || !hs.GhiChu.Contains("Không đủ điều kiện"));
+                                <tr>
+                                    <td><input type="checkbox" class="chk-hs" value="@hs.IdHocSinh"></td>
+                                    <td>@(stt++)</td>
+                                    <td class="fw-bold">@hs.MaHS</td>
+                                    <td class="text-start">@hs.HoTen</td>
+                                    <td>@(hs.LopHoc?.TenLop)</td>
+                                    <td>
+                                        @if(isEligible) { <span class="text-dark fw-bold">Đủ điều kiện</span> }
+                                        else { <span class="text-danger fw-bold">Không đủ điều kiện</span> }
+                                    </td>
+                                    <td>
+                                        @if(hs.DaDuyet) { <span class="badge-soft-success">Đã duyệt</span> }
+                                        else { <span class="badge-soft-warning">Chờ duyệt</span> }
+                                    </td>
+                                    <td><button type="button" class="btn btn-sm btn-light border text-primary"><i class="bi bi-eye"></i></button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="d-flex gap-2">
+                <form method="post" action="/LenLop/BulkApproveAllEligible" class="m-0">
+                    <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-check-all"></i> Duyệt tất cả đủ điều kiện</button>
+                </form>
+                <button type="button" class="btn btn-primary fw-bold" onclick="submitForm('/LenLop/BulkApprove')"><i class="bi bi-check-square"></i> Duyệt đã chọn</button>
+                <button type="button" class="btn btn-danger fw-bold" onclick="submitForm('/LenLop/BulkReject')"><i class="bi bi-x-square"></i> Từ chối đã chọn</button>
+            </div>
+            <button class="btn btn-primary fw-bold" onclick="nextStep(4)">Tiếp theo: Khóa kết quả <i class="bi bi-arrow-right ms-1"></i></button>
+        </div>
+    </div>
+
+
+    <!-- STEP 4 -->
+    <div id="step4" class="wizard-step">
+        <div class="step-title-container">
+            <div class="step-title"><span>4</span> 4. KHÓA KẾT QUẢ</div>
+        </div>
+        <p class="text-muted small mb-4">Khóa kết quả sau khi duyệt xong để tránh chỉnh sửa</p>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card-box h-100 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted fw-bold small">Trạng thái</span>
+                        <span class="badge bg-light text-dark border">Chưa thực hiện</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Hoàn thành lúc:</span>
+                        <span class="fw-bold">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Người thực hiện:</span>
+                        <span class="fw-bold">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card-box h-100">
+                    <h6 class="fw-bold mb-3">Thông tin khóa</h6>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Số học sinh đã duyệt:</span>
+                        <span class="fw-bold">@daDuyet/@totalHS</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Thời gian khóa:</span>
+                        <span class="fw-bold">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Người khóa:</span>
+                        <span class="fw-bold">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-warning border-warning" style="background-color: #fffbeb;">
+            <i class="bi bi-exclamation-circle-fill text-warning me-2"></i>
+            Sau khi khóa, dữ liệu kết quả xét sẽ không thể chỉnh sửa. Chỉ người có quyền mở khóa mới có thể mở khóa.
+        </div>
+        
+        <div class="lock-icon-container">
+            <div class="lock-icon mb-3"><i class="bi bi-lock-fill"></i></div>
+            <h5 class="fw-bold text-dark">Kết quả chưa được khóa</h5>
+            <p class="text-muted">Vui lòng khóa kết quả để hoàn tất quy trình.</p>
+            <form method="post" action="/LenLop/LockResults">
+                <button type="submit" class="btn btn-primary fw-bold px-4 py-2 mt-2"><i class="bi bi-lock"></i> Khóa kết quả</button>
+            </form>
+        </div>
+
+        <div class="mt-3">
+            <button class="btn btn-light fw-bold border bg-white" onclick="nextStep(3)"><i class="bi bi-arrow-left me-1"></i> Quay lại</button>
+        </div>
+    </div>
+
+
+    <!-- STEP 5 -->
+    <div id="step5" class="wizard-step">
+        <div class="step-title-container">
+            <div class="step-title"><span>5</span> 5. HOÀN TẤT</div>
+        </div>
+        <p class="text-muted small mb-4">Hoàn tất quy trình và thực hiện các nghiệp vụ tiếp theo</p>
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card-box h-100 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted fw-bold small">Trạng thái</span>
+                        <span class="badge-soft-success">Đã hoàn thành</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Hoàn thành lúc:</span>
+                        <span class="fw-bold">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Người thực hiện:</span>
+                        <span class="fw-bold">Hệ thống</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card-box h-100 d-flex align-items-center" style="background-color: #ecfdf5; border-color: #a7f3d0;">
+                    <div class="finish-icon me-3 bg-white border" style="width: 50px; height: 50px; font-size: 1.5rem;"><i class="bi bi-check-lg"></i></div>
+                    <div class="flex-grow-1">
+                        <h6 class="text-success fw-bold mb-2">Quy trình xét đã hoàn tất</h6>
+                        <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Tổng số học sinh:</span><span class="fw-bold text-dark">@totalHS</span></div>
+                        <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Đủ điều kiện:</span><span class="fw-bold text-success">@duDieuKien</span></div>
+                        <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Không đủ điều kiện:</span><span class="fw-bold text-dark">@chuaDuDieuKien</span></div>
+                        <div class="d-flex justify-content-between small"><span class="text-muted">Chuyển trường / Bỏ học:</span><span class="fw-bold text-dark">@boHoc</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-5">
+                <div class="card-box h-100">
+                    <h6 class="fw-bold text-primary mb-3">Nghiệp vụ tiếp theo</h6>
+                    <div class="row g-2">
+                        <div class="col-6"><button class="btn btn-light border w-100 text-primary text-start fw-bold py-2" data-bs-toggle="modal" data-bs-target="#createYearModal"><i class="bi bi-calendar-plus me-2"></i> Tạo năm học mới</button></div>
+                        <div class="col-6"><button class="btn btn-light border w-100 text-primary text-start fw-bold py-2" data-bs-toggle="modal" data-bs-target="#assignClassModal"><i class="bi bi-diagram-3 me-2"></i> Xếp lớp năm học mới</button></div>
+                        <div class="col-6"><button class="btn btn-light border w-100 text-primary text-start fw-bold py-2" data-bs-toggle="modal" data-bs-target="#printModal"><i class="bi bi-printer me-2"></i> In danh sách kết quả</button></div>
+                        <div class="col-6"><button class="btn btn-light border w-100 text-primary text-start fw-bold py-2" data-bs-toggle="modal" data-bs-target="#exportExcelModal"><i class="bi bi-file-earmark-excel me-2"></i> Xuất Excel</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-box">
+            <h6 class="fw-bold mb-3">Ghi chú</h6>
+            <div class="d-flex align-items-center justify-content-between">
+                <ul>
+                    <li class="mb-2 text-muted">Danh sách kết quả đã được lưu.</li>
+                    <li class="text-muted">Bạn có thể in hoặc xuất dữ liệu để lưu trữ.</li>
+                </ul>
+                <div style="font-size: 5rem; color: #f59e0b;"><i class="bi bi-trophy-fill"></i></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Handle Wizard Steps
+    let isLocked = @(isLocked.ToString().ToLower());
+    
+    function nextStep(stepNumber) {
+        if (stepNumber === 5 && !isLocked) {
+            // Cannot go to step 5 directly if not locked (handled by POST request)
+            return;
+        }
+        
+        document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+        document.getElementById('step' + stepNumber).classList.add('active');
+        localStorage.setItem('currentWizardStep', stepNumber);
+        window.scrollTo(0, 0);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (isLocked) {
+            nextStep(5);
+        } else {
+            let savedStep = localStorage.getItem('currentWizardStep');
+            if (savedStep && savedStep !== '5') {
+                nextStep(parseInt(savedStep));
+            }
+        }
+        
+        // Handle Checkbox in Step 3
+        const checkAll = document.getElementById('checkAll');
+        const checkBoxes = document.querySelectorAll('.chk-hs');
+        
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                checkBoxes.forEach(cb => cb.checked = this.checked);
+            });
+        }
+    });
+    
+    function submitForm(actionUrl) {
+        const selected = Array.from(document.querySelectorAll('.chk-hs:checked')).map(cb => cb.value);
+        if (selected.length === 0) {
+            alert('Vui lòng chọn ít nhất 1 học sinh.');
+            return;
+        }
+        document.getElementById('selectedIds').value = selected.join(',');
+        const form = document.getElementById('duyetForm');
+        form.action = actionUrl;
+        form.submit();
+    }
+</script>
+
+<style>
+    .alert-custom-info { background-color: #eff6ff; color: #1e40af; border: none; font-size: 0.85rem; }
+    .form-label-custom { font-size: 0.875rem; font-weight: 600; color: #334155; }
+    .text-danger-custom { color: #ef4444; }
+</style>
+
+<div class="modal fade" id="createYearModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <form action="/HocVu/TaoNamHocTuDong" method="post">
+                @Html.AntiForgeryToken()
+                <!-- Hidden input for TrangThai, so it defaults to true -->
+                <input type="hidden" name="TrangThai" value="true" />
+                
+                <div class="modal-header border-bottom-0 pt-4 pb-2 px-4">
+                    <h5 class="modal-title fw-bold fs-5" style="color: #1e3a8a !important;">
+                        <i class="bi bi-calendar-plus me-2"></i> TẠO NĂM HỌC MỚI
+                    </h5>
+                </div>
+                
+                <div class="modal-body px-4 pb-4">
+                    <div class="row mb-3 align-items-center">
+                        <label class="col-sm-4 form-label-custom mb-0">Năm học mới <span class="text-danger-custom">*</span></label>
+                        <div class="col-sm-8">
+                            <input type="text" name="TenNamHoc" id="autoTenNamHoc" class="form-control" placeholder="2026-2027" required />
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3 align-items-center">
+                        <label class="col-sm-4 form-label-custom mb-0">Ngày bắt đầu <span class="text-danger-custom">*</span></label>
+                        <div class="col-sm-8">
+                            <input type="date" name="NgayBatDau" id="autoNgayBatDau" class="form-control" required />
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3 align-items-center">
+                        <label class="col-sm-4 form-label-custom mb-0">Ngày kết thúc (dự kiến) <span class="text-danger-custom">*</span></label>
+                        <div class="col-sm-8">
+                            <input type="date" name="NgayKetThuc" id="autoNgayKetThuc" class="form-control" required />
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <label class="col-sm-4 form-label-custom mb-0 pt-2" style="align-self: flex-start;">Mô tả</label>
+                        <div class="col-sm-8">
+                            <textarea class="form-control" rows="3" placeholder="Nhập mô tả (nếu có)..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-top-0 px-4 pb-4">
+                    <button type="button" class="btn btn-white border px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary px-4" style="background-color: #1d4ed8;">
+                        <i class="bi bi-calendar-plus me-1"></i> Tạo năm học mới
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const tenNamHocInput = document.getElementById('autoTenNamHoc');
+        const ngayBatDauInput = document.getElementById('autoNgayBatDau');
+        const ngayKetThucInput = document.getElementById('autoNgayKetThuc');
+
+        if (tenNamHocInput && ngayBatDauInput && ngayKetThucInput) {
+            tenNamHocInput.addEventListener('input', function(e) {
+                const val = e.target.value.trim();
+                const match = val.match(/^(\d{4})-(\d{4})$/);
+                if (match) {
+                    const startYear = match[1];
+                    const endYear = match[2];
+                    
+                    // Năm học thường bắt đầu vào 05/09 và kết thúc vào 31/05
+                    ngayBatDauInput.value = `${startYear}-09-05`;
+                    ngayKetThucInput.value = `${endYear}-05-31`;
+                }
+            });
+        }
+    });
+</script>
+
+<!-- MODAL XẾP LỚP NĂM HỌC MỚI -->
+<div class="modal fade" id="assignClassModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow">
+            <form action="/LenLop/AutoAssignClass" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-bottom-0 pt-4 pb-2 px-4">
+                    <h5 class="modal-title fw-bold fs-5" style="color: #1e3a8a !important;">
+                        <i class="bi bi-diagram-3 me-2"></i> XẾP LỚP NĂM HỌC MỚI
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <div class="alert alert-custom-info d-flex align-items-center py-2 mb-4 rounded-3">
+                        <i class="bi bi-info-circle text-primary me-2 fs-6"></i>
+                        Thực hiện xếp lớp cho học sinh vào các lớp của năm học mới.
+                    </div>
+                    
+                    <div class="row g-3 align-items-end mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label-custom mb-2">Năm học</label>
+                            <select name="NamHoc" class="form-select">
+                                <option value="2026-2027">2026 - 2027</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-custom mb-2">Khối</label>
+                            <select name="Khoi" class="form-select">
+                                <option value="All">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-custom mb-2">Trạng thái</label>
+                            <select name="TrangThai" class="form-select">
+                                <option value="All">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button type="submit" class="btn btn-primary px-4" style="background-color: #1d4ed8;">Xếp lớp tự động</button>
+                        </div>
+                    </div>
+                    
+                    <h6 class="fw-bold mb-3" style="color: #1e3a8a;">DANH SÁCH XẾP LỚP THEO KHỐI</h6>
+                    <div class="table-responsive border rounded-3 mb-3">
+                        <table class="table table-hover align-middle text-center mb-0">
+                            <thead class="table-light text-muted small">
+                                <tr>
+                                    <th class="py-3">Khối</th>
+                                    <th>Sĩ số hiện tại</th>
+                                    <th>Số lớp cần</th>
+                                    <th>Sĩ số trung bình/lớp</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold">Khối 6</td>
+                                    <td>288</td>
+                                    <td>8</td>
+                                    <td>35.75</td>
+                                    <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Đã xếp lớp</span></td>
+                                    <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Khối 7</td>
+                                    <td>301</td>
+                                    <td>8</td>
+                                    <td>37.63</td>
+                                    <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Đã xếp lớp</span></td>
+                                    <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Khối 8</td>
+                                    <td>278</td>
+                                    <td>7</td>
+                                    <td>39.71</td>
+                                    <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Đã xếp lớp</span></td>
+                                    <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Khối 9</td>
+                                    <td>289</td>
+                                    <td>7</td>
+                                    <td>41.29</td>
+                                    <td><span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Chưa xếp lớp</span></td>
+                                    <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="small text-dark fw-bold">Gợi ý: <span class="fw-normal">Sĩ số lý tưởng mỗi lớp từ 35 - 45 học sinh.</span></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL IN DANH SÁCH -->
+<div class="modal fade" id="printModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow">
+            <form action="/LenLop/PrintResults" method="post" target="_blank">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-bottom-0 pt-4 pb-2 px-4">
+                    <h5 class="modal-title fw-bold fs-5" style="color: #1e3a8a !important;">
+                        <i class="bi bi-printer me-2"></i> IN DANH SÁCH KẾT QUẢ
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <div class="row g-4">
+                        <div class="col-md-7">
+                            <div class="border rounded-3 p-4 h-100">
+                                <h6 class="fw-bold mb-4" style="color: #334155;">Thông tin in</h6>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Năm học</label>
+                                    <div class="col-sm-8">
+                                        <select name="NamHoc" class="form-select">
+                                            <option>2025 - 2026</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Khối</label>
+                                    <div class="col-sm-8">
+                                        <select name="Khoi" class="form-select"><option>Tất cả</option></select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Lớp</label>
+                                    <div class="col-sm-8">
+                                        <select name="Lop" class="form-select"><option>Tất cả</option></select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Loại kết quả</label>
+                                    <div class="col-sm-8">
+                                        <select name="LoaiKetQua" class="form-select"><option>Tất cả</option></select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Hình thức in</label>
+                                    <div class="col-sm-8 d-flex gap-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="HinhThucIn" id="printPreview" value="Preview" checked>
+                                            <label class="form-check-label text-primary" for="printPreview">Xem trước</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="HinhThucIn" id="printDirect" value="Direct">
+                                            <label class="form-check-label text-muted" for="printDirect">In trực tiếp</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="border rounded-3 p-4 h-100">
+                                <h6 class="fw-bold mb-4" style="color: #334155;">Mẫu in</h6>
+                                <div class="d-flex flex-column gap-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="MauIn" id="mau1" value="Danh sách xét lên lớp" checked>
+                                        <label class="form-check-label fw-bold" for="mau1">Danh sách xét lên lớp</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="MauIn" id="mau2" value="Danh sách tốt nghiệp lớp 9">
+                                        <label class="form-check-label text-muted" for="mau2">Danh sách tốt nghiệp lớp 9</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="MauIn" id="mau3" value="Danh sách theo lớp">
+                                        <label class="form-check-label text-muted" for="mau3">Danh sách theo lớp</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="MauIn" id="mau4" value="Danh sách theo khối">
+                                        <label class="form-check-label text-muted" for="mau4">Danh sách theo khối</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border rounded-3 p-3 mt-4 d-flex justify-content-between align-items-center" style="cursor: pointer;">
+                        <span class="text-primary fw-bold">Tùy chọn nâng cao</span>
+                        <i class="bi bi-chevron-down text-muted"></i>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-top-0 px-4 pb-4">
+                    <button type="button" class="btn btn-white border px-4 text-primary"><i class="bi bi-eye me-1"></i> Xem trước</button>
+                    <button type="submit" class="btn btn-primary px-4" style="background-color: #1d4ed8;">
+                        <i class="bi bi-printer me-1"></i> Tạo và in
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL XUẤT EXCEL -->
+<div class="modal fade" id="exportExcelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow">
+            <form action="/LenLop/ExportExcel" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-bottom-0 pt-4 pb-2 px-4">
+                    <h5 class="modal-title fw-bold fs-5" style="color: #166534 !important;">
+                        <i class="bi bi-file-earmark-excel-fill me-2" style="color: #16a34a;"></i> XUẤT EXCEL
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <div class="alert alert-custom-info d-flex align-items-center py-2 mb-4 rounded-3">
+                        <i class="bi bi-info-circle text-primary me-2 fs-6"></i>
+                        Xuất dữ liệu kết quả xét lên lớp / tốt nghiệp ra file Excel.
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-4 h-100">
+                                <h6 class="fw-bold mb-4" style="color: #334155;">Thông tin xuất</h6>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Năm học</label>
+                                    <div class="col-sm-8">
+                                        <select name="NamHoc" class="form-select">
+                                            <option>2025 - 2026</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Khối</label>
+                                    <div class="col-sm-8">
+                                        <select name="Khoi" class="form-select"><option>Tất cả</option></select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Lớp</label>
+                                    <div class="col-sm-8">
+                                        <select name="Lop" class="form-select"><option>Tất cả</option></select>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Loại dữ liệu</label>
+                                    <div class="col-sm-8">
+                                        <select name="LoaiDuLieu" class="form-select"><option>Kết quả xét lên lớp</option></select>
+                                    </div>
+                                </div>
+                                <div class="row mb-0 align-items-center">
+                                    <label class="col-sm-4 form-label-custom mb-0">Định dạng file</label>
+                                    <div class="col-sm-8">
+                                        <select name="DinhDangFile" class="form-select"><option>.xlsx (Excel 2007 trở lên)</option></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="border rounded-3 p-4 h-100">
+                                <h6 class="fw-bold mb-4" style="color: #334155;">Bao gồm các thông tin</h6>
+                                <div class="d-flex flex-column gap-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input bg-primary border-primary" type="checkbox" name="BaoGom" value="Thông tin học sinh" id="chk1" checked>
+                                        <label class="form-check-label text-dark" for="chk1">Thông tin học sinh</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input bg-primary border-primary" type="checkbox" name="BaoGom" value="Kết quả học tập" id="chk2" checked>
+                                        <label class="form-check-label text-dark" for="chk2">Kết quả học tập</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input bg-primary border-primary" type="checkbox" name="BaoGom" value="Kết quả rèn luyện" id="chk3" checked>
+                                        <label class="form-check-label text-dark" for="chk3">Kết quả rèn luyện</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input bg-primary border-primary" type="checkbox" name="BaoGom" value="Điều kiện xét" id="chk4" checked>
+                                        <label class="form-check-label text-dark" for="chk4">Điều kiện xét</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input bg-primary border-primary" type="checkbox" name="BaoGom" value="Kết quả xét" id="chk5" checked>
+                                        <label class="form-check-label text-dark" for="chk5">Kết quả xét</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input bg-primary border-primary" type="checkbox" name="BaoGom" value="Ghi chú" id="chk6" checked>
+                                        <label class="form-check-label text-dark" for="chk6">Ghi chú</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-top-0 px-4 pb-4">
+                    <button type="submit" class="btn btn-primary px-4" style="background-color: #1d4ed8;">
+                        <i class="bi bi-download me-1"></i> Xuất Excel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

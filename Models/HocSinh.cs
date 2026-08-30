@@ -1,4 +1,4 @@
-﻿using eSchool.Models;
+using eSchool.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
@@ -42,6 +42,8 @@ public class HocSinh
     public DateTime? NgayNhapHoc { get; set; }
 
     public bool TrangThai { get; set; } = true;
+        // Indicates whether the student has been approved in the promotion process
+        public bool DaDuyet { get; set; } = false;
 
     public DateTime? NgayTao { get; set; } = DateTime.Now;
 

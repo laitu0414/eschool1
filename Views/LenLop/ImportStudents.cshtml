@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Import Học sinh";
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+}
+<h2 class="page-title"><i class="bi bi-upload me-2"></i> Import Học sinh</h2>
+<form asp-action="ImportStudents" asp-controller="LenLop" method="post" enctype="multipart/form-data" class="mt-4">
+    <div class="mb-3">
+        <label class="form-label">File CSV</label>
+        <input type="file" name="csvFile" class="form-control" accept=".csv" required />
+    </div>
+    <button type="submit" class="btn btn-success"><i class="bi bi-cloud-upload"></i> Upload</button>
+</form>
