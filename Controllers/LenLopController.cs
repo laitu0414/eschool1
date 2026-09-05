@@ -44,7 +44,7 @@ namespace eSchool.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var allHocSinh = await _context.HocSinhs.Include(h => h.LopHoc).ToListAsync();
+            var allHocSinh = await _context.HocSinhs.Include(h => h.LopHoc).Include(h => h.Diems).ToListAsync();
             var allLops = await _context.LopHocs.ToListAsync();
 
             int totalHS = allHocSinh.Count;
@@ -70,14 +70,23 @@ namespace eSchool.Controllers
             ViewBag.TyLeDuyet = (totalHS > 0) ? Math.Round((double)daDuyet / totalHS * 100, 2) : 0;
 
             // Stats for Step 1
+            // Học sinh chưa tổng kết là học sinh đang theo học (Active) và:
+            // - Chưa có điểm nào (chưa nhập điểm)
+            // - HOẶC có môn học nào đó chưa có Điểm TB (chưa tổng kết xong môn đó)
+            int chuaTongKet = allHocSinh.Count(h => h.TrangThai && (h.Diems == null || h.Diems.Count == 0 || h.Diems.Any(d => d.DiemTB == null)));
+            int daTongKet = totalHS - chuaTongKet;
+            ViewBag.DaTongKet = daTongKet;
+            ViewBag.ChuaTongKet = chuaTongKet;
+
             var lopStats = allLops.Select(l => {
                 int siso = allHocSinh.Count(h => h.IdLopHoc == l.IdLop);
+                int ctk = allHocSinh.Count(h => h.IdLopHoc == l.IdLop && h.TrangThai && (h.Diems == null || h.Diems.Count == 0 || h.Diems.Any(d => d.DiemTB == null)));
                 return new LopStat {
                     Khoi = l.Khoi ?? "",
                     TenLop = l.TenLop,
                     SiSo = siso,
-                    DaTongKet = siso,
-                    TrangThai = "Đã hoàn thành"
+                    DaTongKet = siso - ctk,
+                    TrangThai = ctk == 0 ? "Đã hoàn thành" : "Chưa hoàn thành"
                 };
             }).OrderBy(l => l.Khoi).ThenBy(l => l.TenLop).ToList();
             ViewBag.LopStats = lopStats;
@@ -198,8 +207,13 @@ namespace eSchool.Controllers
         }
 
         [HttpPost]
-        public IActionResult PrintResults(string NamHoc, string Khoi, string Lop, string LoaiKetQua, string HinhThucIn, string MauIn)
+        public async Task<IActionResult> PrintResults(string NamHoc, string Khoi, string Lop, string LoaiKetQua, string HinhThucIn, string MauIn)
         {
+            var query = _context.HocSinhs.Include(h => h.LopHoc).AsQueryable();
+            if (!string.IsNullOrEmpty(Khoi)) query = query.Where(h => h.LopHoc != null && h.LopHoc.Khoi == Khoi);
+            if (!string.IsNullOrEmpty(Lop)) query = query.Where(h => h.LopHoc != null && h.LopHoc.TenLop == Lop);
+            var students = await query.OrderBy(h => h.LopHoc.TenLop).ThenBy(h => h.HoTen).ToListAsync();
+
             QuestPDF.Settings.License = LicenseType.Community;
             var document = Document.Create(container => {
                 container.Page(page => {
@@ -215,9 +229,15 @@ namespace eSchool.Controllers
                         x.Item().Text($"Khối: {Khoi}");
                         x.Item().Text($"Lớp: {Lop}");
                         x.Item().Text($"Loại kết quả: {LoaiKetQua}");
-                        x.Item().PaddingTop(20).Text("Danh sách học sinh (Bản xem trước)").Bold();
-                        x.Item().Text("1. Nguyễn Văn A - Lớp 9A1 - Đủ điều kiện");
-                        x.Item().Text("2. Trần Thị B - Lớp 9A2 - Đủ điều kiện");
+                        x.Item().PaddingTop(20).Text("Danh sách học sinh").Bold();
+                        
+                        int i = 1;
+                        foreach (var hs in students)
+                        {
+                            string trangThai = hs.DaDuyet ? "Đã duyệt" : (hs.GhiChu ?? (hs.TrangThai ? "Đủ điều kiện" : "Bỏ học"));
+                            string lopName = hs.LopHoc != null ? hs.LopHoc.TenLop : "";
+                            x.Item().Text($"{i++}. {hs.MaHS} - {hs.HoTen} - Lớp {lopName} - {trangThai}");
+                        }
                     });
                     page.Footer().AlignCenter().Text(x => {
                         x.Span("Trang ");
@@ -237,8 +257,13 @@ namespace eSchool.Controllers
         }
 
         [HttpPost]
-        public IActionResult ExportExcel(string NamHoc, string Khoi, string Lop, string LoaiDuLieu, string DinhDangFile, List<string> BaoGom)
+        public async Task<IActionResult> ExportExcel(string NamHoc, string Khoi, string Lop, string LoaiDuLieu, string DinhDangFile, List<string> BaoGom)
         {
+            var query = _context.HocSinhs.Include(h => h.LopHoc).AsQueryable();
+            if (!string.IsNullOrEmpty(Khoi)) query = query.Where(h => h.LopHoc != null && h.LopHoc.Khoi == Khoi);
+            if (!string.IsNullOrEmpty(Lop)) query = query.Where(h => h.LopHoc != null && h.LopHoc.TenLop == Lop);
+            var students = await query.OrderBy(h => h.LopHoc.TenLop).ThenBy(h => h.HoTen).ToListAsync();
+
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("KetQua");
             worksheet.Cell(1, 1).Value = "Kết quả xét lên lớp - " + NamHoc;
@@ -246,7 +271,7 @@ namespace eSchool.Controllers
             worksheet.Cell(1, 1).Style.Font.FontSize = 14;
             
             int col = 1;
-            if (BaoGom != null)
+            if (BaoGom != null && BaoGom.Count > 0)
             {
                 foreach(var field in BaoGom)
                 {
@@ -256,12 +281,40 @@ namespace eSchool.Controllers
                     col++;
                 }
             }
+            else
+            {
+                worksheet.Cell(3, 1).Value = "Mã HS";
+                worksheet.Cell(3, 2).Value = "Họ tên";
+                worksheet.Cell(3, 3).Value = "Lớp";
+                worksheet.Cell(3, 4).Value = "Trạng thái";
+            }
             
-            // Dummy data
-            worksheet.Cell(4, 1).Value = "HS001 - Nguyễn Văn A";
-            if (col > 2) worksheet.Cell(4, 2).Value = "Giỏi";
-            if (col > 3) worksheet.Cell(4, 3).Value = "Tốt";
-            if (col > 4) worksheet.Cell(4, 4).Value = "Đủ điều kiện";
+            int row = 4;
+            foreach (var hs in students)
+            {
+                string trangThai = hs.DaDuyet ? "Đã duyệt" : (hs.GhiChu ?? (hs.TrangThai ? "Đủ điều kiện" : "Bỏ học"));
+                if (BaoGom != null && BaoGom.Count > 0)
+                {
+                    int c = 1;
+                    foreach(var field in BaoGom)
+                    {
+                        if (field.Contains("Mã", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = hs.MaHS;
+                        else if (field.Contains("Tên", StringComparison.OrdinalIgnoreCase) || field.Contains("Họ", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = hs.HoTen;
+                        else if (field.Contains("Lớp", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = hs.LopHoc?.TenLop;
+                        else if (field.Contains("Trạng", StringComparison.OrdinalIgnoreCase) || field.Contains("Kết quả", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = trangThai;
+                        else worksheet.Cell(row, c).Value = "";
+                        c++;
+                    }
+                }
+                else
+                {
+                    worksheet.Cell(row, 1).Value = hs.MaHS;
+                    worksheet.Cell(row, 2).Value = hs.HoTen;
+                    worksheet.Cell(row, 3).Value = hs.LopHoc?.TenLop;
+                    worksheet.Cell(row, 4).Value = trangThai;
+                }
+                row++;
+            }
             
             worksheet.Columns().AdjustToContents();
             

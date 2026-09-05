@@ -12,38 +12,279 @@
     <link href="~/css/home-portal.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body>
-    <header class="portal-header">
-        <div class="portal-topbar">
-            <a class="portal-brand" asp-controller="Home" asp-action="Index">
-                <span class="portal-brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
-                <span>
-                    <strong>eSchool</strong>
-                    <small>Hệ thống quản lý trường học</small>
-                </span>
-            </a>
-            <button type="button" class="portal-login-btn" data-bs-toggle="modal" data-bs-target="#loginModal">
-                <i class="bi bi-box-arrow-in-right"></i>
-                <span>Đăng nhập</span>
-            </button>
-        </div>
-        <div class="portal-nav-wrapper">
-            <div class="portal-nav-container">
-                <nav class="portal-nav">
-                    <a href="/#tin-tuc"><i class="bi bi-house-door-fill" style="margin-right: 5px;"></i> Tin tức</a>
-                    <a href="/#thong-bao">Thông báo</a>
-                    <div class="dropdown d-inline-block">
-                        <a href="#gioi-thieu" class="dropdown-toggle" style="text-decoration: none;" data-bs-toggle="dropdown" aria-expanded="false">Giới thiệu</a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="ThongDiepHieuTruong" style="text-transform: none; font-weight: normal;">Thông điệp của Hiệu trưởng</a></li>
-                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="TamNhin" style="text-transform: none; font-weight: normal;">Tầm nhìn và sứ mệnh của chúng tôi</a></li>
-                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="DoiNguGiaoVien" style="text-transform: none; font-weight: normal;">Đội ngũ giáo viên</a></li>
-                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="CoSoVatChat" style="text-transform: none; font-weight: normal;">Cơ sở vật chất</a></li>
-                            <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="MoHinhDaoTao" style="text-transform: none; font-weight: normal;">Mô hình đào tạo</a></li>
-                        </ul>
-                    </div>
-                    <a href="/#lien-he">Liên hệ</a>
-                </nav>
+    <style>
+        @@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,400&display=swap');
+        /* Reset and specific variables for the new header */
+        .eschool-header {
+            font-family: 'Roboto', Arial, sans-serif;
+            width: 100%;
+        }
+
+        /* Tier 1 */
+        .eschool-top-bar {
+            background-color: #1a4175;
+            color: #ffffff;
+            font-size: 13px;
+            padding: 8px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .eschool-top-bar .left-info, .eschool-top-bar .right-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .eschool-top-bar a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .eschool-top-bar a:hover {
+            text-decoration: underline;
+        }
+        .eschool-top-bar i {
+            margin-right: 5px;
+        }
+        .eschool-top-bar .divider {
+            color: rgba(255, 255, 255, 0.4);
+            margin: 0 10px;
+        }
+
+        /* Tier 2 */
+        .eschool-middle-bar {
+            background-color: #ffffff;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            height: 140px;
+        }
+        .eschool-brand-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 2;
+        }
+        .eschool-logo {
+            width: 90px;
+            height: 90px;
+            background-color: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a4175;
+            font-size: 40px;
+            border: 2px solid #e2e8f0;
+        }
+        .eschool-titles {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .eschool-titles .title-small {
+            color: #1a4175;
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .eschool-titles .title-large {
+            color: #e51d20;
+            font-size: 36px;
+            font-weight: 900;
+            margin: 5px 0;
+            text-transform: uppercase;
+        }
+        .eschool-titles .slogan {
+            color: #475569;
+            font-size: 15px;
+            font-style: italic;
+            margin: 0;
+        }
+
+        /* Background image blending on the right */
+        .eschool-middle-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 55%;
+            background: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80') no-repeat right center;
+            background-size: cover;
+            z-index: 1;
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40%);
+            mask-image: linear-gradient(to right, transparent 0%, black 40%);
+        }
+
+        /* Search bar on the right */
+        .eschool-search-container {
+            z-index: 2;
+            position: relative;
+            margin-right: 20px;
+        }
+        .eschool-search-box {
+            display: flex;
+            align-items: center;
+            background: #ffffff;
+            border-radius: 25px;
+            padding: 8px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 300px;
+            border: 1px solid #e2e8f0;
+        }
+        .eschool-search-box input {
+            border: none;
+            outline: none;
+            flex: 1;
+            padding: 5px;
+            font-size: 15px;
+        }
+        .eschool-search-box i {
+            color: #1a4175;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* Tier 3 */
+        .eschool-nav-bar {
+            background-color: #1a4175;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+        }
+        .eschool-nav-menu {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .eschool-nav-menu li {
+            position: relative;
+        }
+        .eschool-nav-menu a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 22px;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            transition: background-color 0.2s;
+        }
+        .eschool-nav-menu a:hover {
+            background-color: #12315c;
+        }
+        .eschool-nav-menu li.active a {
+            background-color: #0d47a1; /* Active state like Trang chủ */
+        }
+        .eschool-nav-menu .dropdown-icon {
+            font-size: 12px;
+        }
+
+        /* Tier 3 - New Blue Centered Nav */
+        .eschool-nav-bar {
+            background-color: #1a4175; /* Dark blue */
+            display: flex;
+            justify-content: center; /* Center the items */
+            align-items: center;
+        }
+        .eschool-nav-menu {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .eschool-nav-menu > li > a, .eschool-nav-menu > .dropdown > a {
+            display: inline-block;
+            padding: 15px 20px;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+        .eschool-nav-menu > li > a:hover, .eschool-nav-menu > .dropdown > a:hover {
+            background-color: #12315c;
+            color: #ffffff;
+        }
+        .eschool-nav-menu .dropdown-menu {
+            border: none;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-top: 0;
+        }
+        .eschool-nav-menu .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+    </style>
+
+    <header class="eschool-header">
+        <!-- Tier 1: Top Bar -->
+        <div class="eschool-top-bar">
+            <div class="left-info">
+                <span><i class="bi bi-geo-alt-fill"></i> Hà Nội, Việt Nam</span>
+                <span><i class="bi bi-telephone-fill"></i> 1900 9999</span>
+                <span><i class="bi bi-envelope-fill"></i> support@eschool.local</span>
             </div>
+            <div class="right-info">
+                <a href="#">Sơ đồ website</a> <span class="divider">|</span>
+                <a href="#">Hỏi đáp</a> <span class="divider">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="bi bi-person-fill"></i> Đăng nhập</a>
+            </div>
+        </div>
+
+        <!-- Tier 2: Middle Bar -->
+        <div class="eschool-middle-bar">
+            <div class="eschool-brand-section">
+                <div class="eschool-logo">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <div class="eschool-titles">
+                    <h2 class="title-small">TRƯỜNG TRUNG HỌC CƠ SỞ</h2>
+                    <h1 class="title-large">ESCHOOL</h1>
+                    <p class="slogan">"Học tập sáng tạo - Rèn luyện chăm ngoan - Vui chơi lành mạnh"</p>
+                </div>
+            </div>
+            
+            <div class="eschool-search-container">
+                <div class="eschool-search-box">
+                    <input type="text" placeholder="Tìm kiếm..">
+                    <i class="bi bi-search"></i>
+                </div>
+            </div>
+
+            <div class="eschool-middle-bg"></div>
+        </div>
+
+        <!-- Tier 3: Nav Bar (Blue & Centered) -->
+        <div class="eschool-nav-bar">
+            <ul class="eschool-nav-menu">
+                <li>
+                    <a asp-controller="Home" asp-action="Index" style="background-color: #0d47a1;"><i class="bi bi-house-door-fill" style="margin-right: 5px;"></i> TRANG CHỦ</a>
+                </li>
+                <li class="dropdown">
+                    <a href="#gioi-thieu" class="dropdown-toggle" style="text-decoration: none;">GIỚI THIỆU</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="ThongDiepHieuTruong" style="text-transform: none; font-weight: normal;">Thông điệp của Hiệu trưởng</a></li>
+                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="TamNhin" style="text-transform: none; font-weight: normal;">Tầm nhìn và sứ mệnh của chúng tôi</a></li>
+                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="DoiNguGiaoVien" style="text-transform: none; font-weight: normal;">Đội ngũ giáo viên</a></li>
+                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="CoSoVatChat" style="text-transform: none; font-weight: normal;">Cơ sở vật chất</a></li>
+                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="MoHinhDaoTao" style="text-transform: none; font-weight: normal;">Mô hình đào tạo</a></li>
+                    </ul>
+                </li>
+                <li><a href="#cat-1">TUYỂN SINH</a></li>
+                <li><a href="#cat-2">TIN TỨC - SỰ KIỆN</a></li>
+                <li><a href="#cat-3">THÔNG BÁO</a></li>
+                <li><a href="#cat-4">THÀNH TÍCH</a></li>
+                <li><a href="#cat-5">CHƯƠNG TRÌNH ĐÀO TẠO</a></li>
+                <li><a href="#lien-he">LIÊN HỆ</a></li>
+            </ul>
         </div>
     </header>
     <div class="container">

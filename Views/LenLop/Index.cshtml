@@ -16,6 +16,9 @@
     int choDuyet = ViewBag.ChoDuyet ?? 0;
     double tyleDuyet = ViewBag.TyLeDuyet ?? 0;
     
+    int daTongKet = ViewBag.DaTongKet ?? 0;
+    int chuaTongKet = ViewBag.ChuaTongKet ?? 0;
+
     bool isLocked = TempData["IsLocked"] != null && (bool)TempData["IsLocked"];
 }
 
@@ -130,7 +133,7 @@
                         <div class="card-stat green h-100">
                             <div>
                                 <div class="stat-label text-success">Đã tổng kết</div>
-                                <div class="stat-val text-success"><i class="bi bi-check-circle-fill me-2"></i>@totalHS <span class="fs-6 fw-normal text-muted">(100%)</span></div>
+                                <div class="stat-val text-success"><i class="bi bi-check-circle-fill me-2"></i>@daTongKet <span class="fs-6 fw-normal text-muted">(@((totalHS > 0 ? ((double)daTongKet/totalHS*100) : 0).ToString("0.0"))%)</span></div>
                             </div>
                         </div>
                     </div>
@@ -138,7 +141,7 @@
                         <div class="card-stat orange h-100">
                             <div>
                                 <div class="stat-label text-warning">Chưa tổng kết</div>
-                                <div class="stat-val text-warning"><i class="bi bi-person-fill-exclamation me-2"></i>0 <span class="fs-6 fw-normal text-muted">(0%)</span></div>
+                                <div class="stat-val text-warning"><i class="bi bi-person-fill-exclamation me-2"></i><span id="valChuaTongKet">@chuaTongKet</span> <span class="fs-6 fw-normal text-muted">(@((totalHS > 0 ? ((double)chuaTongKet/totalHS*100) : 0).ToString("0.0"))%)</span></div>
                             </div>
                         </div>
                     </div>
@@ -170,7 +173,7 @@
                 <div class="col-3">
                     <div class="text-success small fw-bold mb-1"><i class="bi bi-check2"></i> Đã tổng kết năm học</div>
                     <div class="d-flex justify-content-center align-items-end gap-2">
-                        <span class="fs-4 fw-bold">@totalHS</span> <span class="text-muted small mb-1">100%</span>
+                        <span class="fs-4 fw-bold">@daTongKet</span> <span class="text-muted small mb-1">@((totalHS > 0 ? ((double)daTongKet/totalHS*100) : 0).ToString("0.0"))%</span>
                     </div>
                 </div>
             </div>
@@ -199,8 +202,14 @@
                                 <td class="fw-bold">@l.TenLop</td>
                                 <td>@l.SiSo</td>
                                 <td>@l.DaTongKet</td>
-                                <td>100%</td>
-                                <td><span class="badge-soft-success">@l.TrangThai</span></td>
+                                <td>@((l.SiSo > 0 ? ((double)l.DaTongKet/l.SiSo*100) : 0).ToString("0.0"))%</td>
+                                <td>
+                                    @if(l.TrangThai == "Đã hoàn thành") {
+                                        <span class="badge-soft-success">@l.TrangThai</span>
+                                    } else {
+                                        <span class="badge-soft-warning">@l.TrangThai</span>
+                                    }
+                                </td>
                                 <td><button class="btn btn-sm btn-light text-primary border"><i class="bi bi-eye"></i></button></td>
                             </tr>
                         }
@@ -595,8 +604,14 @@
 <script>
     // Handle Wizard Steps
     let isLocked = @(isLocked.ToString().ToLower());
+    let chuaTongKet = @chuaTongKet;
     
     function nextStep(stepNumber) {
+        if (stepNumber === 2 && chuaTongKet > 0) {
+            alert("Lỗi: Hệ thống ghi nhận còn " + chuaTongKet + " học sinh chưa được tổng kết điểm và hạnh kiểm. Vui lòng hoàn thành tổng kết cho toàn bộ học sinh trước khi xét duyệt điều kiện.");
+            return;
+        }
+
         if (stepNumber === 5 && !isLocked) {
             // Cannot go to step 5 directly if not locked (handled by POST request)
             return;
@@ -755,6 +770,10 @@
                             <label class="form-label-custom mb-2">Khối</label>
                             <select name="Khoi" class="form-select">
                                 <option value="All">Tất cả</option>
+                                @foreach(var k in khoiStats)
+                                {
+                                    <option value="@k.Khoi">@k.Khoi</option>
+                                }
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -782,38 +801,21 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td class="fw-bold">Khối 6</td>
-                                    <td>288</td>
-                                    <td>8</td>
-                                    <td>35.75</td>
-                                    <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Đã xếp lớp</span></td>
-                                    <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
-                                </tr>
-                                <tr>
-                                    <td class="fw-bold">Khối 7</td>
-                                    <td>301</td>
-                                    <td>8</td>
-                                    <td>37.63</td>
-                                    <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Đã xếp lớp</span></td>
-                                    <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
-                                </tr>
-                                <tr>
-                                    <td class="fw-bold">Khối 8</td>
-                                    <td>278</td>
-                                    <td>7</td>
-                                    <td>39.71</td>
-                                    <td><span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Đã xếp lớp</span></td>
-                                    <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
-                                </tr>
-                                <tr>
-                                    <td class="fw-bold">Khối 9</td>
-                                    <td>289</td>
-                                    <td>7</td>
-                                    <td>41.29</td>
-                                    <td><span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Chưa xếp lớp</span></td>
-                                    <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
-                                </tr>
+                                @foreach(var k in khoiStats)
+                                {
+                                    int soLop = (int)Math.Ceiling((double)k.DuDieuKien / 40);
+                                    if (soLop == 0) soLop = 1;
+                                    double siSoTB = Math.Round((double)k.DuDieuKien / soLop, 2);
+                                    
+                                    <tr>
+                                        <td class="fw-bold">@k.Khoi</td>
+                                        <td>@k.DuDieuKien</td>
+                                        <td>@soLop</td>
+                                        <td>@siSoTB</td>
+                                        <td><span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Chưa xếp lớp</span></td>
+                                        <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
+                                    </tr>
+                                }
                             </tbody>
                         </table>
                     </div>
@@ -853,13 +855,25 @@
                                 <div class="row mb-3 align-items-center">
                                     <label class="col-sm-4 form-label-custom mb-0">Khối</label>
                                     <div class="col-sm-8">
-                                        <select name="Khoi" class="form-select"><option>Tất cả</option></select>
+                                        <select name="Khoi" class="form-select">
+                                            <option value="">Tất cả</option>
+                                            @foreach(var k in khoiStats)
+                                            {
+                                                <option value="@k.Khoi">@k.Khoi</option>
+                                            }
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="row mb-3 align-items-center">
                                     <label class="col-sm-4 form-label-custom mb-0">Lớp</label>
                                     <div class="col-sm-8">
-                                        <select name="Lop" class="form-select"><option>Tất cả</option></select>
+                                        <select name="Lop" class="form-select">
+                                            <option value="">Tất cả</option>
+                                            @foreach(var l in lopStats)
+                                            {
+                                                <option value="@l.TenLop">@l.TenLop</option>
+                                            }
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="row mb-3 align-items-center">
@@ -958,13 +972,25 @@
                                 <div class="row mb-3 align-items-center">
                                     <label class="col-sm-4 form-label-custom mb-0">Khối</label>
                                     <div class="col-sm-8">
-                                        <select name="Khoi" class="form-select"><option>Tất cả</option></select>
+                                        <select name="Khoi" class="form-select">
+                                            <option value="">Tất cả</option>
+                                            @foreach(var k in khoiStats)
+                                            {
+                                                <option value="@k.Khoi">@k.Khoi</option>
+                                            }
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="row mb-3 align-items-center">
                                     <label class="col-sm-4 form-label-custom mb-0">Lớp</label>
                                     <div class="col-sm-8">
-                                        <select name="Lop" class="form-select"><option>Tất cả</option></select>
+                                        <select name="Lop" class="form-select">
+                                            <option value="">Tất cả</option>
+                                            @foreach(var l in lopStats)
+                                            {
+                                                <option value="@l.TenLop">@l.TenLop</option>
+                                            }
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="row mb-3 align-items-center">

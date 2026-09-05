@@ -76,9 +76,10 @@
                     <tr>
                         <th>Năm học</th>
                         <th>Học kỳ</th>
+                        <th>Hạn nộp</th>
+                        <th>Số tiền</th>
                         @if (Context.Session.GetInt32("RoleId") == 4)
                         {
-                            <th>Số tiền</th>
                             <th class="text-end">Thanh toán</th>
                         }
                         else
@@ -101,9 +102,10 @@
                             <tr>
                                 <td>@item.NamHoc?.TenNamHoc</td>
                                 <td>@(item.HocKyInfo?.TenHocKy ?? item.HocKy)</td>
+                                <td>@(item.HanDongTien.HasValue ? item.HanDongTien.Value.ToString("dd/MM/yyyy") : "-")</td>
+                                <td class="student-fee-money">@item.SoTien.ToString("N0") đ</td>
                                 @if (Context.Session.GetInt32("RoleId") == 4)
                                 {
-                                    <td class="student-fee-money">@item.SoTien.ToString("N0") đ</td>
                                     <td class="text-end">
                                         @if (item.TrangThai == 1)
                                         {
