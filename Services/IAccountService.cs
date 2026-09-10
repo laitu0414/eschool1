@@ -4,7 +4,7 @@ namespace eSchool.Services
 {
     public interface IAccountService
     {
-        TaiKhoan? Login(string username, string password);
+        TaiKhoan? Login(string username, string password, int idChucVu);
 
         List<TaiKhoan> GetAll();
 
@@ -12,7 +12,7 @@ namespace eSchool.Services
 
         bool Create(string username, string password, int idChucVu, string? email);
 
-        bool Update(int id, string username, int idChucVu, bool trangThai, string? email);
+        bool Update(int id, int idChucVu, bool trangThai, string? email);
 
         bool Delete(int id);
 
@@ -22,7 +22,7 @@ namespace eSchool.Services
 
         bool ResetPasswordAndRequireChange(int id, string newPassword);
 
-        TaiKhoan? GetByUsername(string username);
+        TaiKhoan? GetByUsername(string username, int? idChucVu = null);
 
         string GeneratePassword();
 

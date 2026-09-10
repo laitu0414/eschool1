@@ -4,11 +4,11 @@ namespace eSchool.Repositories
 {
     public interface IAccountRepository
     {
-        TaiKhoan? Login(string username, string password);
+        TaiKhoan? Login(string username, string password, int idChucVu);
         List<TaiKhoan> GetAll();
         TaiKhoan? GetById(int id);
-        TaiKhoan? GetByUsername(string username);
-        bool ExistsUsername(string username, int? excludeId = null);
+        TaiKhoan? GetByUsername(string username, int? idChucVu = null);
+        bool ExistsUsername(string username, int idChucVu, int? excludeId = null);
         bool RoleExists(int idChucVu);
         void Add(TaiKhoan taiKhoan);
         void Update(TaiKhoan taiKhoan);

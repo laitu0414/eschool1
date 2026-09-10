@@ -11,8 +11,9 @@ namespace eSchool.Models
         [StringLength(100)]
         public string HoTen { get; set; }
 
-        [RegularExpression(@"^(0|\+84)[0-9]{9,10}$", ErrorMessage = "Số điện thoại không đúng định dạng")]
-        [StringLength(15)]
+        [Required]
+        [RegularExpression(@"^0[0-9]{9}$", ErrorMessage = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0")]
+        [StringLength(10)]
         public string? SDT { get; set; }
 
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]

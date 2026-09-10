@@ -3,6 +3,7 @@ using eSchool.Services;
 using eSchool.ViewModels;
 using eSchool.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace eSchool.Controllers
 {
@@ -58,12 +59,23 @@ namespace eSchool.Controllers
             {
                 var vm = new PhuHuynhViewModel();
                 SetHocSinhOptions(vm);
+                if (vm.HocSinhs.Count == 0)
+                {
+                    TempData["Error"] = "Không có học sinh hợp lệ chưa được liên kết phụ huynh.";
+                    return RedirectToAction(nameof(Index));
+                }
                 return View(vm);
             }
 
             var hs = GetCurrentHocSinh();
             if (hs == null)
                 return NotFound("Tài khoản này chưa được liên kết với học sinh.");
+
+            if (!hs.TrangThai || !IsValidStudentPhone(hs.SDT))
+            {
+                TempData["Error"] = "Học sinh phải đang học và có số điện thoại hợp lệ trước khi thêm phụ huynh.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var hasParent = _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh);
             if (hasParent)
@@ -80,6 +92,7 @@ namespace eSchool.Controllers
         public IActionResult Create(PhuHuynhViewModel vm)
         {
             Normalize(vm);
+            ModelState.Remove(nameof(vm.SDT));
 
             HocSinh? hs;
             if (IsAdministrator())
@@ -102,8 +115,34 @@ namespace eSchool.Controllers
                 if (hs == null)
                     return NotFound("Tài khoản này chưa được liên kết với học sinh.");
 
+                if (!hs.TrangThai)
+                {
+                    TempData["Error"] = "Chỉ có thể tạo phụ huynh cho học sinh đang học.";
+                    return RedirectToAction(nameof(Index));
+                }
+
                 vm.IdHocSinh = hs.IdHocSinh;
                 ModelState.Remove(nameof(vm.IdHocSinh));
+            }
+
+            if (hs != null)
+            {
+                var studentPhone = hs.SDT?.Trim();
+                if (string.IsNullOrWhiteSpace(studentPhone) ||
+                    !System.Text.RegularExpressions.Regex.IsMatch(studentPhone, @"^0[0-9]{9}$"))
+                {
+                    ModelState.AddModelError(nameof(vm.IdHocSinh),
+                        "Học sinh liên kết chưa có số điện thoại hợp lệ gồm 10 chữ số.");
+                }
+                else
+                {
+                    vm.SDT = studentPhone;
+                    if (_context.TaiKhoans.Any(x => x.Username == studentPhone && x.IdChucVu == 4))
+                    {
+                        ModelState.AddModelError(nameof(vm.IdHocSinh),
+                            "Số điện thoại của học sinh này đã được dùng cho một tài khoản phụ huynh khác.");
+                    }
+                }
             }
 
             if (hs != null && _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh))
@@ -127,17 +166,15 @@ namespace eSchool.Controllers
                 NgheNghiep = vm.NgheNghiep,
                 TrangThai = vm.TrangThai
             };
-            if (!string.IsNullOrWhiteSpace(vm.SDT) && !_context.TaiKhoans.Any(x => x.Username == vm.SDT))
+            ph.TaiKhoan = new TaiKhoan
             {
-                ph.TaiKhoan = new TaiKhoan
-                {
-                    Username = vm.SDT,
-                    Password = BCrypt.Net.BCrypt.HashPassword("123456"),
-                    IdChucVu = 4,
-                    TrangThai = true,
-                    BatBuocDoiMatKhau = true
-                };
-            }
+                Username = vm.SDT!,
+                Password = BCrypt.Net.BCrypt.HashPassword("123456"),
+                Email = vm.Email,
+                IdChucVu = 4,
+                TrangThai = true,
+                BatBuocDoiMatKhau = true
+            };
 
             _context.PhuHuynhs.Add(ph);
             _context.HocSinhPhuHuynhs.Add(new HocSinhPhuHuynh
@@ -179,10 +216,58 @@ namespace eSchool.Controllers
 
             Normalize(vm);
 
+            var parent = _context.PhuHuynhs
+                .Include(x => x.TaiKhoan)
+                .FirstOrDefault(x => x.IdPhuHuynh == vm.IdPhuHuynh);
+            if (parent == null)
+                return NotFound();
+
+            var linkedStudent = _context.HocSinhPhuHuynhs
+                .Include(x => x.HocSinh)
+                .Where(x => x.IdPhuHuynh == parent.IdPhuHuynh)
+                .OrderByDescending(x => x.LaLienHeChinh)
+                .Select(x => x.HocSinh)
+                .FirstOrDefault();
+
+            ModelState.Remove(nameof(vm.SDT));
+            if (linkedStudent == null || !IsValidStudentPhone(linkedStudent.SDT))
+            {
+                TempData["Error"] = "Phụ huynh phải được liên kết với học sinh có số điện thoại hợp lệ.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            vm.IdHocSinh = linkedStudent.IdHocSinh;
+            vm.SDT = linkedStudent.SDT!.Trim();
+
+            if (!string.IsNullOrWhiteSpace(vm.SDT) && _context.TaiKhoans.Any(x =>
+                    x.Username == vm.SDT && x.IdChucVu == 4 &&
+                    (!parent.IdTaiKhoan.HasValue || x.IdTaiKhoan != parent.IdTaiKhoan.Value)))
+            {
+                ModelState.AddModelError(nameof(vm.SDT), "Số điện thoại này đã được dùng cho một tài khoản phụ huynh khác.");
+            }
+
             if (!ModelState.IsValid)
                 return View(vm);
 
             _service.Update(vm);
+            if (parent.TaiKhoan?.IdChucVu == 4)
+            {
+                parent.TaiKhoan.Username = vm.SDT!;
+                parent.TaiKhoan.Email = vm.Email;
+            }
+            else if (parent.TaiKhoan == null)
+            {
+                parent.TaiKhoan = new TaiKhoan
+                {
+                    Username = vm.SDT!,
+                    Password = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    Email = vm.Email,
+                    IdChucVu = 4,
+                    TrangThai = true,
+                    BatBuocDoiMatKhau = true
+                };
+            }
+            _context.SaveChanges();
             TempData["Success"] = "Cập nhật phụ huynh thành công";
             return RedirectToAction(nameof(Index));
         }
@@ -209,15 +294,22 @@ namespace eSchool.Controllers
         {
             vm.HocSinhs = _context.HocSinhs
                 .Where(hs => hs.TrangThai && !_context.HocSinhPhuHuynhs
-                    .Any(link => link.IdHocSinh == hs.IdHocSinh))
+                    .Any(link => link.IdHocSinh == hs.IdHocSinh) &&
+                    hs.SDT != null && hs.SDT.Length == 10 && hs.SDT.StartsWith("0"))
                 .OrderByDescending(hs => hs.IdHocSinh)
                 .Select(hs => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
                 {
                     Value = hs.IdHocSinh.ToString(),
-                    Text = $"{hs.MaHS} - {hs.HoTen}",
+                    Text = $"{hs.HoTen} - {hs.SDT}",
                     Selected = vm.IdHocSinh == hs.IdHocSinh
                 })
                 .ToList();
+        }
+
+        private static bool IsValidStudentPhone(string? phone)
+        {
+            return !string.IsNullOrWhiteSpace(phone) &&
+                   System.Text.RegularExpressions.Regex.IsMatch(phone.Trim(), @"^0[0-9]{9}$");
         }
 
         private static void Normalize(PhuHuynhViewModel vm)

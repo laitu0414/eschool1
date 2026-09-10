@@ -25,9 +25,7 @@ namespace eSchool.Services
                 {
                     IdPhuHuynh = x.IdPhuHuynh,
                     IdHocSinh = lienKet?.IdHocSinh,
-                    TenHocSinh = lienKet?.HocSinh == null
-                        ? null
-                        : $"{lienKet.HocSinh.MaHS} - {lienKet.HocSinh.HoTen}",
+                    TenHocSinh = lienKet?.HocSinh?.HoTen,
                     HoTen = x.HoTen,
                     SDT = x.SDT,
                     Email = x.Email,
@@ -51,9 +49,7 @@ namespace eSchool.Services
             {
                 IdPhuHuynh = x.IdPhuHuynh,
                 IdHocSinh = lienKet?.IdHocSinh,
-                TenHocSinh = lienKet?.HocSinh == null
-                    ? null
-                    : $"{lienKet.HocSinh.MaHS} - {lienKet.HocSinh.HoTen}",
+                TenHocSinh = lienKet?.HocSinh?.HoTen,
                 HoTen = x.HoTen,
                 SDT = x.SDT,
                 Email = x.Email,

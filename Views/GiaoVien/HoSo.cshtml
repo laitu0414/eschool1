@@ -10,10 +10,11 @@
 <div class="page-card">
     <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
         <div class="teacher-name">
-            <span>@Model.HoTen.Trim().Substring(0, 1).ToUpper()</span>
+            <img src="@(string.IsNullOrWhiteSpace(Model.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : Model.AnhDaiDien)"
+                 alt="Ảnh @Model.HoTen"
+                 style="width:64px;height:64px;border-radius:16px;object-fit:cover;background:#ccfbf1;" />
             <div>
                 <h4 class="mb-1">@Model.HoTen</h4>
-                <div class="text-muted">@Model.MaGV</div>
             </div>
         </div>
     </div>
@@ -22,11 +23,7 @@
         <table class="table table-bordered align-middle mb-0">
             <tbody>
                 <tr>
-                    <th style="width: 220px;">Mã giáo viên</th>
-                    <td>@Model.MaGV</td>
-                </tr>
-                <tr>
-                    <th>Họ tên</th>
+                    <th style="width: 220px;">Họ tên</th>
                     <td>@Model.HoTen</td>
                 </tr>
                 <tr>

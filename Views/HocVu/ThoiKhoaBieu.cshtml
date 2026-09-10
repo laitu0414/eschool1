@@ -154,6 +154,30 @@
                         <i class="bi bi-search me-2"></i> Hiển thị
                     </button>
                 </form>
+            <form asp-action="TaoThoiKhoaBieuTuDong" method="post" class="mt-3"
+                  onsubmit="return prepareAutoSchedule();">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="namHoc" id="autoNamHoc" />
+
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="bi bi-magic me-2"></i>
+                    Tạo TKB tự động
+                </button>
+            </form>
+            <form asp-action="XepLaiTKBToanTruong" method="post" class="mt-3"
+                  onsubmit="return prepareRebuildSchedule();">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="namHoc" id="rebuildNamHoc" />
+
+                <button type="submit" class="btn btn-danger w-100">
+                    <i class="bi bi-arrow-repeat me-2"></i>
+                    Xếp lại TKB toàn trường
+                </button>
+            </form>
             </div>
         </div>
 
@@ -504,7 +528,41 @@
     </style>
     }
 }
+        <script>
+            function prepareAutoSchedule() {
+                const namHoc = document.getElementById("namHocSelect").value;
 
+                if (!namHoc) {
+                    alert("Vui lòng chọn năm học trước.");
+                    return false;
+                }
+
+                document.getElementById("autoNamHoc").value = namHoc;
+
+                return confirm(
+                    "Bạn có chắc muốn tự động tạo thời khóa biểu cho toàn bộ lớp của năm học " +
+                    namHoc +
+                    " không?"
+                );
+            }
+
+            function prepareRebuildSchedule() {
+                const namHoc = document.getElementById("namHocSelect").value;
+
+                if (!namHoc) {
+                    alert("Vui lòng chọn năm học trước.");
+                    return false;
+                }
+
+                document.getElementById("rebuildNamHoc").value = namHoc;
+
+                return confirm(
+                    "Xếp lại TKB sẽ xóa toàn bộ lịch hiện có của năm học " +
+                    namHoc +
+                    " và tạo lại cho tất cả lớp. Bạn có chắc muốn tiếp tục?"
+                );
+            }
+        </script>
 <div class="modal fade" id="createSchedule" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
     <form asp-action="TaoLich" method="post">
         @Html.AntiForgeryToken()

@@ -21,9 +21,10 @@ namespace eSchool.Repositories
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
+                keyword = keyword.Trim();
                 query = query.Where(x =>
-                    x.MaHS.Contains(keyword) ||
                     x.HoTen.Contains(keyword) ||
+                    (x.Email != null && x.Email.Contains(keyword)) ||
                     (x.SDT != null && x.SDT.Contains(keyword)));
             }
 

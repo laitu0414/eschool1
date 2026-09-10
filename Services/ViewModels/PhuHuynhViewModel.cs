@@ -16,8 +16,8 @@ namespace eSchool.ViewModels
         [StringLength(100, MinimumLength = 2, ErrorMessage = "Họ tên phải từ 2 đến 100 ký tự")]
         public string HoTen { get; set; } = string.Empty;
 
-        [RegularExpression(@"^(0|\+84)[0-9]{9,10}$", ErrorMessage = "Số điện thoại không đúng định dạng")]
-        [StringLength(15)]
+        // SĐT đăng nhập được lấy từ học sinh liên kết, không nhận từ biểu mẫu.
+        [StringLength(10)]
         public string? SDT { get; set; }
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
         [StringLength(100)]

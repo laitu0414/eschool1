@@ -22,14 +22,15 @@
         <span asp-validation-for="HoTen" class="text-danger"></span>
     </div>
     <div class="col-md-6 mb-3">
-        <label asp-for="SDT" class="form-label">Số điện thoại</label>
-        <input asp-for="SDT" class="form-control" maxlength="15" />
-        <span asp-validation-for="SDT" class="text-danger"></span>
-    </div>
-    <div class="col-md-6 mb-3">
         <label asp-for="Email" class="form-label">Email</label>
         <input asp-for="Email" type="email" class="form-control" maxlength="100" />
         <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <div class="alert alert-info py-2 mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Số điện thoại đăng nhập của phụ huynh được lấy tự động từ học sinh liên kết.
+        </div>
     </div>
     <div class="col-md-6 mb-3">
         <label asp-for="NgheNghiep" class="form-label">Nghề nghiệp</label>

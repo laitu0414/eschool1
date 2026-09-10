@@ -1,12 +1,7 @@
 @model eSchool.ViewModels.LopHocFormViewModel
 
 <div class="row g-3">
-    <div class="col-md-4">
-        <label class="form-label">Mã lớp <span class="text-danger">*</span></label>
-        <input asp-for="MaLop" class="form-control" required maxlength="20" />
-        <span asp-validation-for="MaLop" class="text-danger"></span>
-    </div>
-    <div class="col-md-8">
+    <div class="col-md-12">
         <label class="form-label">Tên lớp <span class="text-danger">*</span></label>
         <input asp-for="TenLop" class="form-control" required maxlength="50" />
         <span asp-validation-for="TenLop" class="text-danger"></span>
@@ -70,38 +65,6 @@
                     }
                 }
             }
-            
-            if (e.target.matches('select[name="NamHoc"]')) {
-                generateMaLopForForm(e.target);
-            }
         });
-
-        document.addEventListener('input', function (e) {
-            if (e.target.matches('input[name="TenLop"]')) {
-                generateMaLopForForm(e.target);
-            }
-        });
-
-        function generateMaLopForForm(element) {
-            var form = element.closest('.row');
-            if (!form) return;
-            
-            var namHocSelect = form.querySelector('select[name="NamHoc"]');
-            var tenLopInput = form.querySelector('input[name="TenLop"]');
-            var maLopInput = form.querySelector('input[name="MaLop"]');
-            
-            if (!namHocSelect || !tenLopInput || !maLopInput) return;
-            
-            var namHocText = namHocSelect.options[namHocSelect.selectedIndex]?.text;
-            var tenLopVal = tenLopInput.value;
-
-            if (namHocText && namHocText.includes('-') && tenLopVal) {
-                var year = namHocText.split('-')[0].trim(); 
-                if (year.length === 4) {
-                    var k = "K" + year.substring(2); 
-                    maLopInput.value = k + "_" + tenLopVal.trim().toUpperCase();
-                }
-            }
-        }
     }
 </script>

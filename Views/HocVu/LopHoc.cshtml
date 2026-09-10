@@ -8,7 +8,7 @@
 <div class="page-card">
     <div class="page-tools">
         <form method="get">
-            <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm mã, tên hoặc khối..." />
+            <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm theo tên lớp hoặc khối..." />
             <button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Tìm</button>
         </form>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClass">
@@ -18,17 +18,16 @@
 
     <div class="table-responsive">
         <table class="table table-hover">
-            <thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Khối</th><th>Năm học</th><th>Chủ nhiệm</th><th class="text-end">Thao tác</th></tr></thead>
+            <thead><tr><th>Tên lớp</th><th>Khối</th><th>Năm học</th><th>Chủ nhiệm</th><th class="text-end">Thao tác</th></tr></thead>
             <tbody>
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
                 }
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td><strong>@item.MaLop</strong></td>
-                        <td>@item.TenLop</td>
+                        <td><strong>@item.TenLop</strong></td>
                         <td>@item.Khoi</td>
                         <td>@item.NamHoc</td>
                         <td>@(item.GiaoVienChuNhiem?.HoTen ?? "Chưa phân công")</td>

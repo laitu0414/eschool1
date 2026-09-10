@@ -17,7 +17,6 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>Mã lớp</th>
                     <th>Tên lớp</th>
                     <th>Khối</th>
                     <th>Năm học</th>
@@ -27,12 +26,11 @@
             <tbody>
                 @if (!Model.LopHocs.Any())
                 {
-                    <tr><td colspan="5" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
+                    <tr><td colspan="4" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
                 }
                 @foreach (var lop in Model.LopHocs)
                 {
                     <tr>
-                        <td>@lop.MaLop</td>
                         <td><strong>@lop.TenLop</strong></td>
                         <td>@lop.Khoi</td>
                         <td>@lop.NamHoc</td>

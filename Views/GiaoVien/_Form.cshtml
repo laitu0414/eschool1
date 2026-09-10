@@ -1,13 +1,29 @@
 @model eSchool.ViewModels.GiaoVienFormViewModel
 
 <div class="row g-3 teacher-admin-form">
-    <div class="col-md-4">
-        <label class="form-label">Mã giáo viên <span class="text-danger">*</span></label>
-        <input asp-for="MaGV" class="form-control" required maxlength="20" placeholder="VD: GV001" />
-        <span asp-validation-for="MaGV" class="text-danger"></span>
+    <div class="col-12 text-center mb-2">
+        @{
+            var teacherPreview = string.IsNullOrWhiteSpace(Model.AnhDaiDien)
+                ? Url.Content("~/image/default-avatar.svg")
+                : Model.AnhDaiDien;
+        }
+        <img src="@teacherPreview"
+             data-teacher-image-preview
+             alt="Ảnh giáo viên"
+             style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #dbeafe;background:#fff;" />
+        <div class="mx-auto mt-3" style="max-width:520px;">
+            <label asp-for="AnhTaiLen" class="form-label">Ảnh giáo viên</label>
+            <input asp-for="AnhTaiLen"
+                   type="file"
+                   class="form-control"
+                   accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                   onchange="if(this.files && this.files[0]) this.closest('.teacher-admin-form').querySelector('[data-teacher-image-preview]').src = URL.createObjectURL(this.files[0])" />
+            <span asp-validation-for="AnhTaiLen" class="text-danger"></span>
+            <small class="text-muted d-block mt-1">JPG, PNG hoặc WebP, tối đa 5 MB.</small>
+        </div>
     </div>
 
-    <div class="col-md-8">
+    <div class="col-md-4">
         <label class="form-label">Họ tên <span class="text-danger">*</span></label>
         <input asp-for="HoTen" class="form-control" required maxlength="100" placeholder="Nhập họ tên giáo viên" />
         <span asp-validation-for="HoTen" class="text-danger"></span>
@@ -33,14 +49,15 @@
     </div>
 
     <div class="col-md-4">
-        <label class="form-label">Số điện thoại</label>
-        <input asp-for="SDT" class="form-control" maxlength="15" placeholder="0xxxxxxxxx" />
+        <label class="form-label">Số điện thoại đăng nhập <span class="text-danger">*</span></label>
+        <input asp-for="SDT" type="tel" class="form-control" inputmode="numeric" pattern="0[0-9]{9}" minlength="10" maxlength="10" autocomplete="tel" required placeholder="0xxxxxxxxx" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)" />
         <span asp-validation-for="SDT" class="text-danger"></span>
+        <small class="text-muted">Gồm đúng 10 chữ số, bắt đầu bằng 0.</small>
     </div>
 
     <div class="col-md-4">
-        <label class="form-label">Email</label>
-        <input asp-for="Email" type="email" class="form-control" maxlength="100" placeholder="giaovien@email.com" />
+        <label class="form-label">Email <span class="text-danger">*</span></label>
+        <input asp-for="Email" type="email" class="form-control" maxlength="100" autocomplete="email" required placeholder="giaovien@email.com" />
         <span asp-validation-for="Email" class="text-danger"></span>
     </div>
 
