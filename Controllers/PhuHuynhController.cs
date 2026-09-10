@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace eSchool.Controllers
 {
-    [RoleAuthorize(3, 4)]
+    [RoleAuthorize(SystemRoleIds.SystemAdmin, 3, 4)]
     public class PhuHuynhController : Controller
     {
         private readonly IPhuHuynhService _service;
@@ -54,16 +54,24 @@ namespace eSchool.Controllers
 
         public IActionResult Create()
         {
-            var hs = GetCurrentHocSinh();
-            if (hs != null)
+            if (IsAdministrator())
             {
-                var hasParent = _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh);
-                if (hasParent)
-                {
-                    TempData["Error"] = "Mỗi học sinh chỉ được thêm 1 phụ huynh làm người giám hộ chính.";
-                    return RedirectToAction(nameof(Index));
-                }
+                var vm = new PhuHuynhViewModel();
+                SetHocSinhOptions(vm);
+                return View(vm);
             }
+
+            var hs = GetCurrentHocSinh();
+            if (hs == null)
+                return NotFound("Tài khoản này chưa được liên kết với học sinh.");
+
+            var hasParent = _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh);
+            if (hasParent)
+            {
+                TempData["Error"] = "Mỗi học sinh chỉ được thêm 1 phụ huynh làm người giám hộ chính.";
+                return RedirectToAction(nameof(Index));
+            }
+
             return View(new PhuHuynhViewModel());
         }
 
@@ -73,19 +81,42 @@ namespace eSchool.Controllers
         {
             Normalize(vm);
 
-            var hs = GetCurrentHocSinh();
-            if (hs != null)
+            HocSinh? hs;
+            if (IsAdministrator())
             {
-                var hasParent = _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh);
-                if (hasParent)
+                if (!vm.IdHocSinh.HasValue)
                 {
-                    TempData["Error"] = "Mỗi học sinh chỉ được thêm 1 phụ huynh làm người giám hộ chính.";
-                    return RedirectToAction(nameof(Index));
+                    hs = null;
+                    ModelState.AddModelError(nameof(vm.IdHocSinh), "Vui lòng chọn học sinh để liên kết.");
                 }
+                else
+                {
+                    hs = _context.HocSinhs.FirstOrDefault(x => x.IdHocSinh == vm.IdHocSinh.Value && x.TrangThai);
+                    if (hs == null)
+                        ModelState.AddModelError(nameof(vm.IdHocSinh), "Học sinh được chọn không tồn tại hoặc đã nghỉ học.");
+                }
+            }
+            else
+            {
+                hs = GetCurrentHocSinh();
+                if (hs == null)
+                    return NotFound("Tài khoản này chưa được liên kết với học sinh.");
+
+                vm.IdHocSinh = hs.IdHocSinh;
+                ModelState.Remove(nameof(vm.IdHocSinh));
+            }
+
+            if (hs != null && _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh))
+            {
+                ModelState.AddModelError(nameof(vm.IdHocSinh), "Học sinh này đã có phụ huynh là người giám hộ chính.");
             }
 
             if (!ModelState.IsValid)
+            {
+                if (IsAdministrator())
+                    SetHocSinhOptions(vm);
                 return View(vm);
+            }
 
             var ph = new PhuHuynh
             {
@@ -98,7 +129,7 @@ namespace eSchool.Controllers
             };
             if (!string.IsNullOrWhiteSpace(vm.SDT) && !_context.TaiKhoans.Any(x => x.Username == vm.SDT))
             {
-                var taiKhoan = new TaiKhoan
+                ph.TaiKhoan = new TaiKhoan
                 {
                     Username = vm.SDT,
                     Password = BCrypt.Net.BCrypt.HashPassword("123456"),
@@ -106,28 +137,19 @@ namespace eSchool.Controllers
                     TrangThai = true,
                     BatBuocDoiMatKhau = true
                 };
-                _context.TaiKhoans.Add(taiKhoan);
-                _context.SaveChanges();
-                ph.IdTaiKhoan = taiKhoan.IdTaiKhoan;
             }
 
             _context.PhuHuynhs.Add(ph);
+            _context.HocSinhPhuHuynhs.Add(new HocSinhPhuHuynh
+            {
+                IdHocSinh = hs!.IdHocSinh,
+                PhuHuynh = ph,
+                QuanHe = "Giám hộ chính",
+                LaLienHeChinh = true
+            });
             _context.SaveChanges();
 
-            if (hs != null)
-            {
-                var hsp = new HocSinhPhuHuynh
-                {
-                    IdHocSinh = hs.IdHocSinh,
-                    IdPhuHuynh = ph.IdPhuHuynh,
-                    QuanHe = "Giám hộ chính",
-                    LaLienHeChinh = true
-                };
-                _context.HocSinhPhuHuynhs.Add(hsp);
-                _context.SaveChanges();
-            }
-
-            TempData["Success"] = "Thêm phụ huynh thành công";
+            TempData["Success"] = "Thêm phụ huynh và liên kết với học sinh thành công.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -165,20 +187,37 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
-            var hs = GetCurrentHocSinh();
-            if (hs != null)
-            {
-                var isMyParent = _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh && x.IdPhuHuynh == id);
-                if (!isMyParent) return NotFound();
-            }
+            if (!_context.PhuHuynhs.Any(x => x.IdPhuHuynh == id))
+                return NotFound();
 
             _service.Delete(id);
-            TempData["Success"] = "Đã chuyển phụ huynh sang trạng thái ngừng hoạt động";
+            TempData["Success"] = "Đã xóa phụ huynh, tài khoản liên quan và liên kết với học sinh.";
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool IsAdministrator()
+        {
+            return HttpContext.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin;
+        }
+
+        private void SetHocSinhOptions(PhuHuynhViewModel vm)
+        {
+            vm.HocSinhs = _context.HocSinhs
+                .Where(hs => hs.TrangThai && !_context.HocSinhPhuHuynhs
+                    .Any(link => link.IdHocSinh == hs.IdHocSinh))
+                .OrderByDescending(hs => hs.IdHocSinh)
+                .Select(hs => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = hs.IdHocSinh.ToString(),
+                    Text = $"{hs.MaHS} - {hs.HoTen}",
+                    Selected = vm.IdHocSinh == hs.IdHocSinh
+                })
+                .ToList();
         }
 
         private static void Normalize(PhuHuynhViewModel vm)

@@ -36,5 +36,6 @@ namespace eSchool.ViewModels
         public List<ThongBao> ThongBaos { get; set; } = new();
         public bool OpenLogin { get; set; }
         public bool OpenForgotPassword { get; set; }
+        public int? LoginRole { get; set; }
     }
 }

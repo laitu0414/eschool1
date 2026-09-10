@@ -1,4 +1,5 @@
 using eSchool.Services;
+using eSchool.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eSchool.Controllers
@@ -19,9 +20,9 @@ namespace eSchool.Controllers
             _nhatKyService = nhatKyService;
         }
 
-        public IActionResult Login()
+        public IActionResult Login(int? loginRole)
         {
-            return RedirectToAction("Index", "Home", new { openLogin = true });
+            return RedirectToAction("Index", "Home", new { openLogin = true, loginRole });
         }
 
         public IActionResult ForgotPassword()
@@ -70,14 +71,26 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Login(string username, string password)
+        public IActionResult Login(string username, string password, int? loginRole)
         {
+            if (!IsValidLoginRole(loginRole))
+            {
+                TempData["LoginError"] = "Vui lòng chọn cổng đăng nhập phù hợp.";
+                return RedirectToLogin(loginRole);
+            }
+
             var account = _accountService.Login(username, password);
 
             if (account == null)
             {
-                TempData["LoginError"] = "Sai tai khoan hoac mat khau";
-                return RedirectToAction("Index", "Home", new { openLogin = true });
+                TempData["LoginError"] = "Sai tài khoản hoặc mật khẩu.";
+                return RedirectToLogin(loginRole);
+            }
+
+            if (account.IdChucVu != loginRole)
+            {
+                TempData["LoginError"] = "Tài khoản này không thuộc cổng đăng nhập đã chọn.";
+                return RedirectToLogin(loginRole);
             }
 
             HttpContext.Session.Clear();
@@ -165,11 +178,10 @@ namespace eSchool.Controllers
         {
             return roleId switch
             {
-                1 => RedirectToAction("Index", "Admin"),
+                SystemRoleIds.SystemAdmin => RedirectToAction("Index", "Admin"),
                 2 => RedirectToAction("HoSoCaNhan", "GiaoVien"),
                 3 => RedirectToAction("HoSoCaNhan", "HocSinh"),
                 4 => RedirectToAction("HoSoCaNhan", "HocSinh"),
-                5 => RedirectToAction("Index", "Admin"),
                 _ => InvalidRole()
             };
         }
@@ -177,8 +189,18 @@ namespace eSchool.Controllers
         private IActionResult InvalidRole()
         {
             HttpContext.Session.Clear();
-            TempData["LoginError"] = "Tai khoan chua duoc gan quyen hop le";
-            return RedirectToAction("Index", "Home", new { openLogin = true });
+            TempData["LoginError"] = "Tài khoản chưa được gán quyền hợp lệ.";
+            return RedirectToLogin();
+        }
+
+        private static bool IsValidLoginRole(int? loginRole)
+        {
+            return loginRole is SystemRoleIds.SystemAdmin or 2 or 3 or 4;
+        }
+
+        private IActionResult RedirectToLogin(int? loginRole = null)
+        {
+            return RedirectToAction("Index", "Home", new { openLogin = true, loginRole });
         }
     }
 }

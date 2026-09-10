@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace eSchool.Controllers
 {
-    [RoleAuthorize(1, 3)]
+    [RoleAuthorize(SystemRoleIds.SystemAdmin, 3)]
     public class ChuyenLopController : Controller
     {
         private readonly AppDbContext _context;
@@ -45,7 +45,7 @@ namespace eSchool.Controllers
             return View("Index", data); // Render the old Index view which shows history
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult Index(int? lopId, string? namHoc)
         {
             var roleId = HttpContext.Session.GetInt32("RoleId");
@@ -70,7 +70,7 @@ namespace eSchool.Controllers
             return View("StudentList", hocSinhs);
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult Create(int id)
         {
             var hocSinh = _context.HocSinhs
@@ -83,7 +83,7 @@ namespace eSchool.Controllers
             return View(CreateViewModel(hocSinh));
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(ChuyenLopViewModel vm)
@@ -161,7 +161,7 @@ namespace eSchool.Controllers
                 .ToList();
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult DownloadTemplate()
         {
             using var workbook = new ClosedXML.Excel.XLWorkbook();
@@ -190,7 +190,7 @@ namespace eSchool.Controllers
             return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ChuyenLop_Template.xlsx");
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ImportExcel(IFormFile? file)

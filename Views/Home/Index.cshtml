@@ -4,6 +4,15 @@
     ViewData["Title"] = "eSchool";
     var featuredNews = Model.TinTucSuKiens.FirstOrDefault();
     var secondaryNews = Model.TinTucSuKiens.Skip(1).Take(4).ToList();
+    var loginPortals = new[]
+    {
+        new { Role = SystemRoleIds.SystemAdmin, Name = "Quản Trị Viên", Icon = "bi-shield-lock-fill" },
+        new { Role = 2, Name = "Giảng Viên", Icon = "bi-person-workspace" },
+        new { Role = 3, Name = "Sinh Viên", Icon = "bi-mortarboard-fill" },
+        new { Role = 4, Name = "Phụ Huynh", Icon = "bi-people-fill" }
+    };
+    var selectedLoginPortal = loginPortals.FirstOrDefault(portal => portal.Role == Model.LoginRole);
+    var selectedLoginPortalName = selectedLoginPortal?.Name ?? "Chọn cổng đăng nhập của bạn";
 }
 
 <!DOCTYPE html>
@@ -28,32 +37,65 @@
 
         /* Tier 1 */
         .eschool-top-bar {
-            background-color: #1a4175;
-            color: #ffffff;
-            font-size: 13px;
-            padding: 8px 30px;
+            background-color: #ffffff;
+            color: #1f2937;
+            padding: 12px clamp(18px, 5vw, 64px);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 24px;
+            border-bottom: 1px solid #e5e7eb;
         }
         .eschool-top-bar .left-info, .eschool-top-bar .right-info {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
         }
-        .eschool-top-bar a {
-            color: #ffffff;
+        .eschool-top-bar .eschool-login-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            color: #e46c15;
             text-decoration: none;
+            font-size: 0.78rem;
+            font-weight: 900;
+            text-transform: uppercase;
         }
-        .eschool-top-bar a:hover {
-            text-decoration: underline;
+        .eschool-top-bar .eschool-login-brand i {
+            font-size: 1.55rem;
         }
-        .eschool-top-bar i {
-            margin-right: 5px;
+        .eschool-role-login-menu {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 12px;
         }
-        .eschool-top-bar .divider {
-            color: rgba(255, 255, 255, 0.4);
-            margin: 0 10px;
+        .eschool-role-login-menu a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 34px;
+            padding: 8px 13px;
+            border: 1px solid #202733;
+            border-radius: 5px;
+            background: #202733;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+        }
+        .eschool-role-login-menu a:hover,
+        .eschool-role-login-menu a:focus-visible {
+            border-color: #0d47a1;
+            background: #0d47a1;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+        .eschool-role-login-menu i {
+            font-size: 0.9rem;
         }
 
         /* Tier 2 */
@@ -190,20 +232,45 @@
         .eschool-nav-menu .dropdown:hover .dropdown-menu {
             display: block;
         }
+
+        @@media (max-width: 900px) {
+            .eschool-top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .eschool-role-login-menu {
+                justify-content: flex-start;
+            }
+        }
+
+        @@media (max-width: 560px) {
+            .eschool-role-login-menu a {
+                flex: 1 1 calc(50% - 10px);
+                justify-content: center;
+                font-size: 0.68rem;
+            }
+        }
     </style>
 
     <header class="eschool-header">
         <!-- Tier 1: Top Bar -->
         <div class="eschool-top-bar">
             <div class="left-info">
-                <span><i class="bi bi-geo-alt-fill"></i> Hà Nội, Việt Nam</span>
-                <span><i class="bi bi-telephone-fill"></i> 1900 9999</span>
-                <span><i class="bi bi-envelope-fill"></i> support@eschool.local</span>
+                <a asp-controller="Home" asp-action="Index" class="eschool-login-brand">
+                    <i class="bi bi-mortarboard-fill"></i>
+                    <span>eSchool Education</span>
+                </a>
             </div>
             <div class="right-info">
-                <a href="#">Sơ đồ website</a> <span class="divider">|</span>
-                <a href="#">Hỏi đáp</a> <span class="divider">|</span>
-                <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="bi bi-person-fill"></i> Đăng nhập</a>
+                <nav class="eschool-role-login-menu" aria-label="Cổng đăng nhập">
+                    @foreach (var portal in loginPortals)
+                    {
+                        <a asp-controller="Account" asp-action="Login" asp-route-loginRole="@portal.Role">
+                            <i class="bi @portal.Icon"></i>
+                            <span>@portal.Name</span>
+                        </a>
+                    }
+                </nav>
             </div>
         </div>
 
@@ -356,7 +423,7 @@
                 <div class="modal-body pt-0 px-4 px-md-5 pb-4 pb-md-5">
                     <div class="portal-login-logo"><i class="bi bi-mortarboard-fill"></i></div>
                     <h2>Đăng nhập eSchool</h2>
-                    <p>Đăng nhập để truy cập đúng vai trò của bạn trong hệ thống.</p>
+                    <p id="selectedLoginPortal">@selectedLoginPortalName</p>
 
                     @if (TempData["LoginError"] != null)
                     {
@@ -370,6 +437,7 @@
 
                     <form asp-controller="Account" asp-action="Login" method="post" class="portal-login-form">
                         @Html.AntiForgeryToken()
+                        <input id="loginRole" name="loginRole" type="hidden" value="@Model.LoginRole" />
                         <div class="mb-3">
                             <label class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
                             <input name="username" class="form-control" maxlength="50" autocomplete="username" required />
@@ -378,7 +446,7 @@
                             <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
                             <input name="password" type="password" class="form-control" autocomplete="current-password" required />
                         </div>
-                        <button type="submit" class="btn portal-submit-btn w-100">Đăng nhập</button>
+                        <button id="loginSubmitButton" type="submit" class="btn portal-submit-btn w-100" disabled="@(Model.LoginRole == null ? "disabled" : null)">Đăng nhập</button>
                     </form>
 
                     <div class="text-center mt-3">

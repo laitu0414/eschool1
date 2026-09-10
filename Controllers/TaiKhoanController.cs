@@ -53,6 +53,12 @@ namespace eSchool.Controllers
         public IActionResult Create(string username, string password, int idChucVu, string? email, int? idHocSinhLienKet, int? idGiaoVienLienKet)
         {
             username = username?.Trim() ?? string.Empty;
+            if (idChucVu == SystemRoleIds.SystemAdmin)
+            {
+                TempData["Error"] = "Hệ thống chỉ có một tài khoản System Admin và không thể tạo thêm.";
+                return RedirectToAction("Index");
+            }
+
             if (!ValidateProfileLink(idChucVu, idHocSinhLienKet, idGiaoVienLienKet, out var linkError))
             {
                 TempData["Error"] = linkError;
@@ -87,11 +93,17 @@ namespace eSchool.Controllers
         {
             if (!HasPermissionToManage(id))
             {
-                TempData["Error"] = "Bạn không có quyền thao tác trên tài khoản Quản trị viên này.";
+                TempData["Error"] = "Bạn không có quyền thao tác trên tài khoản System Admin này.";
                 return RedirectToAction("Index");
             }
 
-            if (HttpContext.Session.GetInt32("UserId") == id && (idChucVu != 1 || !trangThai))
+            if (idChucVu == SystemRoleIds.SystemAdmin && HttpContext.Session.GetInt32("UserId") != id)
+            {
+                TempData["Error"] = "Không thể gán vai trò System Admin cho tài khoản khác.";
+                return RedirectToAction("Index");
+            }
+
+            if (HttpContext.Session.GetInt32("UserId") == id && (idChucVu != SystemRoleIds.SystemAdmin || !trangThai))
             {
                 TempData["Error"] = "Không thể tự khóa hoặc hạ quyền tài khoản đang đăng nhập";
                 return RedirectToAction("Index");
@@ -112,27 +124,81 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
-            if (!HasPermissionToManage(id))
+             var taiKhoan = _context.TaiKhoans
+        .FirstOrDefault(x => x.IdTaiKhoan == id);
+
+        // if (taiKhoan == null)
+        // {
+        //     TempData["Error"] = "Không tìm thấy tài khoản.";
+        //     return RedirectToAction("Index");
+        // }
+
+        // Không cho xóa System Admin
+        if (taiKhoan.IdChucVu == SystemRoleIds.SystemAdmin)
+        {
+            TempData["Error"] = "Không thể xóa tài khoản System Admin.";
+            return RedirectToAction("Index");
+        }
+
+        try
+        {
+            // 1. Gỡ tài khoản khỏi học sinh
+            var hocSinhs = _context.HocSinhs
+                .Where(x => x.IdTaiKhoan == id)
+                .ToList();
+
+            foreach (var x in hocSinhs)
             {
-                TempData["Error"] = "Bạn không có quyền thao tác trên tài khoản Quản trị viên này.";
-                return RedirectToAction("Index");
+                x.IdTaiKhoan = null;
             }
 
-            if (HttpContext.Session.GetInt32("UserId") == id)
+            // 2. Gỡ tài khoản khỏi giáo viên
+            var giaoViens = _context.GiaoViens
+                .Where(x => x.IdTaiKhoan == id)
+                .ToList();
+
+            foreach (var x in giaoViens)
             {
-                TempData["Error"] = "Không thể tự xóa tài khoản đang đăng nhập";
-                return RedirectToAction("Index");
+                x.IdTaiKhoan = null;
             }
 
-            if (!_accountService.Delete(id))
+            // 3. Gỡ tài khoản khỏi phụ huynh
+            var phuHuynhs = _context.PhuHuynhs
+                .Where(x => x.IdTaiKhoan == id)
+                .ToList();
+
+            foreach (var x in phuHuynhs)
             {
-                TempData["Error"] = "Không thể xóa tài khoản quản trị hoặc tài khoản đang được sử dụng";
-                return RedirectToAction("Index");
+                x.IdTaiKhoan = null;
             }
+
+            // 4. Nếu tài khoản từng lập phiếu điểm
+            var phieuDiems = _context.PhieuDiems
+                .Where(x => x.NguoiLap == id)
+                .ToList();
+
+            foreach (var x in phieuDiems)
+            {
+                x.NguoiLap = null;
+            }
+
+            // Lưu việc gỡ liên kết
+            _context.SaveChanges();
+
+            // 5. Xóa tài khoản
+            _context.TaiKhoans.Remove(taiKhoan);
+            _context.SaveChanges();
 
             WriteLog("Xóa tài khoản", $"Đã xóa tài khoản ID {id}");
-            TempData["Success"] = "Xóa tài khoản thành công";
-            return RedirectToAction("Index");
+
+            TempData["Success"] = "Xóa tài khoản thành công.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Xóa thất bại: " + ex.Message;
+        }
+
+        return RedirectToAction("Index");
         }
 
         [HttpPost]
@@ -141,7 +207,7 @@ namespace eSchool.Controllers
         {
             if (!HasPermissionToManage(id))
             {
-                TempData["Error"] = "Bạn không có quyền thao tác trên tài khoản Quản trị viên này.";
+                TempData["Error"] = "Bạn không có quyền thao tác trên tài khoản System Admin này.";
                 return RedirectToAction("Index");
             }
 
@@ -168,7 +234,7 @@ namespace eSchool.Controllers
         {
             if (!HasPermissionToManage(id))
             {
-                TempData["Error"] = "Bạn không có quyền thao tác trên tài khoản Quản trị viên này.";
+                TempData["Error"] = "Bạn không có quyền thao tác trên tài khoản System Admin này.";
                 return RedirectToAction("Index");
             }
 
@@ -192,15 +258,13 @@ namespace eSchool.Controllers
         private bool HasPermissionToManage(int targetAccountId)
         {
             var currentRoleId = HttpContext.Session.GetInt32("RoleId");
-            if (currentRoleId == 5) return true; // System Admin can do anything
-
             var targetAccount = _context.TaiKhoans.AsNoTracking().FirstOrDefault(x => x.IdTaiKhoan == targetAccountId);
             if (targetAccount == null) return false;
 
             var currentUserId = HttpContext.Session.GetInt32("UserId");
             if (currentUserId == targetAccountId) return true; // Self edit is fine
 
-            if (currentRoleId == 1 && (targetAccount.IdChucVu == 1 || targetAccount.IdChucVu == 5))
+            if (currentRoleId == SystemRoleIds.SystemAdmin && targetAccount.IdChucVu == SystemRoleIds.SystemAdmin)
             {
                 return false;
             }

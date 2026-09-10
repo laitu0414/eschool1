@@ -34,18 +34,17 @@ namespace eSchool.Infrastructure
                 return;
             }
 
-            if (_allowedRoles.Contains(roleId.Value) || (_allowedRoles.Contains(1) && roleId.Value == 5))
+            if (_allowedRoles.Contains(roleId.Value))
             {
                 return;
             }
 
             context.Result = roleId.Value switch
             {
-                1 => new RedirectToActionResult("Index", "Admin", null),
+                SystemRoleIds.SystemAdmin => new RedirectToActionResult("Index", "Admin", null),
                 2 => new RedirectToActionResult("HoSoCaNhan", "GiaoVien", null),
                 3 => new RedirectToActionResult("HoSoCaNhan", "HocSinh", null),
                 4 => new RedirectToActionResult("HoSoCaNhan", "HocSinh", null),
-                5 => new RedirectToActionResult("Index", "Admin", null),
                 _ => new RedirectToActionResult("Login", "Account", null)
             };
         }

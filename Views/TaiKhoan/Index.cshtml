@@ -1,4 +1,4 @@
-﻿@using System.Linq
+@using System.Linq
 @model List<eSchool.Models.TaiKhoan>
 
 @{
@@ -108,7 +108,6 @@
                     <th width="70">STT</th>
                     <th>Username</th>
                     <th>Email</th>
-                    <th>Mật khẩu</th>
                     <th>Chức vụ</th>
                     <th>Trạng thái</th>
                     <th width="180" class="text-center">Thao tác</th>
@@ -121,6 +120,8 @@
                     @for (int i = 0; i < Model.Count; i++)
                     {
                         var item = Model[i];
+                        var displayEmail = new[] { item.Email, item.GiaoVien?.Email, item.HocSinh?.Email, item.PhuHuynh?.Email }
+                            .FirstOrDefault(email => !string.IsNullOrWhiteSpace(email));
 
                         <tr>
                             <td>@(i + 1)</td>
@@ -130,11 +131,7 @@
                             </td>
 
                             <td>
-                                @(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có" : item.Email)
-                            </td>
-
-                            <td>
-                                <span class="text-muted">••••••••</span>
+                                @(displayEmail ?? "Chưa có")
                             </td>
 
                             <td>
@@ -236,7 +233,7 @@
                                                     Email/Gmail
                                                 </label>
                                                 <input name="email"
-                                                       value="@item.Email"
+                                                       value="@displayEmail"
                                                        type="email"
                                                        class="form-control"
                                                        maxlength="100"
@@ -247,22 +244,30 @@
                                                 <label class="form-label">
                                                     Chức vụ <span class="text-danger">*</span>
                                                 </label>
-                                                <select name="idChucVu" class="form-select" required>
-                                                    @if (chucVus != null)
-                                                    {
-                                                        foreach (var cv in chucVus)
+                                                @if (item.IdChucVu == SystemRoleIds.SystemAdmin)
+                                                {
+                                                    <input name="idChucVu" type="hidden" value="@SystemRoleIds.SystemAdmin" />
+                                                    <input class="form-control" value="System Admin" readonly />
+                                                }
+                                                else
+                                                {
+                                                    <select name="idChucVu" class="form-select" required>
+                                                        @if (chucVus != null)
                                                         {
-                                                            if (item.IdChucVu == cv.IdChucVu)
+                                                            foreach (var cv in chucVus.Where(cv => cv.IdChucVu != SystemRoleIds.SystemAdmin))
                                                             {
-                                                                <option value="@cv.IdChucVu" selected>@cv.TenChucVu</option>
-                                                            }
-                                                            else
-                                                            {
-                                                                <option value="@cv.IdChucVu">@cv.TenChucVu</option>
+                                                                if (item.IdChucVu == cv.IdChucVu)
+                                                                {
+                                                                    <option value="@cv.IdChucVu" selected>@cv.TenChucVu</option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="@cv.IdChucVu">@cv.TenChucVu</option>
+                                                                }
                                                             }
                                                         }
-                                                    }
-                                                </select>
+                                                    </select>
+                                                }
                                             </div>
 
                                             <div class="mb-3">
@@ -361,7 +366,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-5">
+                        <td colspan="6" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                             Không có tài khoản nào
                         </td>
@@ -439,7 +444,7 @@
                         <select name="idChucVu" id="createRoleSelect" class="form-select" required>
                             @if (chucVus != null)
                             {
-                                foreach (var cv in chucVus)
+                                foreach (var cv in chucVus.Where(cv => cv.IdChucVu != SystemRoleIds.SystemAdmin))
                                 {
                                     <option value="@cv.IdChucVu">@cv.TenChucVu</option>
                                 }

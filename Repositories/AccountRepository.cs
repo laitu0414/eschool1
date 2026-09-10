@@ -42,6 +42,9 @@ namespace eSchool.Repositories
         {
             return _context.TaiKhoans
                 .Include(x => x.ChucVu)
+                .Include(x => x.GiaoVien)
+                .Include(x => x.HocSinh)
+                .Include(x => x.PhuHuynh)
                 .ToList();
         }
 

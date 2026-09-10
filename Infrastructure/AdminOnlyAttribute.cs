@@ -7,7 +7,9 @@ namespace eSchool.Infrastructure
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            if (context.HttpContext.Session.GetInt32("RoleId") != 1)
+            var roleId = context.HttpContext.Session.GetInt32("RoleId");
+
+            if (roleId != SystemRoleIds.SystemAdmin)
             {
                 context.Result = new RedirectToActionResult("Login", "Account", null);
                 return;

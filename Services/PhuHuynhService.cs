@@ -15,15 +15,26 @@ namespace eSchool.Services
 
         public List<PhuHuynhViewModel> GetAll(string? keyword)
         {
-            return _repo.GetAll(keyword).Select(x => new PhuHuynhViewModel
+            return _repo.GetAll(keyword).Select(x =>
             {
-                IdPhuHuynh = x.IdPhuHuynh,
-                HoTen = x.HoTen,
-                SDT = x.SDT,
-                Email = x.Email,
-                DiaChi = x.DiaChi,
-                NgheNghiep = x.NgheNghiep,
-                TrangThai = x.TrangThai
+                var lienKet = x.HocSinhPhuHuynhs?
+                    .OrderByDescending(link => link.LaLienHeChinh)
+                    .FirstOrDefault();
+
+                return new PhuHuynhViewModel
+                {
+                    IdPhuHuynh = x.IdPhuHuynh,
+                    IdHocSinh = lienKet?.IdHocSinh,
+                    TenHocSinh = lienKet?.HocSinh == null
+                        ? null
+                        : $"{lienKet.HocSinh.MaHS} - {lienKet.HocSinh.HoTen}",
+                    HoTen = x.HoTen,
+                    SDT = x.SDT,
+                    Email = x.Email,
+                    DiaChi = x.DiaChi,
+                    NgheNghiep = x.NgheNghiep,
+                    TrangThai = x.TrangThai
+                };
             }).ToList();
         }
 
@@ -32,9 +43,17 @@ namespace eSchool.Services
             var x = _repo.GetById(id);
             if (x == null) return null;
 
+            var lienKet = x.HocSinhPhuHuynhs?
+                .OrderByDescending(link => link.LaLienHeChinh)
+                .FirstOrDefault();
+
             return new PhuHuynhViewModel
             {
                 IdPhuHuynh = x.IdPhuHuynh,
+                IdHocSinh = lienKet?.IdHocSinh,
+                TenHocSinh = lienKet?.HocSinh == null
+                    ? null
+                    : $"{lienKet.HocSinh.MaHS} - {lienKet.HocSinh.HoTen}",
                 HoTen = x.HoTen,
                 SDT = x.SDT,
                 Email = x.Email,
