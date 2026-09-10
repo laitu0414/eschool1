@@ -1,6 +1,10 @@
 {
   "Version": 1,
+<<<<<<< Updated upstream
   "Hash": "FSuImdi6UkiUykjVakJUsfFd0cgpxS5akHz296DAlNU=",
+=======
+  "Hash": "icIw8xE6flXcz5/d18SzjTHAWlmW5mPyWNP0B9jO9Mo=",
+>>>>>>> Stashed changes
   "Source": "eSchool",
   "BasePath": "_content/eSchool",
   "Mode": "Default",
@@ -169,6 +173,7 @@
       "OriginalItemSpec": "wwwroot\\css\\site.css"
     },
     {
+<<<<<<< Updated upstream
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\student-layout.css",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -188,6 +193,8 @@
       "OriginalItemSpec": "wwwroot\\css\\student-layout.css"
     },
     {
+=======
+>>>>>>> Stashed changes
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\student.css",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -207,6 +214,28 @@
       "OriginalItemSpec": "wwwroot\\css\\student.css"
     },
     {
+<<<<<<< Updated upstream
+=======
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\student-layout.css",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "css/student-layout.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\student-layout.css"
+    },
+    {
+>>>>>>> Stashed changes
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\teacher.css",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -245,6 +274,28 @@
       "OriginalItemSpec": "wwwroot\\favicon.ico"
     },
     {
+<<<<<<< Updated upstream
+=======
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\b5e3513012e1401a88268c6c447f75b7.jpg",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "image/b5e3513012e1401a88268c6c447f75b7.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\image\\b5e3513012e1401a88268c6c447f75b7.jpg"
+    },
+    {
+>>>>>>> Stashed changes
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\csvc.png",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -283,6 +334,28 @@
       "OriginalItemSpec": "wwwroot\\image\\default-avatar.svg"
     },
     {
+<<<<<<< Updated upstream
+=======
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\erd-eschool.png",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "image/erd-eschool.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\image\\erd-eschool.png"
+    },
+    {
+>>>>>>> Stashed changes
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\erd-eschool-clean-bridges.png",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -359,6 +432,7 @@
       "OriginalItemSpec": "wwwroot\\image\\erd-eschool-updated.png"
     },
     {
+<<<<<<< Updated upstream
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\erd-eschool.png",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -378,6 +452,8 @@
       "OriginalItemSpec": "wwwroot\\image\\erd-eschool.png"
     },
     {
+=======
+>>>>>>> Stashed changes
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\giaovien.png",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -682,6 +758,161 @@
       "OriginalItemSpec": "wwwroot\\js\\student.js"
     },
     {
+<<<<<<< Updated upstream
+=======
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/bootstrap/dist/css/bootstrap.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css.map",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/bootstrap/dist/css/bootstrap.css.map",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css.map"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/bootstrap/dist/css/bootstrap.min.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css.map",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/bootstrap/dist/css/bootstrap.min.css.map",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css.map"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/bootstrap/dist/css/bootstrap.rtl.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css.map",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/bootstrap/dist/css/bootstrap.rtl.css.map",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css.map"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/bootstrap/dist/css/bootstrap.rtl.min.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/bootstrap/dist/css/bootstrap.rtl.min.css.map",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map"
+    },
+    {
+>>>>>>> Stashed changes
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -1138,6 +1369,7 @@
       "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css.map"
     },
     {
+<<<<<<< Updated upstream
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -1290,6 +1522,8 @@
       "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map"
     },
     {
+=======
+>>>>>>> Stashed changes
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -1537,12 +1771,20 @@
       "OriginalItemSpec": "wwwroot\\lib\\bootstrap\\LICENSE"
     },
     {
+<<<<<<< Updated upstream
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.js",
+=======
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery\\dist\\jquery.js",
+>>>>>>> Stashed changes
       "SourceId": "eSchool",
       "SourceType": "Discovered",
       "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
       "BasePath": "_content/eSchool",
+<<<<<<< Updated upstream
       "RelativePath": "lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js",
+=======
+      "RelativePath": "lib/jquery/dist/jquery.js",
+>>>>>>> Stashed changes
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -1553,15 +1795,26 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
+<<<<<<< Updated upstream
       "OriginalItemSpec": "wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.js"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.min.js",
+=======
+      "OriginalItemSpec": "wwwroot\\lib\\jquery\\dist\\jquery.js"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery\\dist\\jquery.min.js",
+>>>>>>> Stashed changes
       "SourceId": "eSchool",
       "SourceType": "Discovered",
       "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
       "BasePath": "_content/eSchool",
+<<<<<<< Updated upstream
       "RelativePath": "lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js",
+=======
+      "RelativePath": "lib/jquery/dist/jquery.min.js",
+>>>>>>> Stashed changes
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -1572,15 +1825,26 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
+<<<<<<< Updated upstream
       "OriginalItemSpec": "wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.min.js"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery-validation-unobtrusive\\LICENSE.txt",
+=======
+      "OriginalItemSpec": "wwwroot\\lib\\jquery\\dist\\jquery.min.js"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery\\dist\\jquery.min.map",
+>>>>>>> Stashed changes
       "SourceId": "eSchool",
       "SourceType": "Discovered",
       "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
       "BasePath": "_content/eSchool",
+<<<<<<< Updated upstream
       "RelativePath": "lib/jquery-validation-unobtrusive/LICENSE.txt",
+=======
+      "RelativePath": "lib/jquery/dist/jquery.min.map",
+>>>>>>> Stashed changes
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -1591,7 +1855,30 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
+<<<<<<< Updated upstream
       "OriginalItemSpec": "wwwroot\\lib\\jquery-validation-unobtrusive\\LICENSE.txt"
+=======
+      "OriginalItemSpec": "wwwroot\\lib\\jquery\\dist\\jquery.min.map"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery\\LICENSE.txt",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "lib/jquery/LICENSE.txt",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\lib\\jquery\\LICENSE.txt"
+>>>>>>> Stashed changes
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.js",
@@ -1689,12 +1976,20 @@
       "OriginalItemSpec": "wwwroot\\lib\\jquery-validation\\LICENSE.md"
     },
     {
+<<<<<<< Updated upstream
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery\\dist\\jquery.js",
+=======
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.js",
+>>>>>>> Stashed changes
       "SourceId": "eSchool",
       "SourceType": "Discovered",
       "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
       "BasePath": "_content/eSchool",
+<<<<<<< Updated upstream
       "RelativePath": "lib/jquery/dist/jquery.js",
+=======
+      "RelativePath": "lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js",
+>>>>>>> Stashed changes
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -1705,15 +2000,26 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
+<<<<<<< Updated upstream
       "OriginalItemSpec": "wwwroot\\lib\\jquery\\dist\\jquery.js"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery\\dist\\jquery.min.js",
+=======
+      "OriginalItemSpec": "wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.js"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.min.js",
+>>>>>>> Stashed changes
       "SourceId": "eSchool",
       "SourceType": "Discovered",
       "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
       "BasePath": "_content/eSchool",
+<<<<<<< Updated upstream
       "RelativePath": "lib/jquery/dist/jquery.min.js",
+=======
+      "RelativePath": "lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js",
+>>>>>>> Stashed changes
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -1724,15 +2030,26 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
+<<<<<<< Updated upstream
       "OriginalItemSpec": "wwwroot\\lib\\jquery\\dist\\jquery.min.js"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery\\dist\\jquery.min.map",
+=======
+      "OriginalItemSpec": "wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.min.js"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\jquery-validation-unobtrusive\\LICENSE.txt",
+>>>>>>> Stashed changes
       "SourceId": "eSchool",
       "SourceType": "Discovered",
       "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
       "BasePath": "_content/eSchool",
+<<<<<<< Updated upstream
       "RelativePath": "lib/jquery/dist/jquery.min.map",
+=======
+      "RelativePath": "lib/jquery-validation-unobtrusive/LICENSE.txt",
+>>>>>>> Stashed changes
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -1743,6 +2060,7 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
+<<<<<<< Updated upstream
       "OriginalItemSpec": "wwwroot\\lib\\jquery\\dist\\jquery.min.map"
     },
     {
@@ -1763,6 +2081,9 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\lib\\jquery\\LICENSE.txt"
+=======
+      "OriginalItemSpec": "wwwroot\\lib\\jquery-validation-unobtrusive\\LICENSE.txt"
+>>>>>>> Stashed changes
     }
   ]
 }
