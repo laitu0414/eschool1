@@ -1,5 +1,7 @@
 ﻿using eSchool.Models;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace eSchool.Repositories
 {
     public class PhuHuynhRepository : IPhuHuynhRepository
@@ -13,7 +15,10 @@ namespace eSchool.Repositories
 
         public List<PhuHuynh> GetAll(string? keyword)
         {
-            var query = _context.PhuHuynhs.AsQueryable();
+            var query = _context.PhuHuynhs
+                .Include(x => x.HocSinhPhuHuynhs!)
+                    .ThenInclude(x => x.HocSinh)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
@@ -27,7 +32,10 @@ namespace eSchool.Repositories
 
         public PhuHuynh? GetById(int id)
         {
-            return _context.PhuHuynhs.Find(id);
+            return _context.PhuHuynhs
+                .Include(x => x.HocSinhPhuHuynhs!)
+                    .ThenInclude(x => x.HocSinh)
+                .FirstOrDefault(x => x.IdPhuHuynh == id);
         }
 
         public void Add(PhuHuynh phuHuynh)
@@ -42,12 +50,19 @@ namespace eSchool.Repositories
 
         public void Delete(int id)
         {
-            var ph = _context.PhuHuynhs.Find(id);
-            if (ph != null)
-            {
-                ph.TrangThai = false;
-                _context.PhuHuynhs.Update(ph);
-            }
+            var ph = _context.PhuHuynhs
+                .Include(x => x.TaiKhoan)
+                .FirstOrDefault(x => x.IdPhuHuynh == id);
+
+            if (ph == null)
+                return;
+
+            // The HocSinhPhuHuynh records are cascade-deleted with the parent.
+            // Remove the dedicated parent account to prevent an orphaned login.
+            if (ph.TaiKhoan?.IdChucVu == 4)
+                _context.TaiKhoans.Remove(ph.TaiKhoan);
+
+            _context.PhuHuynhs.Remove(ph);
         }
 
         public void Save()

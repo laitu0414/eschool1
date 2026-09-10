@@ -1,12 +1,14 @@
 @model List<eSchool.Models.GiaoVien>
 
 @{
-    Layout = Context.Session.GetInt32("RoleId") == 1
-        ? "~/Views/Shared/_AdminLayout.cshtml"
+      var roleId = Context.Session.GetInt32("RoleId");
+    var isAdmin = roleId == SystemRoleIds.SystemAdmin;
+
+Layout = isAdmin
+    ? "~/Views/Shared/_AdminLayout.cshtml"
         : "~/Views/Shared/_TeacherLayout.cshtml";
     ViewData["Title"] = "Quản lý giáo viên";
 
-    var isAdmin = Context.Session.GetInt32("RoleId") == 1;
     var danhSach = Model ?? new List<eSchool.Models.GiaoVien>();
     var tongGiaoVien = danhSach.Count;
     var coEmail = danhSach.Count(x => !string.IsNullOrWhiteSpace(x.Email));

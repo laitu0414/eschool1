@@ -1,9 +1,12 @@
 @model List<eSchool.ViewModels.HocSinhViewModel>
 
 @{
-    Layout = Context.Session.GetInt32("RoleId") == 1
-        ? "~/Views/Shared/_AdminLayout.cshtml"
-        : "~/Views/Shared/_StudentLayout.cshtml";
+    var roleId = Context.Session.GetInt32("RoleId");
+    var isAdmin = roleId == SystemRoleIds.SystemAdmin;
+
+Layout = isAdmin
+    ? "~/Views/Shared/_AdminLayout.cshtml"
+    : "~/Views/Shared/_StudentLayout.cshtml";
     ViewData["Title"] = "Quản lý học sinh";
 
     var danhSach = Model ?? new List<eSchool.ViewModels.HocSinhViewModel>();
@@ -15,7 +18,6 @@
     int? selectedLopId = ViewBag.LopId is int lopId ? lopId : null;
     bool? selectedTrangThai = ViewBag.TrangThai is bool trangThai ? trangThai : null;
     string keyword = ViewBag.Keyword as string ?? string.Empty;
-    var isAdmin = Context.Session.GetInt32("RoleId") == 1;
     var createForm = ViewBag.CreateHocSinhForm as eSchool.ViewModels.HocSinhViewModel
         ?? new eSchool.ViewModels.HocSinhViewModel();
 }

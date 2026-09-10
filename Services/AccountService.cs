@@ -1,5 +1,6 @@
 using eSchool.Models;
 using eSchool.Repositories;
+using eSchool.Infrastructure;
 using System.Security.Cryptography;
 
 namespace eSchool.Services
@@ -34,7 +35,9 @@ namespace eSchool.Services
             {
                 data = data.Where(x =>
                     x.Username.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                    (!string.IsNullOrWhiteSpace(x.Email) && x.Email.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                    new[] { x.Email, x.GiaoVien?.Email, x.HocSinh?.Email, x.PhuHuynh?.Email }
+                        .Any(email => !string.IsNullOrWhiteSpace(email) &&
+                                      email.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 ).ToList();
             }
 
@@ -58,6 +61,7 @@ namespace eSchool.Services
 
             if (string.IsNullOrWhiteSpace(username) ||
                 password?.Length < 6 ||
+                idChucVu == SystemRoleIds.SystemAdmin ||
                 !_accountRepo.RoleExists(idChucVu))
                 return false;
 
@@ -90,6 +94,7 @@ namespace eSchool.Services
             email = email?.Trim();
             if (string.IsNullOrWhiteSpace(username) ||
                 !_accountRepo.RoleExists(idChucVu) ||
+                (idChucVu == SystemRoleIds.SystemAdmin && account.IdChucVu != SystemRoleIds.SystemAdmin) ||
                 _accountRepo.ExistsUsername(username, id))
                 return false;
 
@@ -123,7 +128,7 @@ namespace eSchool.Services
             if (account == null)
                 return false;
 
-            if (account.IdChucVu == 1)
+            if (account.IdChucVu == SystemRoleIds.SystemAdmin)
                 return false;
 
             try
@@ -203,7 +208,7 @@ namespace eSchool.Services
             if (account == null)
                 return false;
 
-            if (account.IdChucVu == 1)
+            if (account.IdChucVu == SystemRoleIds.SystemAdmin)
                 return false;
 
             account.TrangThai = !account.TrangThai;

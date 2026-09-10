@@ -1,6 +1,21 @@
 @model eSchool.ViewModels.PhuHuynhViewModel
 
+@{
+    var isAdmin = Context.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin;
+}
+
 <div class="row">
+    @if (isAdmin && Model.IdPhuHuynh == 0)
+    {
+        <div class="col-12 mb-3">
+            <label asp-for="IdHocSinh" class="form-label">Học sinh liên kết <span class="text-danger">*</span></label>
+            <select asp-for="IdHocSinh" asp-items="Model.HocSinhs" class="form-select" required>
+                <option value="">-- Chọn học sinh chưa có phụ huynh --</option>
+            </select>
+            <div class="form-text">Chỉ hiển thị học sinh đang học và chưa có người giám hộ chính.</div>
+            <span asp-validation-for="IdHocSinh" class="text-danger"></span>
+        </div>
+    }
     <div class="col-md-6 mb-3">
         <label asp-for="HoTen" class="form-label">Họ tên <span class="text-danger">*</span></label>
         <input asp-for="HoTen" class="form-control" required maxlength="100" />

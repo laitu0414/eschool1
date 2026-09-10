@@ -2,6 +2,7 @@ using System.Diagnostics;
 using eSchool.Models;
 using eSchool.ViewModels;
 using eschool.Models;
+using eSchool.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,12 +19,13 @@ namespace eschool.Controllers
             _context = context;
         }
 
-        public IActionResult Index(bool openLogin = false, bool openForgotPassword = false)
+        public IActionResult Index(bool openLogin = false, bool openForgotPassword = false, int? loginRole = null)
         {
             var vm = new TrangChuViewModel
             {
                 OpenLogin = openLogin || TempData["LoginError"] != null || TempData["AuthSuccess"] != null,
                 OpenForgotPassword = openForgotPassword || TempData["ForgotPasswordError"] != null,
+                LoginRole = loginRole is SystemRoleIds.SystemAdmin or 2 or 3 or 4 ? loginRole : null,
                 TinTucSuKiens = _context.TinTucSuKiens
                     .Where(x => x.TrangThai)
                     .OrderByDescending(x => x.NgayTao)

@@ -1,6 +1,7 @@
 using eSchool.Models;
 using eSchool.Repositories;
 using eSchool.Services;
+using eSchool.Infrastructure;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
@@ -55,15 +56,27 @@ namespace eschool
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 dbContext.Database.Migrate();
 
-                if (!dbContext.ChucVus.Any(c => c.IdChucVu == 5))
+                var defaultRoles = new Dictionary<int, string>
                 {
-                    try 
+                    [SystemRoleIds.SystemAdmin] = "System Admin",
+                    [2] = "Giáo viên",
+                    [3] = "Học sinh",
+                    [4] = "Phụ huynh"
+                };
+
+                foreach (var role in defaultRoles)
+                {
+                    if (dbContext.ChucVus.Any(c => c.IdChucVu == role.Key))
+                        continue;
+
+                    try
                     {
-                        dbContext.Database.ExecuteSqlRaw("SET IDENTITY_INSERT ChucVus ON; INSERT INTO ChucVus (IdChucVu, TenChucVu) VALUES (5, N'System Admin'); SET IDENTITY_INSERT ChucVus OFF;");
+                        dbContext.Database.ExecuteSqlRaw(
+                            $"SET IDENTITY_INSERT ChucVus ON; INSERT INTO ChucVus (IdChucVu, TenChucVu) VALUES ({role.Key}, N'{role.Value.Replace("'", "''")}'); SET IDENTITY_INSERT ChucVus OFF;");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Error seeding System Admin: " + ex.Message);
+                        Console.WriteLine($"Error seeding role {role.Key}: {ex.Message}");
                     }
                 }
             }

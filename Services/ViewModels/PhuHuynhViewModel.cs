@@ -6,6 +6,12 @@ namespace eSchool.ViewModels
     {
         public int IdPhuHuynh { get; set; }
 
+        public int? IdHocSinh { get; set; }
+
+        public string? TenHocSinh { get; set; }
+
+        public List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> HocSinhs { get; set; } = new();
+
         [Required(ErrorMessage = "Họ tên phụ huynh không được để trống")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "Họ tên phải từ 2 đến 100 ký tự")]
         public string HoTen { get; set; } = string.Empty;

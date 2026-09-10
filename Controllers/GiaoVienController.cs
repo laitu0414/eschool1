@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 namespace eSchool.Controllers
 {
-    [RoleAuthorize(1, 2)]
+    [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
     public class GiaoVienController : Controller
     {
         private readonly AppDbContext _context;
@@ -17,7 +17,7 @@ namespace eSchool.Controllers
             _context = context;
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult Index(string? keyword)
         {
             var query = _context.GiaoViens
@@ -82,7 +82,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(HoSo), new { id = giaoVien.IdGiaoVien });
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(GiaoVienFormViewModel vm)
@@ -135,7 +135,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(GiaoVienFormViewModel vm)
@@ -172,7 +172,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
@@ -198,7 +198,7 @@ namespace eSchool.Controllers
 
 
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult ChuNhiem()
         {
             return View(new ChuNhiemViewModel
@@ -211,7 +211,7 @@ namespace eSchool.Controllers
             });
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult GanChuNhiem(int idLop, int? idGiaoVien)
@@ -232,7 +232,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(ChuNhiem));
         }
 
-        [RoleAuthorize(1, 2)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         public IActionResult ThoiKhoaBieu(int? giaoVienId, string? hocKy, string? namHoc, DateTime? tuan)
         {
             if (IsTeacher())
@@ -656,7 +656,7 @@ namespace eSchool.Controllers
                 .FirstOrDefault();
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult DownloadTemplate()
         {
             using var workbook = new XLWorkbook();
@@ -697,7 +697,7 @@ namespace eSchool.Controllers
                 "GiaoVien_Template.xlsx");
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ImportExcel(IFormFile? file)

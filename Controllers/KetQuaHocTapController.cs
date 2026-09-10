@@ -12,7 +12,7 @@ using ClosedXML.Excel;
 
 namespace eSchool.Controllers
 {
-    [RoleAuthorize(1, 2, 3, 4)]
+    [RoleAuthorize(SystemRoleIds.SystemAdmin, 2, 3, 4)]
     public class KetQuaHocTapController : Controller
     {
         private readonly AppDbContext _context;
@@ -26,7 +26,7 @@ namespace eSchool.Controllers
             _emailSender = emailSender;
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult NhatKySuaDiem()
         {
             var logs = _context.NhatKyHoatDongs
@@ -37,7 +37,7 @@ namespace eSchool.Controllers
             return View(logs);
         }
 
-        [RoleAuthorize(1, 2)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         public IActionResult Diem(int? lopId, int? hocKyId)
         {
             var roleId = HttpContext.Session.GetInt32("RoleId");
@@ -144,7 +144,7 @@ namespace eSchool.Controllers
         }
 
         [HttpGet]
-        [RoleAuthorize(1, 2)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         public IActionResult GetDiemHocSinh(int idHocSinh, int idHocKy)
         {
             var hocKy = _context.HocKys.Find(idHocKy);
@@ -192,7 +192,7 @@ namespace eSchool.Controllers
         }
 
         [HttpPost]
-        [RoleAuthorize(1, 2)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         public IActionResult LuuDiemHocSinh([FromBody] LuuDiemHocSinhRequest req)
         {
             if (req == null || req.IdHocSinh <= 0 || req.IdHocKy <= 0 || req.IdNamHoc <= 0)
@@ -252,7 +252,7 @@ namespace eSchool.Controllers
                 }
             }
 
-            if (roleId == 1) // If Admin
+            if (roleId == SystemRoleIds.SystemAdmin) // If System Admin
             {
                 var username = HttpContext.Session.GetString("Username") ?? "Admin";
                 _nhatKyService.GhiLog(username, "Sửa điểm", $"Sửa điểm cho học sinh {hocSinh.HoTen} ({hocSinh.MaHS}) ở học kỳ {hocKy.TenHocKy}");
@@ -262,7 +262,7 @@ namespace eSchool.Controllers
             return Ok(new { success = true, message = "Đã lưu điểm thành công." });
         }
 
-        [RoleAuthorize(1, 2)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         public IActionResult DownloadDiemTemplate(int lopId)
         {
             var hocSinhs = _context.HocSinhs
@@ -301,7 +301,7 @@ namespace eSchool.Controllers
             return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Mau_NhapDiem.xlsx");
         }
 
-        [RoleAuthorize(1, 2)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ImportDiemExcel(IFormFile? file, int lopId, int hocKyId, int monHocId)
@@ -430,7 +430,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult LuuDiem(DiemFormViewModel vm)
         {
             if (!ModelState.IsValid)
@@ -481,7 +481,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult XoaDiem(int id)
         {
             var diem = _context.Diems.Find(id);
@@ -495,7 +495,7 @@ namespace eSchool.Controllers
             return Success(nameof(Diem), "Da xoa diem.");
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult DiemDanh(string? namHocId, int? lopId, DateTime? ngay)
         {
             var assignments = GetAllAttendanceAssignments();
@@ -538,7 +538,7 @@ namespace eSchool.Controllers
             return View(vm);
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult ChiTietDiemDanh(int lopId, DateTime ngayHoc, int? idTietHoc)
         {
             var assignments = GetAllAttendanceAssignments();
@@ -759,7 +759,7 @@ namespace eSchool.Controllers
             });
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public async Task<IActionResult> HocPhi(int? trangThai, int? namHocId)
         {
             await UpdateQuaHanHocPhi();
@@ -871,7 +871,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public async Task<IActionResult> LuuHocPhi(HocPhiFormViewModel vm)
         {
             if (!ModelState.IsValid)
@@ -936,7 +936,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public async Task<IActionResult> LuuHocPhiHangLoat(int IdNamHoc, int IdHocKy, string? Khoi, int? IdLop, decimal SoTien, DateTime? HanDongTien, string? GhiChu)
         {
             var hocKy = _context.HocKys.FirstOrDefault(x => x.IdHocKy == IdHocKy && x.IdNamHoc == IdNamHoc);
@@ -1033,14 +1033,14 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult LuuMienGiam(ChinhSachMienGiam model)
         {
             _context.ChinhSachMienGiams.Add(model);
             _context.SaveChanges();
             return RedirectToAction(nameof(DanhSachMienGiam));
         }
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult DownloadMienGiamTemplate()
         {
             using var workbook = new XLWorkbook();
@@ -1071,7 +1071,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult ImportMienGiamExcel(IFormFile excelFile)
         {
             if (excelFile == null || excelFile.Length == 0)
@@ -1122,7 +1122,7 @@ namespace eSchool.Controllers
             }
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult DanhSachMienGiam()
         {
             var data = _context.ChinhSachMienGiams
@@ -1140,7 +1140,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult XoaMienGiam(int id)
         {
             var policy = _context.ChinhSachMienGiams.Find(id);
@@ -1165,7 +1165,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult XacNhanDongHocPhi(int id, string? phuongThuc)
         {
             var hocPhi = _context.HocPhis.Find(id);
@@ -1183,7 +1183,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult XoaHocPhi(int id)
         {
             var hocPhi = _context.HocPhis.Find(id);
@@ -1343,7 +1343,7 @@ namespace eSchool.Controllers
                 return Compare.Compare(x, y, System.Globalization.CompareOptions.Ordinal);
             }
         }
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult PhieuDiem()
         {
             return View(new PhieuDiemPageViewModel
@@ -1363,7 +1363,7 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult TaoPhieuDiem(int idHocSinh, int idNamHoc, int idHocKy)
         {
             var hocSinh = _context.HocSinhs.Find(idHocSinh);
@@ -1388,7 +1388,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(InPhieuDiem), new { id = phieu.IdPhieuDiem });
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult InPhieuDiem(int id)
         {
             var phieu = _context.PhieuDiems

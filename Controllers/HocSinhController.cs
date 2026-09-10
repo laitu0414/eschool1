@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 namespace eSchool.Controllers
 {
-    [RoleAuthorize(1, 3, 4)]
+    [RoleAuthorize(SystemRoleIds.SystemAdmin, 3, 4)]
     public class HocSinhController : Controller
     {
         private static readonly HashSet<string> AllowedImageExtensions =
@@ -28,7 +28,7 @@ namespace eSchool.Controllers
             _environment = environment;
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult Index(string? keyword, int? lopId, bool? trangThai)
         {
             SetFilterData(keyword, lopId, trangThai);
@@ -38,14 +38,14 @@ namespace eSchool.Controllers
             return View(_service.GetAll(keyword, lopId, trangThai));
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult Details(int id)
         {
             var data = _service.GetById(id);
             return data == null ? NotFound() : View("HoSo", data);
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult Create()
         {
             var vm = new HocSinhViewModel();
@@ -53,7 +53,7 @@ namespace eSchool.Controllers
             return View(vm);
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HocSinhViewModel vm)
@@ -98,7 +98,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult Edit(int id)
         {
             var vm = _service.GetById(id);
@@ -109,7 +109,7 @@ namespace eSchool.Controllers
             return View(vm);
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(HocSinhViewModel vm)
@@ -157,7 +157,7 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
@@ -183,14 +183,14 @@ namespace eSchool.Controllers
             return data == null ? NotFound() : View(data);
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult TraCuu(string? keyword, int? lopId, bool? trangThai)
         {
             SetFilterData(keyword, lopId, trangThai);
             return View(_service.GetAll(keyword, lopId, trangThai));
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult KyLuat(string? namHoc, string? hocKy, int? lopId, string? keyword)
         {
             var query = _context.KyLuats
@@ -228,7 +228,7 @@ namespace eSchool.Controllers
             return View(query.OrderByDescending(x => x.NgayViPham).ToList());
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult XoaKyLuat(int id)
@@ -532,7 +532,7 @@ namespace eSchool.Controllers
                 .FirstOrDefault();
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult DownloadTemplate()
         {
             using var workbook = new XLWorkbook();
@@ -575,7 +575,7 @@ namespace eSchool.Controllers
                 "HocSinh_Template.xlsx");
         }
 
-        [RoleAuthorize(1)]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ImportExcel(IFormFile? file)

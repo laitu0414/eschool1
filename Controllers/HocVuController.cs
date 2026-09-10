@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace eSchool.Controllers
 {
-    [RoleAuthorize(1)]
+    [RoleAuthorize(SystemRoleIds.SystemAdmin)]
     public class HocVuController : Controller
     {
         private readonly AppDbContext _context;
@@ -1211,15 +1211,36 @@ namespace eSchool.Controllers
             return RedirectToAction(action);
         }
 
-        public IActionResult PhanCongGiaoVien(int lopId)
+        public IActionResult PhanCongGiaoVien(int? lopId, string? keyword)
         {
-            var lop = _context.LopHocs.Find(lopId);
+            if (!lopId.HasValue)
+            {
+                var query = _context.LopHocs
+                    .Include(x => x.GiaoVienChuNhiem)
+                    .AsNoTracking()
+                    .AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(keyword))
+                {
+                    keyword = keyword.Trim();
+                    query = query.Where(x =>
+                        x.MaLop.Contains(keyword) ||
+                        x.TenLop.Contains(keyword) ||
+                        (x.Khoi != null && x.Khoi.Contains(keyword)) ||
+                        (x.NamHoc != null && x.NamHoc.Contains(keyword)));
+                }
+
+                ViewBag.Keyword = keyword;
+                return View("ChonLopPhanCong", query.OrderBy(x => x.NamHoc).ThenBy(x => x.TenLop).ToList());
+            }
+
+            var lop = _context.LopHocs.Find(lopId.Value);
             if (lop == null) return NotFound();
 
             var phanCongs = _context.PhanCongGiangDays
                 .Include(x => x.MonHoc)
                 .Include(x => x.GiaoVien)
-                .Where(x => x.IdLop == lopId && x.MonHoc != null)
+                .Where(x => x.IdLop == lopId.Value && x.MonHoc != null)
                 .ToList();
 
             var monHocs = phanCongs
@@ -1289,7 +1310,7 @@ namespace eSchool.Controllers
                         for(int i = 0; i < length; i++) 
                         {
                             periods.Add(start + i);
-                            if (s.IdLop != lopId) 
+                            if (s.IdLop != lopId.Value) 
                             {
                                 var buoi = s.LopHoc?.BuoiHoc ?? "";
                                 busyPeriods.Add($"{buoi}_{group.Key.Thu}_{start + i}");

@@ -70,6 +70,11 @@
                 .HasIndex(x => x.IdTaiKhoan)
                 .IsUnique()
                 .HasFilter("[IdTaiKhoan] IS NOT NULL");
+
+            modelBuilder.Entity<TaiKhoan>()
+                .HasIndex(x => x.IdChucVu)
+                .IsUnique()
+                .HasFilter("[IdChucVu] = 5");
         }
     }
     }
