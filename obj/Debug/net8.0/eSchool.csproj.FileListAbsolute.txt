@@ -473,6 +473,7 @@ C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.MvcApplicationPartsAssem
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.RazorAssemblyInfo.cache
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.RazorAssemblyInfo.cs
+C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.sourcelink.json
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\staticwebassets\msbuild.eSchool.Microsoft.AspNetCore.StaticWebAssets.props
@@ -489,4 +490,3 @@ C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\refint\eSchool.dll
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.pdb
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.genruntimeconfig.cache
 C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\ref\eSchool.dll
-C:\Users\Admin\Desktop\eschool\obj\Debug\net8.0\eSchool.sourcelink.json
