@@ -6,6 +6,20 @@
     var lopStats = ViewBag.LopStats as List<LopStat> ?? new List<LopStat>();
     var khoiStats = ViewBag.KhoiStats as List<KhoiStat> ?? new List<KhoiStat>();
     var hocSinhs = ViewBag.HocSinhs as List<HocSinh> ?? new List<HocSinh>();
+    var khoiFilters = hocSinhs
+        .Select(h => h.LopHoc?.Khoi)
+        .Where(khoi => !string.IsNullOrWhiteSpace(khoi))
+        .Select(khoi => khoi!)
+        .Distinct()
+        .OrderBy(khoi => khoi)
+        .ToList();
+    var lopFilters = hocSinhs
+        .Select(h => h.LopHoc?.TenLop)
+        .Where(lop => !string.IsNullOrWhiteSpace(lop))
+        .Select(lop => lop!)
+        .Distinct()
+        .OrderBy(lop => lop)
+        .ToList();
 
     int totalHS = ViewBag.TotalHS ?? 0;
     int duDieuKien = ViewBag.DuDieuKien ?? 0;
@@ -19,7 +33,7 @@
     int daTongKet = ViewBag.DaTongKet ?? 0;
     int chuaTongKet = ViewBag.ChuaTongKet ?? 0;
 
-    bool isLocked = TempData["IsLocked"] != null && (bool)TempData["IsLocked"];
+    bool isLocked = ViewBag.IsLocked is bool locked && locked;
 }
 
 <style>
@@ -89,6 +103,14 @@
     .finish-icon {
         width: 80px; height: 80px; background: #ecfdf5; color: #10b981;
         border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-size: 2.5rem; margin-bottom: 10px;
+    }
+    .student-review-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .student-review-filter .student-review-search { flex: 1 1 260px; min-width: 220px; }
+    .student-review-filter .form-select { width: auto; min-width: 145px; }
+    .student-review-filter-count { color: #64748b; font-size: .825rem; }
+    @@media (max-width: 768px) {
+        .student-review-filter > * { width: 100% !important; }
+        .student-review-filter .form-select { min-width: 0; }
     }
 </style>
 
@@ -408,22 +430,44 @@
         </div>
 
         <div class="card-box">
-            <div class="d-flex gap-2 mb-3">
-                <input type="text" class="form-control form-control-sm w-25" placeholder="Tìm kiếm học sinh...">
-                <select class="form-select form-select-sm w-auto"><option>Khối: Tất cả</option></select>
-                <select class="form-select form-select-sm w-auto"><option>Lớp: Tất cả</option></select>
-                <select class="form-select form-select-sm w-auto"><option>Trạng thái: Tất cả</option></select>
-                <button class="btn btn-primary btn-sm px-4"><i class="bi bi-search"></i> Tìm kiếm</button>
-            </div>
+            <form id="studentReviewFilter" class="student-review-filter mb-3">
+                <input id="studentReviewSearch" type="search" class="form-control form-control-sm student-review-search"
+                       placeholder="Tìm theo mã, họ tên hoặc lớp..." autocomplete="off">
+                <select id="studentReviewGrade" class="form-select form-select-sm" aria-label="Lọc theo khối">
+                    <option value="">Khối: Tất cả</option>
+                    @foreach (var khoi in khoiFilters)
+                    {
+                        <option value="@khoi">Khối: @khoi</option>
+                    }
+                </select>
+                <select id="studentReviewClass" class="form-select form-select-sm" aria-label="Lọc theo lớp">
+                    <option value="">Lớp: Tất cả</option>
+                    @foreach (var lop in lopFilters)
+                    {
+                        <option value="@lop">Lớp: @lop</option>
+                    }
+                </select>
+                <select id="studentReviewStatus" class="form-select form-select-sm" aria-label="Lọc theo trạng thái">
+                    <option value="">Trạng thái: Tất cả</option>
+                    <option value="eligible">Đủ điều kiện</option>
+                    <option value="ineligible">Không đủ điều kiện</option>
+                    <option value="approved">Đã duyệt</option>
+                    <option value="pending">Chờ duyệt</option>
+                    <option value="inactive">Bỏ học / ngừng học</option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm px-4"><i class="bi bi-search"></i> Tìm kiếm</button>
+                <button type="button" id="studentReviewReset" class="btn btn-light border btn-sm px-3">Làm mới</button>
+                <span id="studentReviewFilterCount" class="student-review-filter-count ms-auto">@hocSinhs.Count học sinh</span>
+            </form>
             
             <form id="duyetForm" method="post">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="ids" id="selectedIds">
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table-custom text-center align-middle">
                         <thead style="position: sticky; top: 0; z-index: 1;">
                             <tr>
                                 <th><input type="checkbox" id="checkAll"></th>
-                                <th>STT</th>
                                 <th>Mã học sinh</th>
                                 <th class="text-start">Họ và tên</th>
                                 <th>Lớp</th>
@@ -433,27 +477,37 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @{ int stt = 1; }
                             @foreach(var hs in hocSinhs)
                             {
                                 bool isEligible = hs.TrangThai && (hs.GhiChu == null || !hs.GhiChu.Contains("Không đủ điều kiện"));
-                                <tr>
-                                    <td><input type="checkbox" class="chk-hs" value="@hs.IdHocSinh"></td>
-                                    <td>@(stt++)</td>
+                                var resultStatus = isEligible ? "eligible" : (hs.TrangThai ? "ineligible" : "inactive");
+                                var approvalStatus = hs.DaDuyet ? "approved" : (isEligible ? "pending" : resultStatus);
+                                <tr class="student-review-row"
+                                    data-khoi="@(hs.LopHoc?.Khoi ?? string.Empty)"
+                                    data-lop="@(hs.LopHoc?.TenLop ?? string.Empty)"
+                                    data-result-status="@resultStatus"
+                                    data-approval-status="@approvalStatus">
+                                    <td><input type="checkbox" class="chk-hs" value="@hs.IdHocSinh" disabled="@(isEligible ? null : "disabled")"></td>
                                     <td class="fw-bold">@hs.MaHS</td>
                                     <td class="text-start">@hs.HoTen</td>
                                     <td>@(hs.LopHoc?.TenLop)</td>
                                     <td>
                                         @if(isEligible) { <span class="text-dark fw-bold">Đủ điều kiện</span> }
+                                        else if (!hs.TrangThai) { <span class="text-secondary fw-bold">Bỏ học / ngừng học</span> }
                                         else { <span class="text-danger fw-bold">Không đủ điều kiện</span> }
                                     </td>
                                     <td>
                                         @if(hs.DaDuyet) { <span class="badge-soft-success">Đã duyệt</span> }
+                                        else if (!hs.TrangThai) { <span class="badge bg-secondary">Không xét</span> }
+                                        else if (!isEligible) { <span class="badge-soft-danger">Không duyệt</span> }
                                         else { <span class="badge-soft-warning">Chờ duyệt</span> }
                                     </td>
                                     <td><button type="button" class="btn btn-sm btn-light border text-primary"><i class="bi bi-eye"></i></button></td>
                                 </tr>
                             }
+                            <tr id="studentReviewEmpty" hidden>
+                                <td colspan="7" class="py-4 text-muted">Không tìm thấy học sinh phù hợp với điều kiện lọc.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -463,6 +517,7 @@
         <div class="d-flex justify-content-between align-items-center mt-3">
             <div class="d-flex gap-2">
                 <form method="post" action="/LenLop/BulkApproveAllEligible" class="m-0">
+                    @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-check-all"></i> Duyệt tất cả đủ điều kiện</button>
                 </form>
                 <button type="button" class="btn btn-primary fw-bold" onclick="submitForm('/LenLop/BulkApprove')"><i class="bi bi-check-square"></i> Duyệt đã chọn</button>
@@ -526,6 +581,7 @@
             <h5 class="fw-bold text-dark">Kết quả chưa được khóa</h5>
             <p class="text-muted">Vui lòng khóa kết quả để hoàn tất quy trình.</p>
             <form method="post" action="/LenLop/LockResults">
+                @Html.AntiForgeryToken()
                 <button type="submit" class="btn btn-primary fw-bold px-4 py-2 mt-2"><i class="bi bi-lock"></i> Khóa kết quả</button>
             </form>
         </div>
@@ -633,15 +689,101 @@
             }
         }
         
+        // Tìm kiếm và lọc danh sách xét duyệt ở bước 3.
+        const reviewFilterForm = document.getElementById('studentReviewFilter');
+        const reviewSearchInput = document.getElementById('studentReviewSearch');
+        const reviewGradeSelect = document.getElementById('studentReviewGrade');
+        const reviewClassSelect = document.getElementById('studentReviewClass');
+        const reviewStatusSelect = document.getElementById('studentReviewStatus');
+        const reviewResetButton = document.getElementById('studentReviewReset');
+        const reviewRows = Array.from(document.querySelectorAll('.student-review-row'));
+        const reviewEmptyRow = document.getElementById('studentReviewEmpty');
+        const reviewFilterCount = document.getElementById('studentReviewFilterCount');
+
+        const normalizeSearchText = (value) => (value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .replace(/Đ/g, 'd')
+            .toLowerCase()
+            .trim();
+
+        const updateCheckAllState = () => {
+            const visibleCheckboxes = reviewRows
+                .filter(row => !row.hidden)
+                .map(row => row.querySelector('.chk-hs'))
+                .filter(checkbox => checkbox && !checkbox.disabled);
+
+            if (!checkAll) return;
+
+            checkAll.checked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(checkbox => checkbox.checked);
+            checkAll.indeterminate = visibleCheckboxes.some(checkbox => checkbox.checked) && !checkAll.checked;
+        };
+
+        const applyStudentReviewFilter = () => {
+            const keyword = normalizeSearchText(reviewSearchInput?.value);
+            const khoi = reviewGradeSelect?.value || '';
+            const lop = reviewClassSelect?.value || '';
+            const status = reviewStatusSelect?.value || '';
+            let visibleCount = 0;
+
+            reviewRows.forEach(row => {
+                const matchesKeyword = !keyword || normalizeSearchText(row.textContent).includes(keyword);
+                const matchesKhoi = !khoi || row.dataset.khoi === khoi;
+                const matchesLop = !lop || row.dataset.lop === lop;
+                const matchesStatus = !status ||
+                    (status === 'approved' && row.dataset.approvalStatus === 'approved') ||
+                    (status === 'pending' && row.dataset.approvalStatus === 'pending') ||
+                    (status === 'eligible' && row.dataset.resultStatus === 'eligible') ||
+                    (status === 'ineligible' && row.dataset.resultStatus === 'ineligible') ||
+                    (status === 'inactive' && row.dataset.resultStatus === 'inactive');
+                const isVisible = matchesKeyword && matchesKhoi && matchesLop && matchesStatus;
+
+                row.hidden = !isVisible;
+                if (!isVisible) {
+                    const checkbox = row.querySelector('.chk-hs');
+                    if (checkbox) checkbox.checked = false;
+                } else {
+                    visibleCount++;
+                }
+            });
+
+            if (reviewEmptyRow) reviewEmptyRow.hidden = visibleCount !== 0;
+            if (reviewFilterCount) reviewFilterCount.textContent = `${visibleCount} / ${reviewRows.length} học sinh`;
+            updateCheckAllState();
+        };
+
+        if (reviewFilterForm) {
+            reviewFilterForm.addEventListener('submit', event => {
+                event.preventDefault();
+                applyStudentReviewFilter();
+            });
+        }
+
+        reviewSearchInput?.addEventListener('input', applyStudentReviewFilter);
+        reviewGradeSelect?.addEventListener('change', applyStudentReviewFilter);
+        reviewClassSelect?.addEventListener('change', applyStudentReviewFilter);
+        reviewStatusSelect?.addEventListener('change', applyStudentReviewFilter);
+        reviewResetButton?.addEventListener('click', () => {
+            reviewFilterForm?.reset();
+            applyStudentReviewFilter();
+        });
+
         // Handle Checkbox in Step 3
         const checkAll = document.getElementById('checkAll');
         const checkBoxes = document.querySelectorAll('.chk-hs');
         
         if (checkAll) {
             checkAll.addEventListener('change', function() {
-                checkBoxes.forEach(cb => cb.checked = this.checked);
+                reviewRows.filter(row => !row.hidden).forEach(row => {
+                    const checkbox = row.querySelector('.chk-hs');
+                    if (checkbox && !checkbox.disabled) checkbox.checked = this.checked;
+                });
+                updateCheckAllState();
             });
         }
+
+        checkBoxes.forEach(checkbox => checkbox.addEventListener('change', updateCheckAllState));
     });
     
     function submitForm(actionUrl) {

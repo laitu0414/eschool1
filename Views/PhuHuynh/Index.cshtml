@@ -1,94 +1,395 @@
 @model List<eSchool.ViewModels.PhuHuynhViewModel>
 
 @{
-    Layout = Context.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin
+    var roleId = Context.Session.GetInt32("RoleId");
+    var isAdmin = roleId == SystemRoleIds.SystemAdmin;
+    Layout = isAdmin
         ? "~/Views/Shared/_AdminLayout.cshtml"
         : "~/Views/Shared/_StudentLayout.cshtml";
-    ViewData["Title"] = "Phụ huynh";
-    var isAdmin = Context.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin;
-    var columnCount = isAdmin ? 7 : 6;
+    ViewData["Title"] = "Quản lý phụ huynh";
+
+    var danhSach = Model ?? new List<eSchool.ViewModels.PhuHuynhViewModel>();
+    var tongPhuHuynh = danhSach.Count;
+    var dangHoatDong = danhSach.Count(x => x.TrangThai);
+    var coEmail = danhSach.Count(x => !string.IsNullOrWhiteSpace(x.Email));
+    var daLienKetHocSinh = danhSach.Count(x => !string.IsNullOrWhiteSpace(x.TenHocSinh));
+    var keyword = ViewBag.Keyword as string ?? string.Empty;
 }
 
-<div class="student-panel">
-    <div class="d-flex justify-content-between align-items-center">
-        <h3>Danh sách phụ huynh</h3>
-        @if (isAdmin || ViewBag.HasParent != true)
+@if (isAdmin)
+{
+    <div class="teacher-admin-page">
+        <div class="teacher-admin-hero parent-admin-hero">
+            <div>
+                <span class="teacher-admin-eyebrow">Phụ huynh</span>
+                <h2>Quản lý phụ huynh</h2>
+                <p>Theo dõi thông tin liên hệ, học sinh liên kết và trạng thái tài khoản của phụ huynh trong hệ thống.</p>
+            </div>
+
+            <a asp-action="Create" class="teacher-admin-primary">
+                <i class="bi bi-plus-lg"></i>
+                Thêm phụ huynh
+            </a>
+        </div>
+
+        @if (TempData["Success"] != null)
         {
-            <a asp-action="Create" class="btn btn-primary">Thêm phụ huynh</a>
+            <div class="alert alert-success mb-0"><i class="bi bi-check-circle me-2"></i>@TempData["Success"]</div>
         }
-    </div>
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]</div>
+        }
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success mt-3">@TempData["Success"]</div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger mt-3">@TempData["Error"]</div>
-    }
+        <div class="teacher-admin-stats">
+            <div class="teacher-admin-stat-card">
+                <div class="teacher-admin-stat-icon blue">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <span>Tổng phụ huynh</span>
+                    <strong>@tongPhuHuynh</strong>
+                </div>
+            </div>
 
-    <form method="get" class="row g-2 mt-3">
-        <div class="col-md-10">
-            <input name="keyword" value="@ViewBag.Keyword" class="form-control"
-                   placeholder="Tìm theo họ tên hoặc số điện thoại..." />
+            <div class="teacher-admin-stat-card">
+                <div class="teacher-admin-stat-icon green">
+                    <i class="bi bi-person-check-fill"></i>
+                </div>
+                <div>
+                    <span>Đang hoạt động</span>
+                    <strong>@dangHoatDong</strong>
+                </div>
+            </div>
+
+            <div class="teacher-admin-stat-card">
+                <div class="teacher-admin-stat-icon orange">
+                    <i class="bi bi-envelope-check-fill"></i>
+                </div>
+                <div>
+                    <span>Có email</span>
+                    <strong>@coEmail</strong>
+                </div>
+            </div>
+
+            <div class="teacher-admin-stat-card">
+                <div class="teacher-admin-stat-icon purple">
+                    <i class="bi bi-link-45deg"></i>
+                </div>
+                <div>
+                    <span>Đã liên kết học sinh</span>
+                    <strong>@daLienKetHocSinh</strong>
+                </div>
+            </div>
         </div>
-        <div class="col-md-2">
-            <button class="btn btn-primary w-100">Tìm kiếm</button>
-        </div>
-    </form>
 
-    <div class="table-responsive">
-        <table class="table table-bordered mt-3 align-middle">
-            <thead>
-                <tr>
-                    <th>Họ tên</th>
-                    @if (isAdmin)
-                    {
-                        <th>Học sinh liên kết</th>
-                    }
-                    <th>SĐT</th>
-                    <th>Email</th>
-                    <th>Nghề nghiệp</th>
-                    <th>Trạng thái</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
-                    <tr><td colspan="@columnCount" class="text-center text-muted">Chưa có phụ huynh</td></tr>
-                }
-                else
-                {
-                    foreach (var item in Model)
-                    {
+        <div class="teacher-admin-card">
+            <div class="teacher-admin-card-head">
+                <div>
+                    <h3>Danh sách phụ huynh</h3>
+                    <p>@tongPhuHuynh hồ sơ đang có trong hệ thống</p>
+                </div>
+            </div>
+
+            <form method="get" class="teacher-admin-filter">
+                <div class="teacher-admin-search">
+                    <i class="bi bi-search"></i>
+                    <input name="keyword" value="@keyword" placeholder="Tìm theo họ tên, email hoặc số điện thoại..." />
+                </div>
+                <button type="submit" class="teacher-admin-filter-btn">
+                    <i class="bi bi-funnel"></i>
+                    Tìm
+                </button>
+                <a asp-action="Index" class="teacher-admin-reset-btn">Làm mới</a>
+            </form>
+
+            <div class="teacher-admin-table-wrap">
+                <table class="teacher-admin-table">
+                    <thead>
                         <tr>
-                            <td>@item.HoTen</td>
-                            @if (isAdmin)
-                            {
-                                <td>@(item.TenHocSinh ?? "Chưa liên kết")</td>
-                            }
-                            <td>@item.SDT</td>
-                            <td>@item.Email</td>
-                            <td>@item.NgheNghiep</td>
-                            <td>@(item.TrangThai ? "Hoạt động" : "Ngừng")</td>
-                            <td class="d-flex gap-2">
-                                <a asp-action="Edit" asp-route-id="@item.IdPhuHuynh"
-                                   class="btn btn-sm btn-warning">Sửa</a>
-                                @if (isAdmin)
-                                {
-                                    <form asp-action="Delete" method="post"
-                                          onsubmit="return confirm('Xóa phụ huynh, tài khoản đăng nhập và liên kết với học sinh?')">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.IdPhuHuynh" />
-                                        <button class="btn btn-sm btn-danger">Xóa</button>
-                                    </form>
-                                }
-                            </td>
+                            <th>Phụ huynh</th>
+                            <th>Học sinh liên kết</th>
+                            <th>Liên hệ</th>
+                            <th>Nghề nghiệp</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
                         </tr>
-                    }
-                }
-            </tbody>
-        </table>
+                    </thead>
+                    <tbody>
+                        @if (!danhSach.Any())
+                        {
+                            <tr>
+                                <td colspan="6">
+                                    <div class="teacher-admin-empty">
+                                        <i class="bi bi-person-hearts"></i>
+                                        <strong>Chưa có phụ huynh</strong>
+                                        <span>Bạn có thể tạo hồ sơ phụ huynh mới từ nút phía trên.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in danhSach)
+                            {
+                                var initial = string.IsNullOrWhiteSpace(item.HoTen) ? "?" : item.HoTen.Trim().Substring(0, 1).ToUpperInvariant();
+                                <tr>
+                                    <td>
+                                        <button type="button" class="parent-profile-trigger" title="Xem hồ sơ @item.HoTen"
+                                                data-bs-toggle="modal" data-bs-target="#parentProfileModal"
+                                                data-name="@item.HoTen"
+                                                data-initial="@initial"
+                                                data-student="@(item.TenHocSinh ?? "Chưa liên kết")"
+                                                data-phone="@(item.SDT ?? "Chưa cập nhật")"
+                                                data-email="@(item.Email ?? "Chưa cập nhật")"
+                                                data-job="@(item.NgheNghiep ?? "Chưa cập nhật")"
+                                                data-address="@(item.DiaChi ?? "Chưa cập nhật")"
+                                                data-status="@(item.TrangThai ? "Đang hoạt động" : "Ngừng hoạt động")"
+                                                data-status-class="@(item.TrangThai ? "active" : "inactive")">
+                                            <div class="teacher-admin-profile">
+                                                <span class="parent-profile-initial">@initial</span>
+                                                <div>
+                                                    <strong>@item.HoTen</strong>
+                                                    <small>@(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có email" : item.Email)</small>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <span class="teacher-admin-code">@(item.TenHocSinh ?? "Chưa liên kết")</span>
+                                    </td>
+                                    <td>
+                                        <div class="teacher-admin-contact">
+                                            <span>@(item.SDT ?? "Chưa cập nhật")</span>
+                                            <small>@(item.Email ?? "Chưa có email")</small>
+                                        </div>
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.NgheNghiep) ? "Chưa cập nhật" : item.NgheNghiep)</td>
+                                    <td>
+                                        @if (item.TrangThai)
+                                        {
+                                            <span class="teacher-admin-badge linked">Đang hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="teacher-admin-badge unlinked">Ngừng hoạt động</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="teacher-admin-actions">
+                                            <button type="button" class="teacher-admin-action edit" title="Sửa"
+                                                    data-bs-toggle="modal" data-bs-target="#editParentModal-@item.IdPhuHuynh">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <form asp-action="Delete" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Xóa phụ huynh, tài khoản đăng nhập và liên kết với học sinh?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.IdPhuHuynh" />
+                                                <button type="submit" class="teacher-admin-action delete" title="Xóa">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-</div>
+
+    @foreach (var item in danhSach)
+    {
+        <div class="modal fade" id="editParentModal-@item.IdPhuHuynh" tabindex="-1" aria-labelledby="editParentModalLabel-@item.IdPhuHuynh" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content teacher-admin-modal">
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="IdPhuHuynh" value="@item.IdPhuHuynh" />
+                        <input type="hidden" name="IdHocSinh" value="@item.IdHocSinh" />
+                        <div class="modal-header">
+                            <div>
+                                <h5 class="modal-title" id="editParentModalLabel-@item.IdPhuHuynh">Sửa phụ huynh</h5>
+                                <small>Cập nhật thông tin hồ sơ phụ huynh.</small>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                        </div>
+                        <div class="modal-body">
+                            @await Html.PartialAsync("_Form", new eSchool.ViewModels.PhuHuynhViewModel
+                            {
+                                IdPhuHuynh = item.IdPhuHuynh,
+                                IdHocSinh = item.IdHocSinh,
+                                HoTen = item.HoTen,
+                                SDT = item.SDT,
+                                Email = item.Email,
+                                DiaChi = item.DiaChi,
+                                NgheNghiep = item.NgheNghiep,
+                                TrangThai = item.TrangThai
+                            })
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Cập nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="modal fade" id="parentProfileModal" tabindex="-1" aria-labelledby="parentProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content parent-profile-modal">
+                <div class="parent-profile-modal-head">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    <span id="parentModalInitial" class="parent-modal-avatar">?</span>
+                    <div class="parent-modal-heading">
+                        <span>Hồ sơ phụ huynh</span>
+                        <h2 id="parentProfileModalLabel">Phụ huynh</h2>
+                        <p id="parentModalStudent">Chưa liên kết học sinh</p>
+                    </div>
+                    <strong id="parentModalStatus" class="parent-modal-status active">Đang hoạt động</strong>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="parent-modal-grid">
+                        <section>
+                            <h3><i class="bi bi-person-vcard"></i> Thông tin cơ bản</h3>
+                            <dl>
+                                <div><dt>Học sinh liên kết</dt><dd id="parentModalStudentDetail"></dd></div>
+                                <div><dt>Nghề nghiệp</dt><dd id="parentModalJob"></dd></div>
+                            </dl>
+                        </section>
+                        <section>
+                            <h3><i class="bi bi-telephone"></i> Thông tin liên hệ</h3>
+                            <dl>
+                                <div><dt>Số điện thoại</dt><dd id="parentModalPhone"></dd></div>
+                                <div><dt>Email</dt><dd id="parentModalEmail"></dd></div>
+                                <div class="parent-modal-address"><dt>Địa chỉ</dt><dd id="parentModalAddress"></dd></div>
+                            </dl>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="student-panel">
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+            <h3 class="mb-0">Thông tin phụ huynh</h3>
+            @if (ViewBag.HasParent != true)
+            {
+                <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm phụ huynh</a>
+            }
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success mt-3">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger mt-3">@TempData["Error"]</div>
+        }
+
+        <form method="get" class="row g-2 mt-3">
+            <div class="col-md-10">
+                <input name="keyword" value="@keyword" class="form-control" placeholder="Tìm theo họ tên hoặc số điện thoại..." />
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>Tìm kiếm</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-bordered mt-3 align-middle">
+                <thead>
+                    <tr>
+                        <th>Họ tên</th>
+                        <th>SĐT</th>
+                        <th>Email</th>
+                        <th>Nghề nghiệp</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!danhSach.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted">Chưa có phụ huynh</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in danhSach)
+                        {
+                            <tr>
+                                <td>@item.HoTen</td>
+                                <td>@item.SDT</td>
+                                <td>@item.Email</td>
+                                <td>@item.NgheNghiep</td>
+                                <td>@(item.TrangThai ? "Hoạt động" : "Ngừng")</td>
+                                <td><a asp-action="Edit" asp-route-id="@item.IdPhuHuynh" class="btn btn-sm btn-warning">Sửa</a></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<style>
+    .parent-admin-hero { background: linear-gradient(135deg, #312e81 0%, #6d28d9 55%, #c084fc 100%); }
+    .parent-profile-trigger { display: block; width: 100%; padding: 0; color: inherit; border: 0; border-radius: 12px; background: transparent; font: inherit; text-align: left; cursor: pointer; transition: background-color .18s ease; }
+    .parent-profile-trigger:hover { color: inherit; background: rgba(109, 40, 217, .07); }
+    .parent-profile-trigger:focus-visible { outline: 3px solid rgba(124, 58, 237, .4); outline-offset: 2px; }
+    .teacher-admin-profile .parent-profile-initial { color: #6d28d9; background: #ede9fe; }
+    .parent-profile-modal { overflow: hidden; border: 0; border-radius: 18px; box-shadow: 0 24px 60px rgba(15, 23, 42, .2); }
+    .parent-profile-modal-head { position: relative; display: flex; align-items: center; gap: 17px; padding: 25px 28px; color: #fff; background: linear-gradient(125deg, #4c1d95, #7c3aed 58%, #c084fc); }
+    .parent-profile-modal-head .btn-close { position: absolute; top: 16px; right: 16px; opacity: .9; }
+    .parent-modal-avatar { display: grid; flex: 0 0 78px; width: 78px; height: 78px; place-items: center; border: 3px solid rgba(255,255,255,.78); border-radius: 50%; background: #fff; color: #6d28d9; font-size: 32px; font-weight: 800; }
+    .parent-modal-heading > span { font-size: .76rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .78; }
+    .parent-modal-heading h2 { margin: 3px 0; font-size: 1.5rem; font-weight: 750; }
+    .parent-modal-heading p { margin: 0; opacity: .88; }
+    .parent-modal-status { margin-left: auto; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.21); white-space: nowrap; }
+    .parent-modal-status.inactive { background: rgba(127,29,29,.45); }
+    .parent-modal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+    .parent-modal-grid h3 { margin: 0 0 13px; color: #5b21b6; font-size: 1rem; font-weight: 750; }
+    .parent-modal-grid h3 i { margin-right: 6px; color: #7c3aed; }
+    .parent-modal-grid dl { margin: 0; }
+    .parent-modal-grid dl > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid #eef2f7; }
+    .parent-modal-grid dl > div:last-child { border-bottom: 0; }
+    .parent-modal-grid dt { color: #64748b; font-weight: 600; }
+    .parent-modal-grid dd { margin: 0; color: #312e81; font-weight: 650; overflow-wrap: anywhere; }
+    .parent-modal-address dd { font-weight: 500; }
+    @@media (max-width: 600px) { .parent-profile-modal-head { align-items: flex-start; padding: 22px 20px 54px; } .parent-modal-avatar { flex-basis: 64px; width: 64px; height: 64px; } .parent-modal-status { position: absolute; right: 18px; bottom: 14px; } .parent-modal-grid { grid-template-columns: 1fr; gap: 20px; } .parent-modal-grid dl > div { grid-template-columns: 1fr; gap: 3px; } }
+</style>
+
+<script>
+    const parentProfileModal = document.getElementById('parentProfileModal');
+    if (parentProfileModal) {
+        parentProfileModal.addEventListener('show.bs.modal', function (event) {
+            const source = event.relatedTarget;
+            if (!source) return;
+
+            const setText = (id, value) => document.getElementById(id).textContent = value || 'Chưa cập nhật';
+            setText('parentModalInitial', source.dataset.initial);
+            setText('parentProfileModalLabel', source.dataset.name);
+            setText('parentModalStudent', source.dataset.student);
+            setText('parentModalStudentDetail', source.dataset.student);
+            setText('parentModalJob', source.dataset.job);
+            setText('parentModalPhone', source.dataset.phone);
+            setText('parentModalEmail', source.dataset.email);
+            setText('parentModalAddress', source.dataset.address);
+
+            const status = document.getElementById('parentModalStatus');
+            status.textContent = source.dataset.status;
+            status.classList.toggle('active', source.dataset.statusClass === 'active');
+            status.classList.toggle('inactive', source.dataset.statusClass !== 'active');
+        });
+    }
+</script>

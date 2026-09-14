@@ -10,9 +10,9 @@ namespace eSchool.Services
 
         List<TaiKhoan> Search(string? keyword, int? idChucVu, bool? trangThai);
 
-        bool Create(string username, string password, int idChucVu, string? email);
+        bool Create(string sdt, string password, int idChucVu, string? email);
 
-        bool Update(int id, int idChucVu, bool trangThai, string? email);
+        bool Update(int id, int idChucVu, string? email);
 
         bool Delete(int id);
 

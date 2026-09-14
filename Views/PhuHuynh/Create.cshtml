@@ -1,18 +1,55 @@
 @model eSchool.ViewModels.PhuHuynhViewModel
 
 @{
-    Layout = Context.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin
+    var isAdmin = Context.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin;
+    Layout = isAdmin
         ? "~/Views/Shared/_AdminLayout.cshtml"
         : "~/Views/Shared/_StudentLayout.cshtml";
     ViewData["Title"] = "Thêm phụ huynh";
 }
 
-<div class="student-panel">
-    <h3>Thêm phụ huynh</h3>
-    <form asp-action="Create" method="post" class="mt-3">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        @await Html.PartialAsync("_Form", Model)
-        <button class="btn btn-primary">Lưu</button>
-        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
-    </form>
-</div>
+@if (isAdmin)
+{
+    <div class="teacher-admin-page">
+        <div class="teacher-admin-hero parent-admin-hero">
+            <div>
+                <span class="teacher-admin-eyebrow">Phụ huynh</span>
+                <h2>Thêm phụ huynh</h2>
+                <p>Tạo hồ sơ phụ huynh mới và liên kết với học sinh trong hệ thống.</p>
+            </div>
+        </div>
+        <div class="teacher-admin-card">
+            <div class="teacher-admin-card-head">
+                <div>
+                    <h3>Thông tin phụ huynh</h3>
+                    <p>Các trường có dấu * là bắt buộc.</p>
+                </div>
+            </div>
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                @await Html.PartialAsync("_Form", Model)
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Lưu phụ huynh</button>
+                    <a asp-action="Index" class="btn btn-light">Quay lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+else
+{
+    <div class="student-panel">
+        <h3>Thêm phụ huynh</h3>
+        <form asp-action="Create" method="post" class="mt-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @await Html.PartialAsync("_Form", Model)
+            <button class="btn btn-primary">Lưu</button>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </form>
+    </div>
+}
+
+<style>
+    .parent-admin-hero { background: linear-gradient(135deg, #312e81 0%, #6d28d9 55%, #c084fc 100%); }
+</style>

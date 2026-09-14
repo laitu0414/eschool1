@@ -3,6 +3,7 @@
 @{
     Layout = "~/Views/Shared/_AcademicLayout.cshtml";
     ViewData["Title"] = "Quản lý lớp";
+    var siSoMap = ViewBag.SiSoMap as IReadOnlyDictionary<int, int> ?? new Dictionary<int, int>();
 }
 
 <div class="page-card">
@@ -18,11 +19,11 @@
 
     <div class="table-responsive">
         <table class="table table-hover">
-            <thead><tr><th>Tên lớp</th><th>Khối</th><th>Năm học</th><th>Chủ nhiệm</th><th class="text-end">Thao tác</th></tr></thead>
+            <thead><tr><th>Tên lớp</th><th>Khối</th><th>Năm học</th><th>Sĩ số</th><th>Chủ nhiệm</th><th class="text-end">Thao tác</th></tr></thead>
             <tbody>
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="5" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
                 }
                 @foreach (var item in Model)
                 {
@@ -30,8 +31,12 @@
                         <td><strong>@item.TenLop</strong></td>
                         <td>@item.Khoi</td>
                         <td>@item.NamHoc</td>
+                        <td><span class="badge text-bg-light border">@(siSoMap.TryGetValue(item.IdLop, out var siSo) ? siSo : 0) học sinh</span></td>
                         <td>@(item.GiaoVienChuNhiem?.HoTen ?? "Chưa phân công")</td>
                         <td class="text-end">
+                            <a asp-action="DanhSachHocSinhLop" asp-route-id="@item.IdLop" class="btn btn-sm btn-outline-info" title="Xem danh sách học sinh">
+                                <i class="bi bi-people"></i> Danh sách HS
+                            </a>
                             <a asp-action="PhanCongGiaoVien" asp-route-lopId="@item.IdLop" class="btn btn-sm btn-outline-success" title="Phân công Giáo viên">
                                 <i class="bi bi-person-lines-fill"></i> Phân công GV
                             </a>

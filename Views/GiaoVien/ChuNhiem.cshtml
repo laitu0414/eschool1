@@ -13,6 +13,33 @@
         <p class="text-muted mb-0">Chọn giáo viên chủ nhiệm cho từng lớp và năm học.</p>
     </div>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]</div>
+    }
+
+    <form asp-action="TuDongGanChuNhiem" method="post" class="d-flex flex-wrap align-items-center gap-2 mb-4 p-3 rounded border bg-light">
+        @Html.AntiForgeryToken()
+        <div>
+            <strong class="d-block">Phân công tự động</strong>
+            <small class="text-muted">Ưu tiên giáo viên của lớp tiền nhiệm, sau đó cân bằng số lớp chủ nhiệm.</small>
+        </div>
+        <select name="namHoc" class="form-select ms-md-auto" style="max-width: 190px;" required>
+            <option value="">-- Chọn năm học --</option>
+            @foreach (var namHoc in Model.NamHocs)
+            {
+                <option value="@namHoc.Value">@namHoc.Text</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-success" onclick="return confirm('Tự động phân công giáo viên chủ nhiệm cho các lớp chưa có phân công trong năm học đã chọn?');">
+            <i class="bi bi-magic me-1"></i>Phân công tự động
+        </button>
+    </form>
+
     <div class="table-responsive">
         <table class="table table-hover">
             <thead>

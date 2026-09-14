@@ -45,7 +45,11 @@ namespace eSchool.Controllers
         {
             ViewBag.Keyword = keyword;
             var hs = GetCurrentHocSinh();
-            if (hs == null) return View(_service.GetAll(keyword));
+            if (hs == null)
+            {
+                var parents = _service.GetAll(keyword);
+                return View(parents);
+            }
 
             var phIds = _context.HocSinhPhuHuynhs.Where(x => x.IdHocSinh == hs.IdHocSinh).Select(x => x.IdPhuHuynh).ToList();
             var phuHuynhs = _service.GetAll(keyword).Where(x => phIds.Contains(x.IdPhuHuynh)).ToList();

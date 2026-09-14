@@ -4,7 +4,7 @@
     var isAdmin = Context.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin;
 }
 
-<div class="row">
+<div class="row teacher-admin-form">
     @if (isAdmin && Model.IdPhuHuynh == 0)
     {
         <div class="col-12 mb-3">

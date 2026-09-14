@@ -50,12 +50,18 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(string username, string password, int idChucVu, string? email, int? idHocSinhLienKet, int? idGiaoVienLienKet)
+        public IActionResult Create(string sdt, string password, int idChucVu, string? email, int? idHocSinhLienKet, int? idGiaoVienLienKet)
         {
-            username = username?.Trim() ?? string.Empty;
+            sdt = sdt?.Trim() ?? string.Empty;
             if (idChucVu == SystemRoleIds.SystemAdmin)
             {
                 TempData["Error"] = "Hệ thống chỉ có một tài khoản System Admin và không thể tạo thêm.";
+                return RedirectToAction("Index");
+            }
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(sdt, @"^0\d{9}$"))
+            {
+                TempData["Error"] = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.";
                 return RedirectToAction("Index");
             }
 
@@ -67,13 +73,13 @@ namespace eSchool.Controllers
 
             using var transaction = _context.Database.BeginTransaction();
 
-            if (!_accountService.Create(username, password, idChucVu, email))
+            if (!_accountService.Create(sdt, password, idChucVu, email))
             {
-                TempData["Error"] = "Không thể thêm tài khoản. Username có thể đã tồn tại hoặc mật khẩu dưới 6 ký tự.";
+                TempData["Error"] = "Không thể thêm tài khoản. Số điện thoại có thể đã tồn tại hoặc mật khẩu dưới 6 ký tự.";
                 return RedirectToAction("Index");
             }
 
-            var account = _accountService.GetByUsername(username, idChucVu);
+            var account = _accountService.GetByUsername(sdt, idChucVu);
             if (account == null || !LinkProfile(account.IdTaiKhoan, idChucVu, idHocSinhLienKet, idGiaoVienLienKet, out linkError))
             {
                 transaction.Rollback();
@@ -82,14 +88,14 @@ namespace eSchool.Controllers
             }
 
             transaction.Commit();
-            WriteLog("Thêm tài khoản", $"Đã thêm tài khoản {username}");
+            WriteLog("Thêm tài khoản", $"Đã thêm tài khoản có số điện thoại {sdt}");
             TempData["Success"] = "Thêm tài khoản thành công";
             return RedirectToAction("Index");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, int idChucVu, bool trangThai, string? email)
+        public IActionResult Edit(int id, int idChucVu, string? email)
         {
             var account = _context.TaiKhoans.Find(id);
             if (account == null)
@@ -107,13 +113,13 @@ namespace eSchool.Controllers
                 return RedirectToAction("Index");
             }
 
-            if (HttpContext.Session.GetInt32("UserId") == id && (idChucVu != SystemRoleIds.SystemAdmin || !trangThai))
+            if (HttpContext.Session.GetInt32("UserId") == id && idChucVu != SystemRoleIds.SystemAdmin)
             {
                 TempData["Error"] = "Không thể tự khóa hoặc hạ quyền tài khoản đang đăng nhập";
                 return RedirectToAction("Index");
             }
 
-            if (!_accountService.Update(id, idChucVu, trangThai, email))
+            if (!_accountService.Update(id, idChucVu, email))
             {
                 TempData["Error"] = "Cập nhật thất bại. Hãy kiểm tra chức vụ tài khoản.";
                 return RedirectToAction("Index");

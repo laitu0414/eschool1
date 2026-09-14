@@ -1,0 +1,215 @@
+@model eSchool.ViewModels.DanhSachHocSinhLopViewModel
+
+@{
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
+    ViewData["Title"] = $"Học sinh lớp {Model.LopHoc.TenLop}";
+    var hocSinhs = Model.HocSinhs ?? new List<HocSinh>();
+    var dangHoc = hocSinhs.Count(x => x.TrangThai);
+}
+
+<div class="page-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h4 class="mb-0">Danh sách học sinh lớp @Model.LopHoc.TenLop</h4>
+                <span class="badge text-bg-primary">@hocSinhs.Count học sinh</span>
+            </div>
+            <p class="text-muted mb-0">Khối @Model.LopHoc.Khoi · Năm học @Model.LopHoc.NamHoc · Chủ nhiệm: @(Model.LopHoc.GiaoVienChuNhiem?.HoTen ?? "Chưa phân công")</p>
+        </div>
+        <a asp-action="LopHoc" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại quản lý lớp
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block">Tổng sĩ số</small>
+                <strong class="fs-4">@hocSinhs.Count</strong>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block">Đang học</small>
+                <strong class="fs-4 text-success">@dangHoc</strong>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block">Tạm nghỉ</small>
+                <strong class="fs-4 text-secondary">@(hocSinhs.Count - dangHoc)</strong>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block">Buổi học</small>
+                <strong class="fs-5">@(Model.LopHoc.BuoiHoc ?? "Chưa cập nhật")</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width: 64px;">STT</th>
+                    <th>Mã HS</th>
+                    <th>Họ và tên</th>
+                    <th>Ngày sinh</th>
+                    <th>Giới tính</th>
+                    <th>Số điện thoại</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Hồ sơ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!hocSinhs.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="bi bi-people fs-3 d-block mb-2"></i>
+                            Lớp này chưa có học sinh.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @for (var index = 0; index < hocSinhs.Count; index++)
+                    {
+                        var hocSinh = hocSinhs[index];
+                        <tr>
+                            <td class="text-center">@(index + 1)</td>
+                            <td><strong>@hocSinh.MaHS</strong></td>
+                            <td>@hocSinh.HoTen</td>
+                            <td>@hocSinh.NgaySinh.ToString("dd/MM/yyyy")</td>
+                            <td>@(hocSinh.GioiTinh ?? "-")</td>
+                            <td>@(hocSinh.SDT ?? "-")</td>
+                            <td>
+                                @if (hocSinh.TrangThai)
+                                {
+                                    <span class="badge text-bg-success">Đang học</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Tạm nghỉ</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal" data-bs-target="#studentProfileModal"
+                                        data-name="@hocSinh.HoTen"
+                                        data-avatar="@(string.IsNullOrWhiteSpace(hocSinh.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : hocSinh.AnhDaiDien)"
+                                        data-birth="@hocSinh.NgaySinh.ToString("dd/MM/yyyy")"
+                                        data-gender="@(string.IsNullOrWhiteSpace(hocSinh.GioiTinh) ? "Chưa cập nhật" : hocSinh.GioiTinh)"
+                                        data-class="@Model.LopHoc.TenLop"
+                                        data-code="@hocSinh.MaHS"
+                                        data-account="@(hocSinh.TaiKhoan?.Username ?? "Chưa liên kết")"
+                                        data-phone="@(hocSinh.SDT ?? "Chưa cập nhật")"
+                                        data-email="@(hocSinh.Email ?? "Chưa cập nhật")"
+                                        data-address="@(hocSinh.DiaChi ?? "Chưa cập nhật")"
+                                        data-status="@(hocSinh.TrangThai ? "Đang học" : "Tạm nghỉ")"
+                                        data-status-class="@(hocSinh.TrangThai ? "active" : "inactive")"
+                                        data-profile-url="@Url.Action("HoSo", "HocSinh", new { id = hocSinh.IdHocSinh })">
+                                    <i class="bi bi-person-vcard me-1"></i>Xem hồ sơ
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="studentProfileModal" tabindex="-1" aria-labelledby="studentProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content class-student-profile-modal">
+            <div class="class-student-profile-head">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <img id="studentModalAvatar" src="@Url.Content("~/image/default-avatar.svg")" alt="Ảnh học sinh" />
+                <div>
+                    <span>Hồ sơ học sinh</span>
+                    <h2 id="studentProfileModalLabel">Học sinh</h2>
+                    <p id="studentModalClass">Lớp học</p>
+                </div>
+                <strong id="studentModalStatus" class="class-student-modal-status active">Đang học</strong>
+            </div>
+            <div class="modal-body p-4">
+                <div class="class-student-modal-grid">
+                    <section>
+                        <h3><i class="bi bi-person-vcard"></i>Thông tin cơ bản</h3>
+                        <dl>
+                            <div><dt>Mã học sinh</dt><dd id="studentModalCode"></dd></div>
+                            <div><dt>Ngày sinh</dt><dd id="studentModalBirth"></dd></div>
+                            <div><dt>Giới tính</dt><dd id="studentModalGender"></dd></div>
+                            <div><dt>Lớp học</dt><dd id="studentModalClassDetail"></dd></div>
+                            <div><dt>Tài khoản</dt><dd id="studentModalAccount"></dd></div>
+                        </dl>
+                    </section>
+                    <section>
+                        <h3><i class="bi bi-telephone"></i>Liên hệ</h3>
+                        <dl>
+                            <div><dt>Số điện thoại</dt><dd id="studentModalPhone"></dd></div>
+                            <div><dt>Email</dt><dd id="studentModalEmail"></dd></div>
+                            <div class="class-student-modal-address"><dt>Địa chỉ</dt><dd id="studentModalAddress"></dd></div>
+                        </dl>
+                    </section>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <a id="studentModalProfileLink" href="#" class="btn btn-primary">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Mở hồ sơ đầy đủ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .class-student-profile-modal { overflow: hidden; border: 0; border-radius: 18px; }
+    .class-student-profile-head { position: relative; display: flex; align-items: center; gap: 16px; padding: 24px 28px; color: #fff; background: linear-gradient(125deg, #1d4ed8, #2563eb 60%, #38bdf8); }
+    .class-student-profile-head .btn-close { position: absolute; top: 16px; right: 16px; opacity: .9; }
+    .class-student-profile-head img { width: 78px; height: 78px; border: 3px solid rgba(255,255,255,.75); border-radius: 50%; object-fit: cover; background: #fff; }
+    .class-student-profile-head span { font-size: .78rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; opacity: .78; }
+    .class-student-profile-head h2 { margin: 3px 0; font-size: 1.5rem; font-weight: 750; }
+    .class-student-profile-head p { margin: 0; opacity: .88; }
+    .class-student-modal-status { margin-left: auto; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.21); white-space: nowrap; }
+    .class-student-modal-status.inactive { background: rgba(127,29,29,.45); }
+    .class-student-modal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+    .class-student-modal-grid h3 { margin: 0 0 13px; color: #1e3a8a; font-size: 1rem; font-weight: 750; }
+    .class-student-modal-grid h3 i { color: #2563eb; margin-right: 6px; }
+    .class-student-modal-grid dl { margin: 0; }
+    .class-student-modal-grid dl > div { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px solid #eef2f7; }
+    .class-student-modal-grid dl > div:last-child { border-bottom: 0; }
+    .class-student-modal-grid dt { color: #64748b; font-weight: 600; }
+    .class-student-modal-grid dd { margin: 0; color: #172554; font-weight: 650; overflow-wrap: anywhere; }
+    .class-student-modal-address dd { font-weight: 500; }
+    @@media (max-width: 600px) { .class-student-profile-head { padding: 22px 20px; align-items: flex-start; } .class-student-profile-head img { width: 64px; height: 64px; } .class-student-modal-status { position: absolute; right: 18px; bottom: 14px; } .class-student-modal-grid { grid-template-columns: 1fr; gap: 20px; } }
+</style>
+
+<script>
+    document.getElementById('studentProfileModal').addEventListener('show.bs.modal', function (event) {
+        const source = event.relatedTarget;
+        const setText = (id, value) => document.getElementById(id).textContent = value || 'Chưa cập nhật';
+
+        document.getElementById('studentModalAvatar').src = source.dataset.avatar;
+        document.getElementById('studentModalAvatar').alt = `Ảnh ${source.dataset.name}`;
+        setText('studentProfileModalLabel', source.dataset.name);
+        setText('studentModalClass', source.dataset.class);
+        setText('studentModalCode', source.dataset.code);
+        setText('studentModalBirth', source.dataset.birth);
+        setText('studentModalGender', source.dataset.gender);
+        setText('studentModalClassDetail', source.dataset.class);
+        setText('studentModalAccount', source.dataset.account);
+        setText('studentModalPhone', source.dataset.phone);
+        setText('studentModalEmail', source.dataset.email);
+        setText('studentModalAddress', source.dataset.address);
+        document.getElementById('studentModalProfileLink').href = source.dataset.profileUrl;
+
+        const status = document.getElementById('studentModalStatus');
+        status.textContent = source.dataset.status;
+        status.classList.toggle('active', source.dataset.statusClass === 'active');
+        status.classList.toggle('inactive', source.dataset.statusClass === 'inactive');
+    });
+</script>
