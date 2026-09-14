@@ -19339,6 +19339,11 @@
       "FileKind": "mvc"
     },
     {
+      "FilePath": "c:\\Users\\Admin\\Desktop\\eschool\\Views\\HocVu\\DanhSachHocSinhLop.cshtml",
+      "TargetPath": "Views\\HocVu\\DanhSachHocSinhLop.cshtml",
+      "FileKind": "mvc"
+    },
+    {
       "FilePath": "c:\\Users\\Admin\\Desktop\\eschool\\Views\\KetQuaHocTap\\DiemDanh.cshtml",
       "TargetPath": "Views\\KetQuaHocTap\\DiemDanh.cshtml",
       "FileKind": "mvc"
