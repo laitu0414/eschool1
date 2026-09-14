@@ -47,7 +47,7 @@
             <input name="keyword"
                    value="@ViewBag.Keyword"
                    class="form-control"
-                   placeholder="Tìm theo username hoặc email..." />
+                   placeholder="Tìm theo username, họ tên hoặc email..." />
         </div>
 
         <div class="col-md-3">
@@ -107,6 +107,7 @@
                 <tr>
                     <th width="70">STT</th>
                     <th>Username</th>
+                    <th>Tên người dùng</th>
                     <th>Email</th>
                     <th>Chức vụ</th>
                     <th>Trạng thái</th>
@@ -122,12 +123,22 @@
                         var item = Model[i];
                         var displayEmail = new[] { item.Email, item.GiaoVien?.Email, item.HocSinh?.Email, item.PhuHuynh?.Email }
                             .FirstOrDefault(email => !string.IsNullOrWhiteSpace(email));
+                        var displayName = new[] { item.GiaoVien?.HoTen, item.HocSinh?.HoTen, item.PhuHuynh?.HoTen }
+                            .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
+                        if (string.IsNullOrWhiteSpace(displayName) && item.IdChucVu == SystemRoleIds.SystemAdmin)
+                        {
+                            displayName = "Quản trị hệ thống";
+                        }
 
                         <tr>
                             <td>@(i + 1)</td>
 
                             <td>
                                 <strong>@item.Username</strong>
+                            </td>
+
+                            <td>
+                                @(displayName ?? "Chưa liên kết")
                             </td>
 
                             <td>
@@ -218,14 +229,13 @@
                                         <div class="modal-body">
 
                                             <div class="mb-3">
-                                                <label class="form-label">
-                                                    Username <span class="text-danger">*</span>
-                                                </label>
-                                                <input name="username"
-                                                       value="@item.Username"
+                                                <label class="form-label">Username đăng nhập</label>
+                                                <input value="@item.Username"
                                                        class="form-control"
-                                                       required
-                                                       maxlength="50" />
+                                                       readonly />
+                                                <div class="form-text">
+                                                    Username được đồng bộ tự động khi thay đổi số điện thoại trong hồ sơ.
+                                                </div>
                                             </div>
 
                                             <div class="mb-3">
@@ -366,7 +376,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-5">
+                        <td colspan="7" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                             Không có tài khoản nào
                         </td>

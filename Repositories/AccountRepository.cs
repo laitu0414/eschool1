@@ -12,10 +12,11 @@ namespace eSchool.Repositories
             _context = context;
         }
 
-        public TaiKhoan? Login(string username, string password)
+        public TaiKhoan? Login(string username, string password, int idChucVu)
         {
             var account = _context.TaiKhoans.FirstOrDefault(x =>
-                x.Username == username && x.TrangThai);
+                (x.Username == username || x.Email == username) &&
+                x.IdChucVu == idChucVu && x.TrangThai);
 
             if (account == null)
                 return null;
@@ -53,15 +54,18 @@ namespace eSchool.Repositories
             return _context.TaiKhoans.Find(id);
         }
 
-        public TaiKhoan? GetByUsername(string username)
+        public TaiKhoan? GetByUsername(string username, int? idChucVu = null)
         {
-            return _context.TaiKhoans.FirstOrDefault(x => x.Username == username);
+            return _context.TaiKhoans.FirstOrDefault(x =>
+                (x.Username == username || x.Email == username) &&
+                (!idChucVu.HasValue || x.IdChucVu == idChucVu.Value));
         }
 
-        public bool ExistsUsername(string username, int? excludeId = null)
+        public bool ExistsUsername(string username, int idChucVu, int? excludeId = null)
         {
             return _context.TaiKhoans.Any(x =>
                 x.Username == username &&
+                x.IdChucVu == idChucVu &&
                 (!excludeId.HasValue || x.IdTaiKhoan != excludeId.Value));
         }
 

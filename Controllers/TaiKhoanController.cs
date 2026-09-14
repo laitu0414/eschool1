@@ -73,7 +73,7 @@ namespace eSchool.Controllers
                 return RedirectToAction("Index");
             }
 
-            var account = _accountService.GetByUsername(username);
+            var account = _accountService.GetByUsername(username, idChucVu);
             if (account == null || !LinkProfile(account.IdTaiKhoan, idChucVu, idHocSinhLienKet, idGiaoVienLienKet, out linkError))
             {
                 transaction.Rollback();
@@ -89,8 +89,12 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, string username, int idChucVu, bool trangThai, string? email)
+        public IActionResult Edit(int id, int idChucVu, bool trangThai, string? email)
         {
+            var account = _context.TaiKhoans.Find(id);
+            if (account == null)
+                return NotFound();
+
             if (!HasPermissionToManage(id))
             {
                 TempData["Error"] = "Bạn không có quyền thao tác trên tài khoản System Admin này.";
@@ -109,13 +113,13 @@ namespace eSchool.Controllers
                 return RedirectToAction("Index");
             }
 
-            if (!_accountService.Update(id, username, idChucVu, trangThai, email))
+            if (!_accountService.Update(id, idChucVu, trangThai, email))
             {
-                TempData["Error"] = "Cập nhật thất bại. Hãy kiểm tra username và chức vụ.";
+                TempData["Error"] = "Cập nhật thất bại. Hãy kiểm tra chức vụ tài khoản.";
                 return RedirectToAction("Index");
             }
 
-            WriteLog("Sửa tài khoản", $"Đã sửa tài khoản {username}");
+            WriteLog("Sửa tài khoản", $"Đã sửa tài khoản {account.Username}");
             TempData["Success"] = "Cập nhật tài khoản thành công";
             return RedirectToAction("Index");
         }

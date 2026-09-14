@@ -8,8 +8,7 @@ namespace eSchool.ViewModels
     {
         public int IdLop { get; set; }
 
-        [Required(ErrorMessage = "Mã lớp không được để trống")]
-        [StringLength(20, MinimumLength = 2)]
+        [StringLength(20)]
         public string MaLop { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Tên lớp không được để trống")]
@@ -17,12 +16,12 @@ namespace eSchool.ViewModels
         public string TenLop { get; set; } = string.Empty;
 
         [StringLength(20)]
-        [RegularExpression(@"^Khối [6-9]$", ErrorMessage = "Khối chỉ được chọn từ Khối 6 đến Khối 9")]
+        //[RegularExpression(@"^Khối [6-9]$", ErrorMessage = "Khối chỉ được chọn từ Khối 6 đến Khối 9")]
         public string? Khoi { get; set; }
 
         public string? BuoiHoc { get; set; }
 
-        [RegularExpression(@"^\d{4}-\d{4}$", ErrorMessage = "Năm học phải có dạng 2026-2027")]
+        [Required(ErrorMessage = "Vui lòng chọn năm học")]
         public string? NamHoc { get; set; }
         public int? IdGiaoVienCN { get; set; }
         public int? IdPhongHoc { get; set; }

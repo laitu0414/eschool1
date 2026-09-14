@@ -3,77 +3,79 @@
 @{
     Layout = Context.Session.GetInt32("RoleId") switch { SystemRoleIds.SystemAdmin => "~/Views/Shared/_AdminLayout.cshtml", 4 => "~/Views/Shared/_ParentLayout.cshtml", _ => "~/Views/Shared/_StudentLayout.cshtml" };
     ViewData["Title"] = "Hồ sơ học sinh";
+    var roleId = Context.Session.GetInt32("RoleId");
+    var isAdmin = roleId == SystemRoleIds.SystemAdmin;
+    var isParent = roleId == 4;
+    var avatar = string.IsNullOrWhiteSpace(Model.AnhDaiDien)
+        ? Url.Content("~/image/default-avatar.svg")
+        : Model.AnhDaiDien;
 }
 
-<div class="student-panel">
-    <h3>Hồ sơ học sinh</h3>
-    <hr />
-
-    <div class="row">
-        <div class="col-md-4 text-center">
-            <img src="@(string.IsNullOrWhiteSpace(Model.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : Model.AnhDaiDien)"
-                 alt="Ảnh @Model.HoTen"
-                 style="width:150px;height:150px;border-radius:50%;object-fit:cover;" />
-
-            <h4 class="mt-3">@Model.HoTen</h4>
-            <p>@Model.MaHS</p>
+<div class="student-profile-page">
+    <section class="student-profile-hero">
+        <img src="@avatar" alt="Ảnh @Model.HoTen" class="student-profile-avatar" />
+        <div class="student-profile-title">
+            <span>Hồ sơ học sinh</span>
+            <h1>@Model.HoTen</h1>
+            <p>@(Model.TenLop ?? "Chưa xếp lớp")</p>
         </div>
+        <span class="student-profile-status @(Model.TrangThai ? "active" : "inactive")">
+            @(Model.TrangThai ? "Đang học" : "Nghỉ học")
+        </span>
+    </section>
 
-        <div class="col-md-8">
-            <table class="table table-bordered">
-                <tr>
-                    <th>Họ tên</th>
-                    <td>@Model.HoTen</td>
-                </tr>
+    <div class="student-profile-grid">
+        <section class="student-profile-card">
+            <h2><i class="bi bi-person-vcard"></i> Thông tin cơ bản</h2>
+            <dl>
+                <div><dt>Họ và tên</dt><dd>@Model.HoTen</dd></div>
+                <div><dt>Ngày sinh</dt><dd>@Model.NgaySinh.ToString("dd/MM/yyyy")</dd></div>
+                <div><dt>Giới tính</dt><dd>@(string.IsNullOrWhiteSpace(Model.GioiTinh) ? "Chưa cập nhật" : Model.GioiTinh)</dd></div>
+                <div><dt>Lớp học</dt><dd>@(Model.TenLop ?? "Chưa xếp lớp")</dd></div>
+            </dl>
+        </section>
 
-                <tr>
-                    <th>Ngày sinh</th>
-                    <td>@Model.NgaySinh.ToString("dd/MM/yyyy")</td>
-                </tr>
-
-                <tr>
-                    <th>Giới tính</th>
-                    <td>@Model.GioiTinh</td>
-                </tr>
-
-                <tr>
-                    <th>Lớp</th>
-                    <td>@Model.TenLop</td>
-                </tr>
-
-                @if (Context.Session.GetInt32("RoleId") != 4)
+        <section class="student-profile-card">
+            <h2><i class="bi bi-telephone"></i> Liên hệ</h2>
+            <dl>
+                <div><dt>Số điện thoại</dt><dd>@(Model.SDT ?? "Chưa cập nhật")</dd></div>
+                <div><dt>Email</dt><dd>@(Model.Email ?? "Chưa cập nhật")</dd></div>
+                <div class="student-profile-address"><dt>Địa chỉ</dt><dd>@(Model.DiaChi ?? "Chưa cập nhật")</dd></div>
+                @if (!isParent)
                 {
-                    <tr>
-                        <th>Tài khoản</th>
-                        <td>@(Model.TenTaiKhoan ?? "Chưa liên kết")</td>
-                    </tr>
+                    <div><dt>Tài khoản</dt><dd>@(Model.TenTaiKhoan ?? "Chưa liên kết")</dd></div>
                 }
-
-                <tr>
-                    <th>SĐT</th>
-                    <td>@Model.SDT</td>
-                </tr>
-
-                <tr>
-                    <th>Email</th>
-                    <td>@Model.Email</td>
-                </tr>
-
-                <tr>
-                    <th>Địa chỉ</th>
-                    <td>@Model.DiaChi</td>
-                </tr>
-
-                <tr>
-                    <th>Trạng thái</th>
-                    <td>@(Model.TrangThai ? "Đang học" : "Nghỉ học")</td>
-                </tr>
-            </table>
-
-            @if (Context.Session.GetInt32("RoleId") != 4)
-            {
-                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
-            }
-        </div>
+            </dl>
+        </section>
     </div>
+
+    @if (isAdmin)
+    {
+        <a asp-action="Index" class="student-profile-back"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+    }
 </div>
+
+<style>
+    .student-profile-page { max-width: 1040px; margin: 0 auto; padding: 8px 0 28px; }
+    .student-profile-hero { display: flex; align-items: center; gap: 20px; padding: 26px 30px; color: #fff; border-radius: 20px; background: linear-gradient(125deg, #1d4ed8, #2563eb 56%, #38bdf8); box-shadow: 0 14px 32px rgba(37, 99, 235, .22); }
+    .student-profile-avatar { width: 96px; height: 96px; border: 4px solid rgba(255,255,255,.72); border-radius: 50%; object-fit: cover; background: #fff; }
+    .student-profile-title { min-width: 0; flex: 1; }
+    .student-profile-title span { font-size: .82rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .78; }
+    .student-profile-title h1 { margin: 4px 0; font-size: clamp(1.45rem, 3vw, 2rem); font-weight: 750; }
+    .student-profile-title p { margin: 0; opacity: .88; }
+    .student-profile-status { padding: 8px 13px; border-radius: 999px; background: rgba(255,255,255,.2); font-weight: 700; white-space: nowrap; }
+    .student-profile-status.inactive { background: rgba(127, 29, 29, .45); }
+    .student-profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 20px; }
+    .student-profile-card { padding: 22px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; box-shadow: 0 5px 18px rgba(15, 23, 42, .06); }
+    .student-profile-card h2 { margin: 0 0 16px; color: #1e3a8a; font-size: 1.05rem; font-weight: 750; }
+    .student-profile-card h2 i { margin-right: 7px; color: #2563eb; }
+    .student-profile-card dl { margin: 0; }
+    .student-profile-card dl > div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; padding: 11px 0; border-bottom: 1px solid #eef2f7; }
+    .student-profile-card dl > div:last-child { border-bottom: 0; padding-bottom: 0; }
+    .student-profile-card dt { color: #64748b; font-weight: 600; }
+    .student-profile-card dd { margin: 0; color: #172554; font-weight: 650; overflow-wrap: anywhere; }
+    .student-profile-address dd { font-weight: 500; }
+    .student-profile-back { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px; padding: 10px 15px; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 10px; background: #eff6ff; font-weight: 700; text-decoration: none; }
+    .student-profile-back:hover { color: #1e40af; background: #dbeafe; }
+    @@media (max-width: 700px) { .student-profile-hero { align-items: flex-start; flex-wrap: wrap; padding: 22px; } .student-profile-status { margin-left: 116px; margin-top: -48px; } .student-profile-grid { grid-template-columns: 1fr; } .student-profile-card dl > div { grid-template-columns: 1fr; gap: 3px; } }
+</style>

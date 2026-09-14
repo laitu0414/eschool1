@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using eSchool.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace eSchool.ViewModels
@@ -8,7 +9,7 @@ namespace eSchool.ViewModels
     {
         public int IdGiaoVien { get; set; }
 
-        [Required(ErrorMessage = "Mã giáo viên không được để trống")]
+        // Mã nội bộ được hệ thống tạo khi lưu, không nhận từ biểu mẫu.
         [StringLength(20)]
         public string MaGV { get; set; } = string.Empty;
 
@@ -21,14 +22,20 @@ namespace eSchool.ViewModels
 
         public string? GioiTinh { get; set; }
 
-        [RegularExpression(@"^(0|\+84)[0-9]{9,10}$", ErrorMessage = "Số điện thoại không đúng định dạng")]
-        [StringLength(15)]
+        [Required(ErrorMessage = "Số điện thoại không được để trống")]
+        [RegularExpression(@"^0[0-9]{9}$", ErrorMessage = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0")]
+        [StringLength(10)]
         public string? SDT { get; set; }
 
+        [Required(ErrorMessage = "Email không được để trống")]
         [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        [StringLength(100)]
         public string? Email { get; set; }
 
         public string? DiaChi { get; set; }
+
+        public string? AnhDaiDien { get; set; }
+        public IFormFile? AnhTaiLen { get; set; }
 
         [Required(ErrorMessage = "Vui lòng chọn môn dạy")]
         [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn môn dạy")]

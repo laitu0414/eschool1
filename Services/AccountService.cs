@@ -14,12 +14,13 @@ namespace eSchool.Services
             _accountRepo = accountRepo;
         }
 
-        public TaiKhoan? Login(string username, string password)
+        public TaiKhoan? Login(string username, string password, int idChucVu)
         {
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password) ||
+                !_accountRepo.RoleExists(idChucVu))
                 return null;
 
-            return _accountRepo.Login(username, password);
+            return _accountRepo.Login(username.Trim(), password, idChucVu);
         }
 
         public List<TaiKhoan> GetAll()
@@ -35,6 +36,9 @@ namespace eSchool.Services
             {
                 data = data.Where(x =>
                     x.Username.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                    new[] { x.GiaoVien?.HoTen, x.HocSinh?.HoTen, x.PhuHuynh?.HoTen }
+                        .Any(name => !string.IsNullOrWhiteSpace(name) &&
+                                     name.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
                     new[] { x.Email, x.GiaoVien?.Email, x.HocSinh?.Email, x.PhuHuynh?.Email }
                         .Any(email => !string.IsNullOrWhiteSpace(email) &&
                                       email.Contains(keyword, StringComparison.OrdinalIgnoreCase))
@@ -65,7 +69,7 @@ namespace eSchool.Services
                 !_accountRepo.RoleExists(idChucVu))
                 return false;
 
-            if (_accountRepo.ExistsUsername(username))
+            if (_accountRepo.ExistsUsername(username, idChucVu))
                 return false;
 
             var account = new TaiKhoan
@@ -83,22 +87,19 @@ namespace eSchool.Services
             return true;
         }
 
-        public bool Update(int id, string username, int idChucVu, bool trangThai, string? email)
+        public bool Update(int id, int idChucVu, bool trangThai, string? email)
         {
             var account = _accountRepo.GetById(id);
 
             if (account == null)
                 return false;
 
-            username = username?.Trim() ?? string.Empty;
             email = email?.Trim();
-            if (string.IsNullOrWhiteSpace(username) ||
-                !_accountRepo.RoleExists(idChucVu) ||
+            if (!_accountRepo.RoleExists(idChucVu) ||
                 (idChucVu == SystemRoleIds.SystemAdmin && account.IdChucVu != SystemRoleIds.SystemAdmin) ||
-                _accountRepo.ExistsUsername(username, id))
+                _accountRepo.ExistsUsername(account.Username, idChucVu, id))
                 return false;
 
-            account.Username = username;
             account.Email = string.IsNullOrWhiteSpace(email) ? null : email;
             account.IdChucVu = idChucVu;
             account.TrangThai = trangThai;
@@ -109,10 +110,10 @@ namespace eSchool.Services
             return true;
         }
 
-        public TaiKhoan? GetByUsername(string username)
+        public TaiKhoan? GetByUsername(string username, int? idChucVu = null)
         {
             username = username?.Trim() ?? string.Empty;
-            return string.IsNullOrWhiteSpace(username) ? null : _accountRepo.GetByUsername(username);
+            return string.IsNullOrWhiteSpace(username) ? null : _accountRepo.GetByUsername(username, idChucVu);
         }
 
         public string GeneratePassword()

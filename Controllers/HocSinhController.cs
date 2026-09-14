@@ -17,15 +17,18 @@ namespace eSchool.Controllers
         private readonly IHocSinhService _service;
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly ILogger<HocSinhController> _logger;
 
         public HocSinhController(
             IHocSinhService service,
             AppDbContext context,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment,
+            ILogger<HocSinhController> logger)
         {
             _service = service;
             _context = context;
             _environment = environment;
+            _logger = logger;
         }
 
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
@@ -58,23 +61,16 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HocSinhViewModel vm)
         {
-            var taiKhoan = _context.TaiKhoans.FirstOrDefault(t => t.Username == vm.MaHS.Trim());
-            if (taiKhoan == null)
-            {
-                taiKhoan = new TaiKhoan
-                {
-                    Username = vm.MaHS.Trim(),
-                    Password = BCrypt.Net.BCrypt.HashPassword("123456"),
-                    IdChucVu = 3,
-                    TrangThai = true,
-                    BatBuocDoiMatKhau = true
-                };
-                _context.TaiKhoans.Add(taiKhoan);
-                _context.SaveChanges();
-            }
-            vm.IdTaiKhoan = taiKhoan.IdTaiKhoan;
+            ModelState.Remove(nameof(vm.MaHS));
+            vm.MaHS = GenerateStudentCode();
             ValidateStudent(vm);
             ValidateImage(vm.AnhTaiLen);
+
+            if (!string.IsNullOrWhiteSpace(vm.SDT) && _context.TaiKhoans.Any(t =>
+                    t.Username == vm.SDT && t.IdChucVu == 3))
+            {
+                ModelState.AddModelError(nameof(vm.SDT), "Số điện thoại này đã được dùng cho một tài khoản học sinh khác.");
+            }
 
             if (!ModelState.IsValid)
             {
@@ -82,16 +78,47 @@ namespace eSchool.Controllers
                 return View(vm);
             }
 
-            vm.AnhDaiDien = await SaveImageAsync(vm.AnhTaiLen);
+            string? imagePath = null;
 
             try
             {
-                _service.Add(vm);
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                var taiKhoan = new TaiKhoan
+                {
+                    Username = vm.SDT!,
+                    Password = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    Email = vm.Email,
+                    IdChucVu = 3,
+                    TrangThai = true,
+                    BatBuocDoiMatKhau = true
+                };
+                imagePath = await SaveImageAsync(vm.AnhTaiLen);
+                var hocSinh = new HocSinh
+                {
+                    MaHS = vm.MaHS,
+                    HoTen = vm.HoTen,
+                    NgaySinh = vm.NgaySinh,
+                    GioiTinh = vm.GioiTinh,
+                    SDT = vm.SDT,
+                    Email = vm.Email,
+                    DiaChi = vm.DiaChi,
+                    AnhDaiDien = imagePath,
+                    TrangThai = vm.TrangThai,
+                    IdLopHoc = vm.IdLopHoc,
+                    TaiKhoan = taiKhoan
+                };
+
+                _context.HocSinhs.Add(hocSinh);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
-            catch
+            catch (Exception ex)
             {
-                DeleteImage(vm.AnhDaiDien);
-                throw;
+                DeleteImage(imagePath);
+                _logger.LogError(ex, "Cannot create student for phone {Phone}", vm.SDT);
+                ModelState.AddModelError(string.Empty, "Không thể tạo học sinh. Vui lòng thử lại.");
+                SetFormLists(vm);
+                return View(vm);
             }
 
             TempData["Success"] = "Thêm học sinh thành công";
@@ -119,9 +146,38 @@ namespace eSchool.Controllers
                 return NotFound();
 
             var linkedAccountId = existing.IdTaiKhoan;
+            var studentAccount = linkedAccountId.HasValue
+                ? _context.TaiKhoans.Find(linkedAccountId.Value)
+                : null;
+            ModelState.Remove(nameof(vm.MaHS));
+            vm.MaHS = existing.MaHS;
             vm.IdTaiKhoan = null;
             ValidateStudent(vm);
             ValidateImage(vm.AnhTaiLen);
+
+            if (!string.IsNullOrWhiteSpace(vm.SDT) && _context.TaiKhoans.Any(t =>
+                    t.Username == vm.SDT && t.IdChucVu == 3 &&
+                    (!linkedAccountId.HasValue || t.IdTaiKhoan != linkedAccountId.Value)))
+            {
+                ModelState.AddModelError(nameof(vm.SDT), "Số điện thoại này đã được dùng cho một tài khoản học sinh khác.");
+            }
+
+            var linkedParents = _context.HocSinhPhuHuynhs
+                .Where(x => x.IdHocSinh == vm.IdHocSinh)
+                .Select(x => x.PhuHuynh)
+                .Include(x => x.TaiKhoan)
+                .ToList();
+            var linkedParentAccountIds = linkedParents
+                .Where(x => x.IdTaiKhoan.HasValue)
+                .Select(x => x.IdTaiKhoan!.Value)
+                .ToList();
+
+            if (!string.IsNullOrWhiteSpace(vm.SDT) && linkedParents.Count > 0 &&
+                _context.TaiKhoans.Any(t => t.Username == vm.SDT && t.IdChucVu == 4 &&
+                    !linkedParentAccountIds.Contains(t.IdTaiKhoan)))
+            {
+                ModelState.AddModelError(nameof(vm.SDT), "Số điện thoại này đã được dùng cho một tài khoản phụ huynh khác.");
+            }
 
             if (!ModelState.IsValid)
             {
@@ -142,6 +198,18 @@ namespace eSchool.Controllers
             try
             {
                 _service.Update(vm);
+                if (studentAccount?.IdChucVu == 3)
+                {
+                    studentAccount.Username = vm.SDT!;
+                    studentAccount.Email = vm.Email;
+                }
+                foreach (var parent in linkedParents)
+                {
+                    parent.SDT = vm.SDT;
+                    if (parent.TaiKhoan?.IdChucVu == 4)
+                        parent.TaiKhoan.Username = vm.SDT!;
+                }
+                _context.SaveChanges();
             }
             catch
             {
@@ -422,6 +490,24 @@ namespace eSchool.Controllers
                 ModelState.AddModelError(nameof(vm.NgaySinh), "Ngày sinh không được lớn hơn ngày hiện tại");
         }
 
+        private string GenerateStudentCode()
+        {
+            var existingCodes = _context.HocSinhs
+                .AsNoTracking()
+                .Select(x => x.MaHS)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var sequence = 1;
+            string code;
+            do
+            {
+                code = $"HS{sequence:D5}";
+                sequence++;
+            } while (existingCodes.Contains(code));
+
+            return code;
+        }
+
         private void ValidateImage(IFormFile? image)
         {
             if (image == null || image.Length == 0)
@@ -539,14 +625,13 @@ namespace eSchool.Controllers
             var worksheet = workbook.Worksheets.Add("HocSinh");
 
             // Headers
-            worksheet.Cell(1, 1).Value = "Mã HS (*)";
-            worksheet.Cell(1, 2).Value = "Họ Tên (*)";
-            worksheet.Cell(1, 3).Value = "Ngày Sinh (dd/MM/yyyy) (*)";
-            worksheet.Cell(1, 4).Value = "Giới Tính";
-            worksheet.Cell(1, 5).Value = "SĐT";
-            worksheet.Cell(1, 6).Value = "Email";
-            worksheet.Cell(1, 7).Value = "Địa Chỉ";
-            worksheet.Cell(1, 8).Value = "Tên Lớp";
+            worksheet.Cell(1, 1).Value = "Họ Tên (*)";
+            worksheet.Cell(1, 2).Value = "Ngày Sinh (dd/MM/yyyy) (*)";
+            worksheet.Cell(1, 3).Value = "Giới Tính";
+            worksheet.Cell(1, 4).Value = "SĐT - 10 số (*)";
+            worksheet.Cell(1, 5).Value = "Email";
+            worksheet.Cell(1, 6).Value = "Địa Chỉ";
+            worksheet.Cell(1, 7).Value = "Tên Lớp";
 
             // Make headers bold
             var headerRow = worksheet.Row(1);
@@ -554,14 +639,13 @@ namespace eSchool.Controllers
             headerRow.Style.Fill.BackgroundColor = XLColor.LightGray;
 
             // Sample data
-            worksheet.Cell(2, 1).Value = "HS001";
-            worksheet.Cell(2, 2).Value = "Nguyễn Văn A";
-            worksheet.Cell(2, 3).Value = "01/01/2010";
-            worksheet.Cell(2, 4).Value = "Nam";
-            worksheet.Cell(2, 5).Value = "0987654321";
-            worksheet.Cell(2, 6).Value = "nguyenvana@example.com";
-            worksheet.Cell(2, 7).Value = "Hà Nội";
-            worksheet.Cell(2, 8).Value = "10A1";
+            worksheet.Cell(2, 1).Value = "Nguyễn Văn A";
+            worksheet.Cell(2, 2).Value = "01/01/2010";
+            worksheet.Cell(2, 3).Value = "Nam";
+            worksheet.Cell(2, 4).Value = "0987654321";
+            worksheet.Cell(2, 5).Value = "nguyenvana@example.com";
+            worksheet.Cell(2, 6).Value = "Hà Nội";
+            worksheet.Cell(2, 7).Value = "10A1";
 
             worksheet.Columns().AdjustToContents();
 
@@ -610,27 +694,24 @@ namespace eSchool.Controllers
                 }
 
                 var lopHocs = _context.LopHocs.ToList();
+                var firstHeader = worksheet.Cell(1, 1).GetString();
+                var isLegacyTemplate = firstHeader.Contains("Mã", StringComparison.OrdinalIgnoreCase) ||
+                                       firstHeader.Contains("Ma", StringComparison.OrdinalIgnoreCase);
+                var columnOffset = isLegacyTemplate ? 1 : 0;
 
                 foreach (var row in rows)
                 {
-                    var maHS = row.Cell(1).GetString().Trim();
-                    var hoTen = row.Cell(2).GetString().Trim();
+                    var maHS = GenerateStudentCode();
+                    var hoTen = row.Cell(1 + columnOffset).GetString().Trim();
                     
-                    if (string.IsNullOrWhiteSpace(maHS) || string.IsNullOrWhiteSpace(hoTen))
+                    if (string.IsNullOrWhiteSpace(hoTen))
                     {
                         skipCount++;
                         continue; // Bắt buộc phải có mã và họ tên
                     }
 
-                    // Kiểm tra trùng lặp
-                    if (_context.HocSinhs.Any(x => x.MaHS == maHS))
-                    {
-                        skipCount++;
-                        continue;
-                    }
-
                     DateTime ngaySinh = DateTime.Today;
-                    var ngaySinhStr = row.Cell(3).GetString().Trim();
+                    var ngaySinhStr = row.Cell(2 + columnOffset).GetString().Trim();
                     if (DateTime.TryParseExact(ngaySinhStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var parsedDate))
                     {
                         ngaySinh = parsedDate;
@@ -640,7 +721,7 @@ namespace eSchool.Controllers
                         ngaySinh = cellDate;
                     }
 
-                    var tenLop = row.Cell(8).GetString().Trim();
+                    var tenLop = row.Cell(7 + columnOffset).GetString().Trim();
                     int? idLopHoc = null;
                     if (!string.IsNullOrWhiteSpace(tenLop))
                     {
@@ -651,30 +732,36 @@ namespace eSchool.Controllers
                         }
                     }
 
-                    var taiKhoan = _context.TaiKhoans.FirstOrDefault(t => t.Username == maHS);
-                    if (taiKhoan == null)
+                    var sdt = row.Cell(4 + columnOffset).GetString().Trim();
+                    if (string.IsNullOrWhiteSpace(sdt) ||
+                        !System.Text.RegularExpressions.Regex.IsMatch(sdt, @"^0[0-9]{9}$") ||
+                        _context.TaiKhoans.Any(t => t.Username == sdt && t.IdChucVu == 3))
                     {
-                        taiKhoan = new TaiKhoan
-                        {
-                            Username = maHS,
-                            Password = BCrypt.Net.BCrypt.HashPassword("123456"),
-                            IdChucVu = 3,
-                            TrangThai = true,
-                            BatBuocDoiMatKhau = true
-                        };
-                        _context.TaiKhoans.Add(taiKhoan);
-                        await _context.SaveChangesAsync();
+                        skipCount++;
+                        continue;
                     }
+
+                    var taiKhoan = new TaiKhoan
+                    {
+                        Username = sdt,
+                        Password = BCrypt.Net.BCrypt.HashPassword("123456"),
+                        Email = row.Cell(5 + columnOffset).GetString().Trim(),
+                        IdChucVu = 3,
+                        TrangThai = true,
+                        BatBuocDoiMatKhau = true
+                    };
+                    _context.TaiKhoans.Add(taiKhoan);
+                    await _context.SaveChangesAsync();
 
                     var hs = new HocSinhViewModel
                     {
                         MaHS = maHS,
                         HoTen = hoTen,
                         NgaySinh = ngaySinh,
-                        GioiTinh = row.Cell(4).GetString().Trim(),
-                        SDT = row.Cell(5).GetString().Trim(),
-                        Email = row.Cell(6).GetString().Trim(),
-                        DiaChi = row.Cell(7).GetString().Trim(),
+                        GioiTinh = row.Cell(3 + columnOffset).GetString().Trim(),
+                        SDT = sdt,
+                        Email = row.Cell(5 + columnOffset).GetString().Trim(),
+                        DiaChi = row.Cell(6 + columnOffset).GetString().Trim(),
                         IdLopHoc = idLopHoc,
                         IdTaiKhoan = taiKhoan.IdTaiKhoan,
                         TrangThai = true

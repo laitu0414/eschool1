@@ -154,7 +154,7 @@ Layout = isAdmin
                         <i class="bi bi-search"></i>
                         <input name="keyword"
                                value="@keyword"
-                               placeholder="Tìm theo mã, họ tên, email hoặc số điện thoại..." />
+                               placeholder="Tìm theo họ tên, email hoặc số điện thoại..." />
                     </div>
 
                     <select name="lopId" class="student-admin-select">
@@ -184,12 +184,10 @@ Layout = isAdmin
                         <thead>
                             <tr>
                                 <th>Học sinh</th>
-                                <th>Mã HS</th>
                                 <th>Tài khoản</th>
                                 <th>Ngày sinh</th>
                                 <th>Giới tính</th>
                                 <th>Lớp</th>
-                                <th>Liên hệ</th>
                                 <th>Trạng thái</th>
                                 <th class="text-center">Thao tác</th>
                             </tr>
@@ -198,7 +196,7 @@ Layout = isAdmin
                             @if (!danhSach.Any())
                             {
                                 <tr>
-                                    <td colspan="9">
+                                    <td colspan="7">
                                         <div class="student-admin-empty">
                                             <i class="bi bi-person-lines-fill"></i>
                                             <strong>Chưa có học sinh</strong>
@@ -213,16 +211,29 @@ Layout = isAdmin
                                 {
                                     <tr>
                                         <td>
-                                            <div class="student-admin-profile">
-                                                <img src="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
-                                                     alt="Ảnh @item.HoTen" />
-                                                <div>
-                                                    <strong>@item.HoTen</strong>
-                                                    <small>@(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có email" : item.Email)</small>
+                                            <button type="button" class="student-profile-link" title="Xem hồ sơ @item.HoTen"
+                                                    data-bs-toggle="modal" data-bs-target="#studentProfileModal"
+                                                    data-name="@item.HoTen"
+                                                    data-avatar="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
+                                                    data-birth="@item.NgaySinh.ToString("dd/MM/yyyy")"
+                                                    data-gender="@(string.IsNullOrWhiteSpace(item.GioiTinh) ? "Chưa cập nhật" : item.GioiTinh)"
+                                                    data-class="@(item.TenLop ?? "Chưa xếp lớp")"
+                                                    data-phone="@(item.SDT ?? "Chưa cập nhật")"
+                                                    data-email="@(item.Email ?? "Chưa cập nhật")"
+                                                    data-address="@(item.DiaChi ?? "Chưa cập nhật")"
+                                                    data-account="@(item.TenTaiKhoan ?? "Chưa liên kết")"
+                                                    data-status="@(item.TrangThai ? "Đang học" : "Nghỉ học")"
+                                                    data-status-class="@(item.TrangThai ? "active" : "inactive")">
+                                                <div class="student-admin-profile">
+                                                    <img src="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
+                                                         alt="Ảnh @item.HoTen" />
+                                                    <div>
+                                                        <strong>@item.HoTen</strong>
+                                                        <small>@(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có email" : item.Email)</small>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            </button>
                                         </td>
-                                        <td><span class="student-admin-code">@item.MaHS</span></td>
                                         <td>
                                             @if (!string.IsNullOrWhiteSpace(item.TenTaiKhoan))
                                             {
@@ -241,12 +252,6 @@ Layout = isAdmin
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="student-admin-contact">
-                                                <span>@(string.IsNullOrWhiteSpace(item.SDT) ? "-" : item.SDT)</span>
-                                                <small>@(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có email" : item.Email)</small>
-                                            </div>
-                                        </td>
-                                        <td>
                                             @if (item.TrangThai)
                                             {
                                                 <span class="student-admin-status active">Đang học</span>
@@ -258,9 +263,6 @@ Layout = isAdmin
                                         </td>
                                         <td>
                                             <div class="student-admin-actions">
-                                                <a asp-action="Details" asp-route-id="@item.IdHocSinh" class="student-admin-action view" title="Xem hồ sơ">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
                                                 <a asp-action="Edit" asp-route-id="@item.IdHocSinh" class="student-admin-action edit" title="Sửa">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
@@ -342,7 +344,7 @@ Layout = isAdmin
                     <i class="bi bi-search"></i>
                     <input name="keyword"
                            value="@keyword"
-                           placeholder="Tìm theo mã, họ tên, email hoặc số điện thoại..." />
+                           placeholder="Tìm theo họ tên, email hoặc số điện thoại..." />
                 </div>
 
                 <select name="lopId" class="student-filter-select">
@@ -372,21 +374,18 @@ Layout = isAdmin
                     <thead>
                         <tr>
                             <th>Học sinh</th>
-                            <th>Mã HS</th>
                             <th>Tài khoản</th>
                             <th>Ngày sinh</th>
                             <th>Giới tính</th>
                             <th>Lớp</th>
-                            <th>Liên hệ</th>
                             <th>Trạng thái</th>
-                            <th class="text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (!danhSach.Any())
                         {
                             <tr>
-                                <td colspan="9">
+                                <td colspan="6">
                                     <div class="student-empty-state">
                                         <i class="bi bi-person-lines-fill"></i>
                                         <strong>Không có học sinh nào</strong>
@@ -401,21 +400,33 @@ Layout = isAdmin
                             {
                                 <tr>
                                     <td>
-                                        <div class="student-profile-cell">
-                                            <img src="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
-                                                 alt="Ảnh @item.HoTen" />
-                                            <div>
-                                                <strong>@item.HoTen</strong>
-                                                <span>@(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có email" : item.Email)</span>
+                                        <button type="button" class="student-profile-link" title="Xem hồ sơ @item.HoTen"
+                                                data-bs-toggle="modal" data-bs-target="#studentProfileModal"
+                                                data-name="@item.HoTen"
+                                                data-avatar="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
+                                                data-birth="@item.NgaySinh.ToString("dd/MM/yyyy")"
+                                                data-gender="@(string.IsNullOrWhiteSpace(item.GioiTinh) ? "Chưa cập nhật" : item.GioiTinh)"
+                                                data-class="@(item.TenLop ?? "Chưa xếp lớp")"
+                                                data-phone="@(item.SDT ?? "Chưa cập nhật")"
+                                                data-email="@(item.Email ?? "Chưa cập nhật")"
+                                                data-address="@(item.DiaChi ?? "Chưa cập nhật")"
+                                                data-account="@(item.TenTaiKhoan ?? "Chưa liên kết")"
+                                                data-status="@(item.TrangThai ? "Đang học" : "Nghỉ học")"
+                                                data-status-class="@(item.TrangThai ? "active" : "inactive")">
+                                            <div class="student-profile-cell">
+                                                <img src="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
+                                                     alt="Ảnh @item.HoTen" />
+                                                <div>
+                                                    <strong>@item.HoTen</strong>
+                                                    <span>@(string.IsNullOrWhiteSpace(item.Email) ? "Chưa có email" : item.Email)</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </button>
                                     </td>
-                                    <td><span class="student-code">@item.MaHS</span></td>
                                     <td>@(item.TenTaiKhoan ?? "Chưa gắn")</td>
                                     <td>@item.NgaySinh.ToString("dd/MM/yyyy")</td>
                                     <td>@(string.IsNullOrWhiteSpace(item.GioiTinh) ? "-" : item.GioiTinh)</td>
                                     <td><span class="student-class-pill">@(item.TenLop ?? "Chưa xếp lớp")</span></td>
-                                    <td>@(string.IsNullOrWhiteSpace(item.SDT) ? "-" : item.SDT)</td>
                                     <td>
                                         @if (item.TrangThai)
                                         {
@@ -426,13 +437,6 @@ Layout = isAdmin
                                             <span class="student-status-pill inactive">Nghỉ học</span>
                                         }
                                     </td>
-                                    <td>
-                                        <div class="student-action-group">
-                                            <a asp-action="Details" asp-route-id="@item.IdHocSinh" class="student-action-btn view" title="Xem hồ sơ">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                        </div>
-                                    </td>
                                 </tr>
                             }
                         }
@@ -442,3 +446,90 @@ Layout = isAdmin
         </div>
     }
 </div>
+
+<div class="modal fade" id="studentProfileModal" tabindex="-1" aria-labelledby="studentProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content student-profile-modal">
+            <div class="student-profile-modal-head">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <img id="studentModalAvatar" src="@Url.Content("~/image/default-avatar.svg")" alt="Ảnh học sinh" />
+                <div>
+                    <span>Hồ sơ học sinh</span>
+                    <h2 id="studentProfileModalLabel">Học sinh</h2>
+                    <p id="studentModalClass">Chưa xếp lớp</p>
+                </div>
+                <strong id="studentModalStatus" class="student-modal-status active">Đang học</strong>
+            </div>
+            <div class="modal-body p-4">
+                <div class="student-modal-grid">
+                    <section>
+                        <h3><i class="bi bi-person-vcard"></i> Thông tin cơ bản</h3>
+                        <dl>
+                            <div><dt>Ngày sinh</dt><dd id="studentModalBirth"></dd></div>
+                            <div><dt>Giới tính</dt><dd id="studentModalGender"></dd></div>
+                            <div><dt>Lớp học</dt><dd id="studentModalClassDetail"></dd></div>
+                            <div><dt>Tài khoản</dt><dd id="studentModalAccount"></dd></div>
+                        </dl>
+                    </section>
+                    <section>
+                        <h3><i class="bi bi-telephone"></i> Liên hệ</h3>
+                        <dl>
+                            <div><dt>Số điện thoại</dt><dd id="studentModalPhone"></dd></div>
+                            <div><dt>Email</dt><dd id="studentModalEmail"></dd></div>
+                            <div class="student-modal-address"><dt>Địa chỉ</dt><dd id="studentModalAddress"></dd></div>
+                        </dl>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .student-profile-link { display: block; width: 100%; padding: 0; color: inherit; border: 0; border-radius: 12px; background: transparent; font: inherit; text-align: left; text-decoration: none; cursor: pointer; transition: background-color .18s ease; }
+    .student-profile-link:hover { color: inherit; background: rgba(37, 99, 235, .07); }
+    .student-profile-link:focus-visible { outline: 3px solid rgba(59, 130, 246, .45); outline-offset: 2px; }
+    .student-profile-modal { overflow: hidden; border: 0; border-radius: 18px; }
+    .student-profile-modal-head { position: relative; display: flex; align-items: center; gap: 16px; padding: 24px 28px; color: #fff; background: linear-gradient(125deg, #1d4ed8, #2563eb 60%, #38bdf8); }
+    .student-profile-modal-head .btn-close { position: absolute; top: 16px; right: 16px; opacity: .9; }
+    .student-profile-modal-head img { width: 78px; height: 78px; border: 3px solid rgba(255,255,255,.75); border-radius: 50%; object-fit: cover; background: #fff; }
+    .student-profile-modal-head span { font-size: .78rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; opacity: .78; }
+    .student-profile-modal-head h2 { margin: 3px 0; font-size: 1.5rem; font-weight: 750; }
+    .student-profile-modal-head p { margin: 0; opacity: .88; }
+    .student-modal-status { margin-left: auto; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.21); white-space: nowrap; }
+    .student-modal-status.inactive { background: rgba(127,29,29,.45); }
+    .student-modal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+    .student-modal-grid h3 { margin: 0 0 13px; color: #1e3a8a; font-size: 1rem; font-weight: 750; }
+    .student-modal-grid h3 i { color: #2563eb; margin-right: 6px; }
+    .student-modal-grid dl { margin: 0; }
+    .student-modal-grid dl > div { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px solid #eef2f7; }
+    .student-modal-grid dl > div:last-child { border-bottom: 0; }
+    .student-modal-grid dt { color: #64748b; font-weight: 600; }
+    .student-modal-grid dd { margin: 0; color: #172554; font-weight: 650; overflow-wrap: anywhere; }
+    .student-modal-address dd { font-weight: 500; }
+    @@media (max-width: 600px) { .student-profile-modal-head { padding: 22px 20px; align-items: flex-start; } .student-profile-modal-head img { width: 64px; height: 64px; } .student-modal-status { position: absolute; right: 18px; bottom: 14px; } .student-modal-grid { grid-template-columns: 1fr; gap: 20px; } }
+</style>
+
+<script>
+    document.getElementById('studentProfileModal').addEventListener('show.bs.modal', function (event) {
+        const source = event.relatedTarget;
+        const setText = (id, value) => document.getElementById(id).textContent = value || 'Chưa cập nhật';
+
+        document.getElementById('studentModalAvatar').src = source.dataset.avatar;
+        document.getElementById('studentModalAvatar').alt = `Ảnh ${source.dataset.name}`;
+        setText('studentProfileModalLabel', source.dataset.name);
+        setText('studentModalClass', source.dataset.class);
+        setText('studentModalClassDetail', source.dataset.class);
+        setText('studentModalBirth', source.dataset.birth);
+        setText('studentModalGender', source.dataset.gender);
+        setText('studentModalAccount', source.dataset.account);
+        setText('studentModalPhone', source.dataset.phone);
+        setText('studentModalEmail', source.dataset.email);
+        setText('studentModalAddress', source.dataset.address);
+
+        const status = document.getElementById('studentModalStatus');
+        status.textContent = source.dataset.status;
+        status.classList.toggle('active', source.dataset.statusClass === 'active');
+        status.classList.toggle('inactive', source.dataset.statusClass === 'inactive');
+    });
+</script>

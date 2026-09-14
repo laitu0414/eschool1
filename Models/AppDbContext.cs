@@ -75,6 +75,10 @@
                 .HasIndex(x => x.IdChucVu)
                 .IsUnique()
                 .HasFilter("[IdChucVu] = 5");
+
+            modelBuilder.Entity<TaiKhoan>()
+                .HasIndex(x => new { x.Username, x.IdChucVu })
+                .IsUnique();
         }
     }
     }

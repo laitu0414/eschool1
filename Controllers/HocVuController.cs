@@ -26,8 +26,8 @@ namespace eSchool.Controllers
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
+                keyword = keyword.Trim();
                 query = query.Where(x =>
-                    x.MaLop.Contains(keyword) ||
                     x.TenLop.Contains(keyword) ||
                     (x.Khoi != null && x.Khoi.Contains(keyword)));
             }
@@ -48,16 +48,30 @@ namespace eSchool.Controllers
         public IActionResult TaoLop(LopHocFormViewModel vm)
         {
             NormalizeLop(vm);
+            vm.MaLop = GenerateClassCode();
+            ModelState.Clear();
+            TryValidateModel(vm);
 
             if (!ModelState.IsValid)
                 return RedirectWithError(nameof(LopHoc), "Thông tin lớp học chưa hợp lệ.");
 
-            if (_context.LopHocs.Any(x => x.MaLop == vm.MaLop))
-                return RedirectWithError(nameof(LopHoc), "Mã lớp đã tồn tại.");
+            // Mỗi giáo viên chỉ được chủ nhiệm 1 lớp
+            if (vm.IdGiaoVienCN.HasValue)
+            {
+                var daChuNhiem = _context.LopHocs.Any(x =>
+                    x.IdGiaoVienCN == vm.IdGiaoVienCN.Value);
 
+                if (daChuNhiem)
+                {
+                    return RedirectWithError(
+                        nameof(LopHoc),
+                        "Giáo viên này đã chủ nhiệm một lớp khác."
+                    );
+                }
+            }
             var newLop = new LopHoc
             {
-                MaLop = vm.MaLop.Trim(),
+                MaLop = vm.MaLop,
                 TenLop = vm.TenLop.Trim(),
                 Khoi = vm.Khoi,
                 BuoiHoc = vm.BuoiHoc,
@@ -91,14 +105,28 @@ namespace eSchool.Controllers
             if (lop == null) return NotFound();
 
             NormalizeLop(vm);
+            vm.MaLop = lop.MaLop;
+            ModelState.Clear();
+            TryValidateModel(vm);
 
             if (!ModelState.IsValid)
                 return RedirectWithError(nameof(LopHoc), "Thông tin lớp học chưa hợp lệ.");
+                
+            // Mỗi giáo viên chỉ được chủ nhiệm 1 lớp
+            if (vm.IdGiaoVienCN.HasValue)
+            {
+                var daChuNhiemLopKhac = _context.LopHocs.Any(x =>
+                    x.IdGiaoVienCN == vm.IdGiaoVienCN.Value &&
+                    x.IdLop != lop.IdLop);
 
-            if (_context.LopHocs.Any(x => x.MaLop == vm.MaLop && x.IdLop != vm.IdLop))
-                return RedirectWithError(nameof(LopHoc), "Mã lớp đã tồn tại.");
-
-            lop.MaLop = vm.MaLop.Trim();
+                if (daChuNhiemLopKhac)
+                {
+                    return RedirectWithError(
+                        nameof(LopHoc),
+                        "Giáo viên này đã chủ nhiệm một lớp khác."
+                    );
+                }
+            }
             lop.TenLop = vm.TenLop.Trim();
             lop.Khoi = vm.Khoi;
             lop.BuoiHoc = vm.BuoiHoc;
@@ -192,18 +220,43 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult TaoPhong(PhongHoc model)
         {
-            if (string.IsNullOrWhiteSpace(model.MaPhong) || string.IsNullOrWhiteSpace(model.TenPhong))
-                return RedirectWithError(nameof(PhongHoc), "Mã phòng và tên phòng không được để trống.");
+            if (string.IsNullOrWhiteSpace(model.TenPhong))
+            {
+                return RedirectWithError(
+                    nameof(PhongHoc),
+                    "Tên phòng không được để trống."
+                );
+            }
 
-            if (_context.PhongHocs.Any(x => x.MaPhong == model.MaPhong.Trim()))
-                return RedirectWithError(nameof(PhongHoc), "Mã phòng đã tồn tại.");
-
-            model.MaPhong = model.MaPhong.Trim();
+            model.MaPhong = GenerateRoomCode();
             model.TenPhong = model.TenPhong.Trim();
-            
+
             _context.PhongHocs.Add(model);
             _context.SaveChanges();
-            return RedirectWithSuccess(nameof(PhongHoc), "Đã thêm phòng học.");
+
+            return RedirectWithSuccess(
+                nameof(PhongHoc),
+                $"Đã thêm phòng {model.TenPhong} - mã {model.MaPhong}."
+            );
+        }
+        private string GenerateRoomCode()
+        {
+            var existingCodes = _context.PhongHocs
+                .AsNoTracking()
+                .Select(x => x.MaPhong)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            int sequence = 1;
+            string code;
+
+            do
+            {
+                code = $"PH{sequence:D3}";
+                sequence++;
+            }
+            while (existingCodes.Contains(code));
+
+            return code;
         }
 
         [HttpPost]
@@ -213,16 +266,20 @@ namespace eSchool.Controllers
             var phong = _context.PhongHocs.Find(model.IdPhongHoc);
             if (phong == null) return NotFound();
 
-            if (string.IsNullOrWhiteSpace(model.MaPhong) || string.IsNullOrWhiteSpace(model.TenPhong))
-                return RedirectWithError(nameof(PhongHoc), "Mã phòng và tên phòng không được để trống.");
+            if (string.IsNullOrWhiteSpace(model.TenPhong))
+                return RedirectWithError(nameof(PhongHoc), "Tên phòng không được để trống.");
 
-            if (_context.PhongHocs.Any(x => x.MaPhong == model.MaPhong.Trim() && x.IdPhongHoc != model.IdPhongHoc))
-                return RedirectWithError(nameof(PhongHoc), "Mã phòng đã tồn tại.");
+            // if (_context.PhongHocs.Any(x => x.MaPhong == model.MaPhong.Trim() && x.IdPhongHoc != model.IdPhongHoc))
+            //     return RedirectWithError(nameof(PhongHoc), "Mã phòng đã tồn tại.");
 
             bool isChangingToBaoTri = phong.TrangThai && !model.TrangThai;
             int? oldLopId = phong.IdLop;
+            //
 
-            phong.MaPhong = model.MaPhong.Trim();
+            // không sửa mã phòng nữa, vì có thể đã được dùng trong lịch sử, chỉ sửa tên và trạng thái
+            // phong.MaPhong = model.MaPhong.Trim();
+            phong.LoaiPhong = model.LoaiPhong;
+            phong.SucChua = model.SucChua;
             phong.TenPhong = model.TenPhong.Trim();
             phong.TrangThai = model.TrangThai;
             phong.IdLop = model.IdLop;
@@ -657,6 +714,116 @@ namespace eSchool.Controllers
             ViewBag.PhongHocMap = phongHocMap;
             
             return View(vm);
+        }
+        // --- TỰ ĐỘNG TẠO THỜI KHÓA BIỂU ---
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult TaoThoiKhoaBieuTuDong(string namHoc)
+        {
+            if (string.IsNullOrWhiteSpace(namHoc))
+            {
+                return RedirectWithError(
+                    nameof(ThoiKhoaBieu),
+                    "Vui lòng chọn năm học."
+                );
+            }
+
+            var lops = _context.LopHocs
+                .Where(x => x.NamHoc == namHoc)
+                .OrderBy(x => x.TenLop)
+                .ToList();
+
+            if (!lops.Any())
+            {
+                return RedirectWithError(
+                    nameof(ThoiKhoaBieu),
+                    "Không có lớp học trong năm học này."
+                );
+            }
+
+            foreach (var lop in lops)
+            {
+                bool daCoLich = _context.PhanCongGiangDays
+                    .Any(x =>
+                        x.IdLop == lop.IdLop &&
+                        x.NamHoc == namHoc);
+
+                // Không tạo lại lớp đã có lịch
+                if (daCoLich)
+                    continue;
+
+                AutoGenerateSchedule(lop);
+            }
+
+            return RedirectWithSuccess(
+                nameof(ThoiKhoaBieu),
+                "Đã tự động tạo thời khóa biểu cho các lớp."
+            );
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult XepLaiTKBToanTruong(string namHoc)
+        {
+            namHoc = namHoc?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(namHoc))
+            {
+                return RedirectWithError(
+                    nameof(ThoiKhoaBieu),
+                    "Vui lòng chọn năm học."
+                );
+            }
+
+            var lops = _context.LopHocs
+                .Where(x => x.NamHoc == namHoc)
+                .OrderBy(x => x.Khoi)
+                .ThenBy(x => x.TenLop)
+                .ToList();
+
+            if (!lops.Any())
+            {
+                return RedirectWithError(
+                    nameof(ThoiKhoaBieu),
+                    "Không có lớp học trong năm học này."
+                );
+            }
+
+            using var transaction = _context.Database.BeginTransaction();
+
+            try
+            {
+                // TKB hiện được dùng chung cho cả năm học, nên cần xóa toàn bộ
+                // lịch của năm được chọn trước khi tạo lại để không phát sinh lịch trùng.
+                var lichCu = _context.PhanCongGiangDays
+                    .Where(x => x.NamHoc == namHoc)
+                    .ToList();
+
+                _context.PhanCongGiangDays.RemoveRange(lichCu);
+                _context.SaveChanges();
+
+                // Xếp lại toàn bộ lớp
+                foreach (var lop in lops)
+                {
+                    AutoGenerateSchedule(lop);
+                }
+
+                transaction.Commit();
+
+                return RedirectWithSuccess(
+                    nameof(ThoiKhoaBieu),
+                    $"Đã xếp lại thời khóa biểu cho toàn trường năm học {namHoc}."
+                );
+            }
+            catch
+            {
+                transaction.Rollback();
+
+                return RedirectWithError(
+                    nameof(ThoiKhoaBieu),
+                    "Không thể xếp lại thời khóa biểu. Dữ liệu cũ đã được giữ nguyên."
+                );
+            }
         }
 
         [HttpPost]
@@ -1191,6 +1358,24 @@ namespace eSchool.Controllers
             vm.NamHoc = vm.NamHoc?.Trim();
         }
 
+        private string GenerateClassCode()
+        {
+            var existingCodes = _context.LopHocs
+                .AsNoTracking()
+                .Select(x => x.MaLop)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var sequence = 1;
+            string code;
+            do
+            {
+                code = $"LOP{sequence:D5}";
+                sequence++;
+            } while (existingCodes.Contains(code));
+
+            return code;
+        }
+
         private static void NormalizeMon(MonHocFormViewModel vm)
         {
             vm.MaMon = vm.MaMon?.Trim() ?? string.Empty;
@@ -1224,7 +1409,6 @@ namespace eSchool.Controllers
                 {
                     keyword = keyword.Trim();
                     query = query.Where(x =>
-                        x.MaLop.Contains(keyword) ||
                         x.TenLop.Contains(keyword) ||
                         (x.Khoi != null && x.Khoi.Contains(keyword)) ||
                         (x.NamHoc != null && x.NamHoc.Contains(keyword)));
@@ -1438,11 +1622,27 @@ namespace eSchool.Controllers
         {
             var subjectConfigs = new System.Collections.Generic.List<(string MaMon, string TenMon, int SoTiet)>
             {
-                ("NV", "Ngữ văn", 4), ("TOAN", "Toán", 4), ("TA", "Tiếng Anh", 3),
-                ("GDCD", "Giáo dục công dân", 1), ("LS", "Lịch sử", 1), ("DL", "Địa lí", 2),
-                ("VL", "Vật lí", 1), ("HH", "Hóa học", 1), ("SH", "Sinh học", 2),
-                ("CN", "Công nghệ", 1), ("TH", "Tin học", 1), ("GDTC", "Giáo dục thể chất", 2),
-                ("NT", "Nghệ thuật (Âm nhạc, Mỹ thuật)", 2), ("HDTN", "Hoạt động trải nghiệm, hướng nghiệp", 3),
+                ("TOAN", "Toán", 4),
+                ("VAN", "Ngữ văn", 4),
+                ("ANH", "Tiếng Anh", 4),
+
+                ("LY", "Vật lý", 2),
+                ("HOA", "Hóa học", 2),
+                ("SINH", "Sinh học", 2),
+
+                ("SU", "Lịch sử", 2),
+                ("DIA", "Địa lý", 2),
+
+                ("TIN", "Tin học", 2),
+                ("CN", "Công nghệ", 2),
+
+                ("GDTC", "Giáo dục thể chất", 2),
+                ("GDCD", "Giáo dục công dân", 1),
+
+                ("NT", "Nghệ thuật (Âm nhạc, Mỹ thuật)", 2),
+
+                ("HDTN", "Hoạt động trải nghiệm, hướng nghiệp", 3),
+
                 ("GDDP", "Nội dung giáo dục địa phương", 1)
             };
 

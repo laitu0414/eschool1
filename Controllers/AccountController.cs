@@ -32,21 +32,27 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ForgotPassword(string username)
+        public async Task<IActionResult> ForgotPassword(string username, int? loginRole)
         {
+            if (!IsValidLoginRole(loginRole))
+            {
+                TempData["ForgotPasswordError"] = "Vui lòng chọn đúng cổng đăng nhập trước khi đặt lại mật khẩu.";
+                return RedirectToAction("Index", "Home", new { openForgotPassword = true });
+            }
+
             username = username?.Trim() ?? string.Empty;
-            var account = _accountService.GetByUsername(username);
+            var account = _accountService.GetByUsername(username, loginRole);
 
             if (account == null || !account.TrangThai)
             {
                 TempData["ForgotPasswordError"] = "Tài khon không tồn tại hoặc ảđang bị khoá";
-                return RedirectToAction("Index", "Home", new { openForgotPassword = true });
+                return RedirectToAction("Index", "Home", new { openForgotPassword = true, loginRole });
             }
 
             if (string.IsNullOrWhiteSpace(account.Email))
             {
                 TempData["ForgotPasswordError"] = "Tài khoản này chưa có Email để nhận mật khẩu mới";
-                return RedirectToAction("Index", "Home", new { openForgotPassword = true });
+                return RedirectToAction("Index", "Home", new { openForgotPassword = true, loginRole });
             }
 
             var newPassword = _accountService.GeneratePassword();
@@ -60,13 +66,13 @@ namespace eSchool.Controllers
             catch (Exception ex)
             {
                 TempData["ForgotPasswordError"] = $"Không gửi được email: {ex.Message}";
-                return RedirectToAction("Index", "Home", new { openForgotPassword = true });
+                return RedirectToAction("Index", "Home", new { openForgotPassword = true, loginRole });
             }
 
             _accountService.ResetPasswordAndRequireChange(account.IdTaiKhoan, newPassword);
             _nhatKyService.GhiLog(account.Username, "Quên mật khẩu", "Đã đặt lại mật khẩu tạm và yêu cầu đổi mật khẩu");
             TempData["AuthSuccess"] = "Mật khẩu tạm đã được gửi về email. Sau khi đăng nhập, bạn cần đổi mật khẩu mới.";
-            return RedirectToAction(nameof(Login));
+            return RedirectToAction(nameof(Login), new { loginRole });
         }
 
         [HttpPost]
@@ -79,17 +85,11 @@ namespace eSchool.Controllers
                 return RedirectToLogin(loginRole);
             }
 
-            var account = _accountService.Login(username, password);
+            var account = _accountService.Login(username, password, loginRole!.Value);
 
             if (account == null)
             {
                 TempData["LoginError"] = "Sai tài khoản hoặc mật khẩu.";
-                return RedirectToLogin(loginRole);
-            }
-
-            if (account.IdChucVu != loginRole)
-            {
-                TempData["LoginError"] = "Tài khoản này không thuộc cổng đăng nhập đã chọn.";
                 return RedirectToLogin(loginRole);
             }
 

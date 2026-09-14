@@ -24,12 +24,6 @@
     </div>
 
     <div class="col-md-6 mb-3">
-        <label>Mã học sinh <span class="text-danger">*</span></label>
-        <input asp-for="MaHS" class="form-control" required maxlength="20" placeholder="VD: HS001" />
-        <span asp-validation-for="MaHS" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-6 mb-3">
         <label>Họ tên <span class="text-danger">*</span></label>
         <input asp-for="HoTen" class="form-control" required maxlength="100" placeholder="Nhập họ tên học sinh" />
         <span asp-validation-for="HoTen" class="text-danger"></span>
@@ -51,9 +45,10 @@
     </div>
 
     <div class="col-md-6 mb-3">
-        <label>Số điện thoại</label>
-        <input asp-for="SDT" class="form-control" maxlength="15" placeholder="0xxxxxxxxx" />
+        <label>Số điện thoại đăng nhập <span class="text-danger">*</span></label>
+        <input asp-for="SDT" type="tel" class="form-control" inputmode="numeric" pattern="0[0-9]{9}" minlength="10" maxlength="10" autocomplete="tel" required placeholder="0xxxxxxxxx" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)" />
         <span asp-validation-for="SDT" class="text-danger"></span>
+        <small class="text-muted">Gồm đúng 10 chữ số, bắt đầu bằng 0. Có thể trùng với SĐT phụ huynh.</small>
     </div>
 
     <div class="col-md-6 mb-3">

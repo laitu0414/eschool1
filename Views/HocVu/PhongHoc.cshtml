@@ -154,6 +154,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    
                     @if (!Model.Any())
                     {
                         <tr><td colspan="6" class="text-center text-muted py-5">Không tìm thấy phòng học phù hợp</td></tr>
@@ -264,11 +265,11 @@
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        @* <div class="col-md-6">
                             <label class="form-label fw-medium">Mã phòng <span class="text-danger">*</span></label>
                             <input name="MaPhong" class="form-control" required />
-                        </div>
-                        <div class="col-md-6">
+                        </div> *@
+                        <div class="col-md-12">
                             <label class="form-label fw-medium">Tên phòng <span class="text-danger">*</span></label>
                             <input name="TenPhong" class="form-control" required />
                         </div>
@@ -324,10 +325,10 @@
                     </div>
                     <div class="modal-body">
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            @* <div class="col-md-6">
                                 <label class="form-label fw-medium">Mã phòng <span class="text-danger">*</span></label>
                                 <input name="MaPhong" value="@item.MaPhong" class="form-control" required />
-                            </div>
+                            </div> *@
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Tên phòng <span class="text-danger">*</span></label>
                                 <input name="TenPhong" value="@item.TenPhong" class="form-control" required />
@@ -346,7 +347,7 @@
                                 <input type="number" name="SucChua" class="form-control" value="@item.SucChua" />
                             </div>
 
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label class="form-label fw-medium">Trạng thái</label>
                                 <select name="TrangThai" class="form-select">
                                     @Html.Raw($"<option value='true' {(item.TrangThai ? "selected" : "")}>Hoạt động</option>")
