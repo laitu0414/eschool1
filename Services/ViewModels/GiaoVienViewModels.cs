@@ -82,5 +82,6 @@ namespace eSchool.ViewModels
     {
         public List<LopHoc> LopHocs { get; set; } = new();
         public List<SelectListItem> GiaoViens { get; set; } = new();
+        public List<SelectListItem> NamHocs { get; set; } = new();
     }
 }

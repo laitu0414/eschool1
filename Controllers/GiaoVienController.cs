@@ -274,7 +274,11 @@ namespace eSchool.Controllers
                     .Include(x => x.GiaoVienChuNhiem)
                     .OrderBy(x => x.TenLop)
                     .ToList(),
-                GiaoViens = GetGiaoVienSelectList()
+                GiaoViens = GetGiaoVienSelectList(),
+                NamHocs = _context.NamHocs
+                    .OrderByDescending(x => x.NgayBatDau)
+                    .Select(x => new SelectListItem(x.TenNamHoc, x.TenNamHoc))
+                    .ToList()
             });
         }
 
@@ -291,11 +295,81 @@ namespace eSchool.Controllers
                 return NotFound();
             }
 
+            if (idGiaoVien.HasValue && _context.LopHocs.Any(x =>
+                    x.IdGiaoVienCN == idGiaoVien.Value &&
+                    x.IdLop != lop.IdLop &&
+                    x.NamHoc == lop.NamHoc))
+            {
+                TempData["Error"] = "Giáo viên này đã chủ nhiệm một lớp khác trong năm học đã chọn.";
+                return RedirectToAction(nameof(ChuNhiem));
+            }
+
             lop.IdGiaoVienCN = idGiaoVien;
             _context.SaveChanges();
             TempData["Success"] = idGiaoVien.HasValue
                 ? "Đã cập nhật giáo viên chủ nhiệm."
                 : "Đã bỏ phân công chủ nhiệm.";
+            return RedirectToAction(nameof(ChuNhiem));
+        }
+
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult TuDongGanChuNhiem(string? namHoc)
+        {
+            namHoc = namHoc?.Trim();
+            if (string.IsNullOrWhiteSpace(namHoc))
+            {
+                TempData["Error"] = "Vui lòng chọn năm học cần phân công.";
+                return RedirectToAction(nameof(ChuNhiem));
+            }
+
+            var lopChuaPhanCong = _context.LopHocs
+                .Where(x => x.NamHoc == namHoc && !x.IdGiaoVienCN.HasValue)
+                .OrderBy(x => x.Khoi)
+                .ThenBy(x => x.TenLop)
+                .ToList();
+
+            if (!lopChuaPhanCong.Any())
+            {
+                TempData["Success"] = "Tất cả lớp trong năm học này đã có giáo viên chủ nhiệm.";
+                return RedirectToAction(nameof(ChuNhiem));
+            }
+
+            var teacherIds = _context.GiaoViens
+                .AsNoTracking()
+                .OrderBy(x => x.HoTen)
+                .Select(x => x.IdGiaoVien)
+                .ToList();
+
+            if (!teacherIds.Any())
+            {
+                TempData["Error"] = "Chưa có giáo viên để thực hiện phân công tự động.";
+                return RedirectToAction(nameof(ChuNhiem));
+            }
+
+            var homeroomLoads = _context.LopHocs
+                .Where(x => x.NamHoc == namHoc && x.IdGiaoVienCN.HasValue)
+                .GroupBy(x => x.IdGiaoVienCN!.Value)
+                .ToDictionary(x => x.Key, x => x.Count());
+            var previousNamHoc = GetPreviousAcademicYearName(namHoc);
+
+            var autoAssignedCount = 0;
+            foreach (var lop in lopChuaPhanCong)
+            {
+                lop.IdGiaoVienCN = SelectAutomaticHomeroomTeacher(
+                    lop,
+                    previousNamHoc,
+                    teacherIds,
+                    homeroomLoads);
+                if (lop.IdGiaoVienCN.HasValue)
+                    autoAssignedCount++;
+            }
+
+            _context.SaveChanges();
+            TempData["Success"] = autoAssignedCount == lopChuaPhanCong.Count
+                ? $"Đã tự động phân công giáo viên chủ nhiệm cho {autoAssignedCount} lớp trong năm học {namHoc}."
+                : $"Đã tự động phân công giáo viên chủ nhiệm cho {autoAssignedCount}/{lopChuaPhanCong.Count} lớp trong năm học {namHoc}. Các lớp còn lại chưa được phân công vì không còn giáo viên trống trong năm học này.";
             return RedirectToAction(nameof(ChuNhiem));
         }
 
@@ -786,6 +860,76 @@ namespace eSchool.Controllers
                 .Where(x => x.MaGV == username)
                 .Select(x => (int?)x.IdGiaoVien)
                 .FirstOrDefault();
+        }
+
+        private string? GetPreviousAcademicYearName(string targetNamHoc)
+        {
+            var targetYear = _context.NamHocs
+                .AsNoTracking()
+                .FirstOrDefault(x => x.TenNamHoc == targetNamHoc);
+
+            if (targetYear == null)
+                return null;
+
+            return _context.NamHocs
+                .AsNoTracking()
+                .Where(x => x.NgayKetThuc < targetYear.NgayBatDau)
+                .OrderByDescending(x => x.NgayKetThuc)
+                .Select(x => x.TenNamHoc)
+                .FirstOrDefault();
+        }
+
+        private int? SelectAutomaticHomeroomTeacher(
+            LopHoc lop,
+            string? previousNamHoc,
+            IReadOnlyList<int> teacherIds,
+            IDictionary<int, int> homeroomLoads)
+        {
+            int? preferredTeacherId = null;
+            var predecessorClassName = GetPredecessorClassName(lop.TenLop);
+
+            if (!string.IsNullOrWhiteSpace(previousNamHoc) && predecessorClassName != null)
+            {
+                preferredTeacherId = _context.LopHocs
+                    .AsNoTracking()
+                    .Where(x => x.NamHoc == previousNamHoc &&
+                                x.TenLop == predecessorClassName &&
+                                x.IdGiaoVienCN.HasValue)
+                    .Select(x => x.IdGiaoVienCN)
+                    .FirstOrDefault();
+            }
+
+            var availableTeacherIds = teacherIds
+                .Where(id => !homeroomLoads.ContainsKey(id))
+                .ToList();
+            if (!availableTeacherIds.Any())
+                return null;
+
+            var selectedTeacherId = preferredTeacherId.HasValue &&
+                                    availableTeacherIds.Contains(preferredTeacherId.Value)
+                ? preferredTeacherId.Value
+                : availableTeacherIds.First();
+
+            if (selectedTeacherId <= 0)
+                return null;
+
+            homeroomLoads[selectedTeacherId] = homeroomLoads.TryGetValue(selectedTeacherId, out var currentLoad)
+                ? currentLoad + 1
+                : 1;
+
+            return selectedTeacherId;
+        }
+
+        private static string? GetPredecessorClassName(string? className)
+        {
+            if (string.IsNullOrWhiteSpace(className))
+                return null;
+
+            var match = System.Text.RegularExpressions.Regex.Match(className.Trim(), @"^(?<grade>[6-9])(?<suffix>.+)$");
+            if (!match.Success || !int.TryParse(match.Groups["grade"].Value, out var grade) || grade <= 6)
+                return null;
+
+            return $"{grade - 1}{match.Groups["suffix"].Value}";
         }
 
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]

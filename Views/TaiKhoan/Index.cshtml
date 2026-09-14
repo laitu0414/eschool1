@@ -47,7 +47,7 @@
             <input name="keyword"
                    value="@ViewBag.Keyword"
                    class="form-control"
-                   placeholder="Tìm theo username, họ tên hoặc email..." />
+                   placeholder="Tìm theo số điện thoại, họ tên hoặc email..." />
         </div>
 
         <div class="col-md-3">
@@ -106,7 +106,7 @@
             <thead>
                 <tr>
                     <th width="70">STT</th>
-                    <th>Username</th>
+                    <th>Số điện thoại</th>
                     <th>Tên người dùng</th>
                     <th>Email</th>
                     <th>Chức vụ</th>
@@ -229,12 +229,12 @@
                                         <div class="modal-body">
 
                                             <div class="mb-3">
-                                                <label class="form-label">Username đăng nhập</label>
+                                                <label class="form-label">Số điện thoại đăng nhập</label>
                                                 <input value="@item.Username"
                                                        class="form-control"
                                                        readonly />
                                                 <div class="form-text">
-                                                    Username được đồng bộ tự động khi thay đổi số điện thoại trong hồ sơ.
+                                                    Số điện thoại được đồng bộ tự động khi thay đổi số điện thoại trong hồ sơ.
                                                 </div>
                                             </div>
 
@@ -278,24 +278,6 @@
                                                         }
                                                     </select>
                                                 }
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label class="form-label">
-                                                    Trạng thái
-                                                </label>
-                                                <select name="trangThai" class="form-select">
-                                                    @if (item.TrangThai)
-                                                    {
-                                                        <option value="true" selected>Hoạt động</option>
-                                                        <option value="false">Đã khóa</option>
-                                                    }
-                                                    else
-                                                    {
-                                                        <option value="true">Hoạt động</option>
-                                                        <option value="false" selected>Đã khóa</option>
-                                                    }
-                                                </select>
                                             </div>
 
                                         </div>
@@ -411,14 +393,17 @@
 
                     <div class="mb-3">
                         <label class="form-label">
-                            Username <span class="text-danger">*</span>
+                            Số điện thoại <span class="text-danger">*</span>
                         </label>
 
-                        <input name="username"
+                        <input name="sdt"
+                               type="tel"
                                class="form-control"
-                               maxlength="50"
+                               inputmode="numeric"
+                               pattern="0[0-9]{9}"
+                               maxlength="10"
                                required
-                               placeholder="Nhập username" />
+                               placeholder="Nhập số điện thoại 10 chữ số" />
                     </div>
 
                     <div class="mb-3">
