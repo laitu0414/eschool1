@@ -19,6 +19,7 @@ namespace eSchool.Controllers
             _context = context;
         }
 
+
         private HocSinh? GetCurrentHocSinh()
         {
             var userId = HttpContext.Session.GetInt32("UserId");

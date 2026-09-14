@@ -45,6 +45,14 @@
       "PackagePath": "staticwebassets\\favicon.ico"
     },
     {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\57fb753067094d958b5f3e9dca913405.jpg",
+      "PackagePath": "staticwebassets\\image\\57fb753067094d958b5f3e9dca913405.jpg"
+    },
+    {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\b5e3513012e1401a88268c6c447f75b7.jpg",
+      "PackagePath": "staticwebassets\\image\\b5e3513012e1401a88268c6c447f75b7.jpg"
+    },
+    {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\csvc.png",
       "PackagePath": "staticwebassets\\image\\csvc.png"
     },
@@ -119,6 +127,10 @@
     {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\news_fca6d16e4f3b463280408fc90a1ffa40.jpg",
       "PackagePath": "staticwebassets\\image\\news_fca6d16e4f3b463280408fc90a1ffa40.jpg"
+    },
+    {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\teachers\\d22f8ac224ea441db58322e9e3861a64.jpg",
+      "PackagePath": "staticwebassets\\image\\teachers\\d22f8ac224ea441db58322e9e3861a64.jpg"
     },
     {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\images\\khat-khao-cong-hien.png",

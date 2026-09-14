@@ -79,6 +79,31 @@
             modelBuilder.Entity<TaiKhoan>()
                 .HasIndex(x => new { x.Username, x.IdChucVu })
                 .IsUnique();
+
+            modelBuilder.Entity<ChucVu>().HasData(
+                new ChucVu { IdChucVu = 2, TenChucVu = "Giáo viên" },
+                new ChucVu { IdChucVu = 3, TenChucVu = "Học sinh" },
+                new ChucVu { IdChucVu = 4, TenChucVu = "Phụ huynh" },
+                new ChucVu { IdChucVu = 5, TenChucVu = "System Admin" }
+            );
+
+            modelBuilder.Entity<MonHoc>().HasData(
+                new MonHoc { IdMonHoc = 1, MaMon = "TOAN", TenMon = "Toán", SoTiet = 4 },
+                new MonHoc { IdMonHoc = 2, MaMon = "VAN", TenMon = "Ngữ văn", SoTiet = 4 },
+                new MonHoc { IdMonHoc = 3, MaMon = "ANH", TenMon = "Tiếng Anh", SoTiet = 4 },
+                new MonHoc { IdMonHoc = 4, MaMon = "LY", TenMon = "Vật lý", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 5, MaMon = "HOA", TenMon = "Hóa học", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 6, MaMon = "SINH", TenMon = "Sinh học", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 7, MaMon = "SU", TenMon = "Lịch sử", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 8, MaMon = "DIA", TenMon = "Địa lý", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 9, MaMon = "TIN", TenMon = "Tin học", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 10, MaMon = "CN", TenMon = "Công nghệ", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 11, MaMon = "GDTC", TenMon = "Giáo dục thể chất", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 12, MaMon = "GDCD", TenMon = "Giáo dục công dân", SoTiet = 1 },
+                new MonHoc { IdMonHoc = 13, MaMon = "NT", TenMon = "Nghệ thuật (Âm nhạc, Mỹ thuật)", SoTiet = 2 },
+                new MonHoc { IdMonHoc = 14, MaMon = "HDTN", TenMon = "Hoạt động trải nghiệm, hướng nghiệp", SoTiet = 3 },
+                new MonHoc { IdMonHoc = 15, MaMon = "GDDP", TenMon = "Nội dung giáo dục địa phương", SoTiet = 1 }
+            );
         }
     }
     }
