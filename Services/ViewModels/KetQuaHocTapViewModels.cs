@@ -72,6 +72,7 @@ namespace eSchool.ViewModels
 
     public class LuuDiemHocSinhRequest
     {
+        public string? Version { get; set; }
         public int IdHocSinh { get; set; }
         public int IdNamHoc { get; set; }
         public int IdHocKy { get; set; }

@@ -6,7 +6,7 @@
     ViewData["Title"] = "Quản lý điểm"; 
 }
 
-<style>
+<div class="mb-3"><a asp-controller="TongKet" asp-action="Index" class="btn btn-outline-primary">Điểm cả năm / Tổng kết</a></div><style>
     .filter-wrapper {
         min-height: 70vh;
         background: radial-gradient(circle at top right, rgba(238, 242, 247, 0.6), transparent),
@@ -105,7 +105,7 @@
                     <div class="col-md-6">
                         <div class="form-floating custom-floating">
                             <select name="lopId" asp-items="Model.LopHocs" class="form-select" id="lopSelectFull" required>
-                                <option value="" disabled selected>-- Chọn lớp học --</option>
+                                <option value="" disabled>-- Chọn lớp học --</option>
                             </select>
                             <label for="lopSelectFull"><i class="bi bi-people-fill me-1 text-primary"></i> Lớp học</label>
                         </div>
@@ -113,7 +113,7 @@
                     <div class="col-md-6">
                         <div class="form-floating custom-floating">
                             <select name="hocKyId" asp-items="Model.HocKys" class="form-select" id="hocKySelectFull" required>
-                                <option value="" disabled selected>-- Chọn học kỳ --</option>
+                                <option value="" disabled>-- Chọn học kỳ --</option>
                             </select>
                             <label for="hocKySelectFull"><i class="bi bi-calendar-check me-1 text-primary"></i> Học kỳ</label>
                         </div>
@@ -167,7 +167,7 @@
                     {
                         <th class="text-center" style="white-space: nowrap;">@mon.TenMon</th>
                     }
-                    <th class="text-center" style="white-space: nowrap;">Điểm TB Học Kỳ</th>
+                    <th class="text-center" style="white-space: nowrap;">TB các môn có điểm</th>
                     <th class="text-end pe-4" style="white-space: nowrap;">Hành động</th>
                 </tr>
             </thead>
@@ -242,7 +242,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-3 text-muted">Vui lòng tải file mẫu để xem định dạng chuẩn trước khi nhập dữ liệu.</p>
+                    <p class="mb-3 text-muted">Tải mẫu của đúng lớp, nhập điểm trên trang NhapDiem rồi chọn môn học cần cập nhật.</p>
                     <a asp-action="DownloadDiemTemplate" asp-route-lopId="@ViewBag.FilterLopId" class="btn btn-outline-success mb-4 w-100">
                         <i class="bi bi-download me-1"></i> Tải file mẫu danh sách lớp
                     </a>
@@ -259,7 +259,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Chọn file Excel (.xlsx)</label>
+                        <div class="alert alert-info small">
+    Điểm từ <strong>0 đến 10</strong>; số thập phân dùng <strong>7.5 hoặc 7,5</strong>.
+    Nhiều điểm trong một ô dùng dấu chấm phẩy: <strong>8; 7,5; 9</strong>.
+    Ô trống giữ nguyên điểm cũ. Ô có điểm thay thế danh sách điểm của cột đó.
+    Không sửa ID/mã học sinh hoặc dùng công thức. File có lỗi sẽ không lưu bất kỳ dòng nào.
+</div>
+<label class="form-label fw-bold">Chọn file Excel (.xlsx, tối đa 5 MB)</label>
                         <input type="file" name="file" class="form-control" accept=".xlsx" required />
                     </div>
                 </div>
@@ -281,7 +287,7 @@
                 <h5 class="modal-title">Nhập điểm cho <span id="studentNameTitle" class="text-primary"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-0">
+            <div class="modal-body p-0"><div class="alert alert-info m-3 small">Điểm 0–10. Dùng dấu chấm phẩy cho nhiều điểm: 8; 7,5; 9. Trong bảng nhập tay, xóa trắng ô rồi lưu sẽ xóa điểm cũ. ĐTB môn được tính khi đủ 4 nhóm điểm theo trọng số 1–1–2–3.</div>
                 <input type="hidden" id="modalStudentId" />
                 <input type="hidden" id="modalHocKyId" />
                 <input type="hidden" id="modalNamHocId" />
@@ -315,138 +321,93 @@
 </div>
 
 @section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Full screen filter logic
-            const btnNextFull = document.getElementById('btnNextFull');
-            if (btnNextFull) {
-                const lopSelectFull = document.getElementById('lopSelectFull');
-                const step2Full = document.getElementById('step2Full');
-                const hocKySelectFull = document.getElementById('hocKySelectFull');
-                
-                btnNextFull.addEventListener('click', function () {
-                    if (!lopSelectFull.value) {
-                        alert('Vui lòng chọn lớp học trước khi tiếp tục!');
-                        return;
-                    }
-                    btnNextFull.classList.add('d-none');
-                    step2Full.classList.remove('d-none');
-                    hocKySelectFull.focus();
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const element = document.getElementById('scoreModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(element);
+    const tbody = document.getElementById('gradesTableBody');
+    const save = document.getElementById('btnSaveGrades');
+    const fields = ['diem15Phut', 'diem1Tiet', 'diemGiuaKy', 'diemCuoiKy'];
+    let version = '', requestNumber = 0;
+    let baseline = '';
+    const readRows = () => Array.from(tbody.querySelectorAll('tr[data-subject]')).filter(tr => tr.dataset.editable === 'true').map(tr => {
+        const item = { idMonHoc: Number(tr.dataset.subject) };
+        fields.forEach(field => item[field] = tr.querySelector('input[data-field="' + field + '"]').value.trim() || null);
+        return item;
+    });
+    const message = text => {
+        tbody.replaceChildren();
+        const td = document.createElement('td'); td.colSpan = 6; td.className = 'text-center py-4'; td.textContent = text;
+        const tr = document.createElement('tr'); tr.append(td); tbody.append(tr);
+    };
+    const readResponse = async response => {
+        if (response.redirected || !response.headers.get('content-type')?.includes('application/json'))
+            throw new Error(response.status === 403 ? 'Bạn không có quyền thao tác.' : 'Phiên đăng nhập hết hạn hoặc không có quyền truy cập. Hãy tải lại trang.');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Không xử lý được yêu cầu.');
+        return data;
+    };
+    element.addEventListener('hidden.bs.modal', () => { requestNumber++; save.disabled = true; version = ''; });
+    document.querySelectorAll('.btn-nhap-diem').forEach(button => button.addEventListener('click', async () => {
+        const current = ++requestNumber;
+        save.disabled = true; version = '';
+        document.getElementById('studentNameTitle').textContent = button.dataset.name;
+        document.getElementById('modalStudentId').value = button.dataset.id;
+        document.getElementById('modalHocKyId').value = button.dataset.hocky;
+        document.getElementById('modalNamHocId').value = '';
+        message('Đang tải điểm...'); modal.show();
+        try {
+            const data = await readResponse(await fetch('/KetQuaHocTap/GetDiemHocSinh?' + new URLSearchParams({
+                idHocSinh: button.dataset.id, idHocKy: button.dataset.hocky
+            })));
+            if (current !== requestNumber) return;
+            version = data.version;
+            document.getElementById('modalNamHocId').value = data.idNamHoc;
+            tbody.replaceChildren();
+            data.diemMonHocs.forEach((subject, index) => {
+                const tr = document.createElement('tr');
+                tr.dataset.subject = subject.idMonHoc; tr.dataset.editable = String(subject.isEditable);
+                [index + 1, subject.tenMon].forEach(value => {
+                    const td = document.createElement('td'); td.textContent = value; tr.append(td);
                 });
-            }
-
-            const modal = new bootstrap.Modal(document.getElementById('scoreModal'));
-            const tbody = document.getElementById('gradesTableBody');
-            const btnSave = document.getElementById('btnSaveGrades');
-
-            document.querySelectorAll('.btn-nhap-diem').forEach(btn => {
-                btn.addEventListener('click', async function () {
-                    const studentId = this.dataset.id;
-                    const studentName = this.dataset.name;
-                    let hocKyId = this.dataset.hocky;
-
-                    if (!hocKyId || hocKyId === '') {
-                        alert('Vui lòng chọn Học kỳ ở bộ lọc bên trên trước khi nhập điểm!');
-                        return;
-                    }
-
-                    document.getElementById('studentNameTitle').textContent = studentName;
-                    document.getElementById('modalStudentId').value = studentId;
-                    document.getElementById('modalHocKyId').value = hocKyId;
-                    
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-                    modal.show();
-
-                    try {
-                        const response = await fetch(`/KetQuaHocTap/GetDiemHocSinh?idHocSinh=${studentId}&idHocKy=${hocKyId}`);
-                        const data = await response.json();
-                        
-                        document.getElementById('modalNamHocId').value = data.idNamHoc;
-                        
-                        tbody.innerHTML = '';
-                        let stt = 1;
-                        data.diemMonHocs.forEach(m => {
-                            if (!m.isEditable) return; // Ẩn hoàn toàn các môn bị khóa đối với giáo viên
-                            
-                            const tr = document.createElement('tr');
-                            
-                            tr.innerHTML = `
-                                <td class="text-center align-middle">${stt++}</td>
-                                <td class="align-middle fw-medium">
-                                    ${m.tenMon}
-                                    <input type="hidden" class="inp-monhoc" value="${m.idMonHoc}" />
-                                </td>
-                                <td><input type="text" class="form-control form-control-sm inp-15p" placeholder="vd: 8, 9" value="${m.diem15Phut !== null ? m.diem15Phut : ''}" /></td>
-                                <td><input type="text" class="form-control form-control-sm inp-1t" placeholder="vd: 8, 9" value="${m.diem1Tiet !== null ? m.diem1Tiet : ''}" /></td>
-                                <td><input type="text" class="form-control form-control-sm inp-gk" placeholder="vd: 8.5" value="${m.diemGiuaKy !== null ? m.diemGiuaKy : ''}" /></td>
-                                <td><input type="text" class="form-control form-control-sm inp-ck" placeholder="vd: 9" value="${m.diemCuoiKy !== null ? m.diemCuoiKy : ''}" /></td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    } catch (error) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Lỗi khi tải dữ liệu.</td></tr>';
-                    }
+                fields.forEach(field => {
+                    const td = document.createElement('td'), input = document.createElement('input');
+                    input.type = 'text'; input.className = 'form-control form-control-sm';
+                    input.dataset.field = field; input.value = (subject[field] || '').replaceAll(',', '; ');
+                    input.placeholder = '8; 7,5'; input.maxLength = 255; input.disabled = !subject.isEditable;
+                    td.append(input); tr.append(td);
                 });
+                tbody.append(tr);
             });
-
-            btnSave.addEventListener('click', async function () {
-                const spinner = this.querySelector('.spinner-border');
-                const studentId = document.getElementById('modalStudentId').value;
-                const hocKyId = document.getElementById('modalHocKyId').value;
-                const namHocId = document.getElementById('modalNamHocId').value;
-
-                const diemMonHocs = [];
-                tbody.querySelectorAll('tr').forEach(tr => {
-                    const idMonHoc = tr.querySelector('.inp-monhoc')?.value;
-                    if (!idMonHoc) return;
-
-                    const d15p = tr.querySelector('.inp-15p').value.trim();
-                    const d1t = tr.querySelector('.inp-1t').value.trim();
-                    const dgk = tr.querySelector('.inp-gk').value.trim();
-                    const dck = tr.querySelector('.inp-ck').value.trim();
-
-                    diemMonHocs.push({
-                        IdMonHoc: parseInt(idMonHoc),
-                        Diem15Phut: d15p !== '' ? d15p : null,
-                        Diem1Tiet: d1t !== '' ? d1t : null,
-                        DiemGiuaKy: dgk !== '' ? dgk : null,
-                        DiemCuoiKy: dck !== '' ? dck : null
-                    });
-                });
-
-                const payload = {
-                    IdHocSinh: parseInt(studentId),
-                    IdHocKy: parseInt(hocKyId),
-                    IdNamHoc: parseInt(namHocId),
-                    DiemMonHocs: diemMonHocs
-                };
-
-                btnSave.disabled = true;
-                spinner.classList.remove('d-none');
-
-                try {
-                    const response = await fetch('/KetQuaHocTap/LuuDiemHocSinh', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-                    if (result.success) {
-                        modal.hide();
-                        window.location.reload();
-                    } else {
-                        alert(result.message || 'Có lỗi xảy ra khi lưu.');
-                    }
-                } catch (error) {
-                    alert('Lỗi kết nối mạng.');
-                } finally {
-                    btnSave.disabled = false;
-                    spinner.classList.add('d-none');
-                }
-            });
-        });
-    </script>
+            if (!data.diemMonHocs.length) message('Chưa có môn học được phân công.');
+            save.disabled = !data.diemMonHocs.some(m => m.isEditable);
+            baseline = JSON.stringify(readRows());
+        } catch (error) { if (current === requestNumber) message(error.message); }
+    }));
+    save.addEventListener('click', async () => {
+        if (save.disabled || !version) return;
+        const rows = readRows();
+        if (JSON.stringify(rows) === baseline) { modal.hide(); return; }
+        if (!rows.length) return;
+        const oldRows = JSON.parse(baseline);
+        const clearsScores = rows.some(row => fields.some(field => !row[field] && oldRows.find(old => old.idMonHoc === row.idMonHoc)?.[field]));
+        if (clearsScores && !confirm('Một số ô điểm đã được xóa trắng. Lưu sẽ xóa điểm cũ ở các ô này. Tiếp tục?')) return;
+        save.disabled = true;
+        const spinner = save.querySelector('.spinner-border'); spinner.classList.remove('d-none');
+        try {
+            const data = await readResponse(await fetch('/KetQuaHocTap/LuuDiemHocSinh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value },
+                body: JSON.stringify({
+                    idHocSinh: Number(document.getElementById('modalStudentId').value),
+                    idHocKy: Number(document.getElementById('modalHocKyId').value),
+                    idNamHoc: Number(document.getElementById('modalNamHocId').value), version, diemMonHocs: rows
+                })
+            }));
+            if (data.success) window.location.reload();
+        } catch (error) { alert(error.message); }
+        finally { save.disabled = false; spinner.classList.add('d-none'); }
+    });
+});
+</script>
 }

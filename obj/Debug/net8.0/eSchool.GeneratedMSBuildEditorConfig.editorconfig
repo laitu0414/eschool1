@@ -12,329 +12,337 @@ build_property.EntryPointFilePath =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = eSchool
 build_property.RootNamespace = eSchool
-build_property.ProjectDir = C:\Users\Admin\OneDrive\Desktop\DATN\
+build_property.ProjectDir = D:\DATN\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = true
-build_property.MSBuildProjectDirectory = C:\Users\Admin\OneDrive\Desktop\DATN
+build_property.MSBuildProjectDirectory = D:\DATN
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Account/ForceChangePassword.cshtml]
+[D:/DATN/Views/Account/ForceChangePassword.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxGb3JjZUNoYW5nZVBhc3N3b3JkLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Account/ForgotPassword.cshtml]
+[D:/DATN/Views/Account/ForgotPassword.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxGb3Jnb3RQYXNzd29yZC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Account/Login.cshtml]
+[D:/DATN/Views/Account/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxMb2dpbi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Admin/Index.cshtml]
+[D:/DATN/Views/Admin/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/ChucVu/Index.cshtml]
+[D:/DATN/Views/ChucVu/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2h1Y1Z1XEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/ChuyenLop/Create.cshtml]
+[D:/DATN/Views/ChuyenLop/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2h1eWVuTG9wXENyZWF0ZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/ChuyenLop/Index.cshtml]
+[D:/DATN/Views/ChuyenLop/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2h1eWVuTG9wXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/ChuyenLop/StudentList.cshtml]
+[D:/DATN/Views/ChuyenLop/StudentList.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2h1eWVuTG9wXFN0dWRlbnRMaXN0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/GiaoVien/ChuNhiem.cshtml]
+[D:/DATN/Views/GiaoVien/ChuNhiem.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cQ2h1TmhpZW0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/GiaoVien/HoSo.cshtml]
+[D:/DATN/Views/GiaoVien/HoSo.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cSG9Tby5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/GiaoVien/Index.cshtml]
+[D:/DATN/Views/GiaoVien/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/GiaoVien/QuanLyHocPhi.cshtml]
+[D:/DATN/Views/GiaoVien/QuanLyHocPhi.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cUXVhbkx5SG9jUGhpLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/GiaoVien/QuanLyKyLuat.cshtml]
+[D:/DATN/Views/GiaoVien/QuanLyKyLuat.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cUXVhbkx5S3lMdWF0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/GiaoVien/ThoiKhoaBieu.cshtml]
+[D:/DATN/Views/GiaoVien/ThoiKhoaBieu.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cVGhvaUtob2FCaWV1LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/GiaoVien/YeuCauBaoTri.cshtml]
+[D:/DATN/Views/GiaoVien/YeuCauBaoTri.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cWWV1Q2F1QmFvVHJpLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/GiaoVien/_Form.cshtml]
+[D:/DATN/Views/GiaoVien/_Form.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR2lhb1ZpZW5cX0Zvcm0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocSinh/Create.cshtml]
+[D:/DATN/Views/HocSinh/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxDcmVhdGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocSinh/Edit.cshtml]
+[D:/DATN/Views/HocSinh/Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxFZGl0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocSinh/HoSo.cshtml]
+[D:/DATN/Views/HocSinh/HoSo.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxIb1NvLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocSinh/Index.cshtml]
+[D:/DATN/Views/HocSinh/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocSinh/KyLuat.cshtml]
+[D:/DATN/Views/HocSinh/KyLuat.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxLeUx1YXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocSinh/ThoiKhoaBieu.cshtml]
+[D:/DATN/Views/HocSinh/ThoiKhoaBieu.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxUaG9pS2hvYUJpZXUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocSinh/TraCuu.cshtml]
+[D:/DATN/Views/HocSinh/TraCuu.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxUcmFDdXUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocSinh/_Form.cshtml]
+[D:/DATN/Views/HocSinh/_Form.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jU2luaFxfRm9ybS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/ChonLopPhanCong.cshtml]
+[D:/DATN/Views/HocVu/ChonLopPhanCong.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcQ2hvbkxvcFBoYW5Db25nLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/ChuyenLich.cshtml]
+[D:/DATN/Views/HocVu/ChuyenLich.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcQ2h1eWVuTGljaC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/HocKy.cshtml]
+[D:/DATN/Views/HocVu/DanhSachHocSinhLop.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcRGFuaFNhY2hIb2NTaW5oTG9wLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DATN/Views/HocVu/HocKy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcSG9jS3kuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/LopHoc.cshtml]
+[D:/DATN/Views/HocVu/LopHoc.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcTG9wSG9jLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/MonHoc.cshtml]
+[D:/DATN/Views/HocVu/MonHoc.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcTW9uSG9jLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/NamHoc.cshtml]
+[D:/DATN/Views/HocVu/NamHoc.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcTmFtSG9jLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/PhanCongGiaoVien.cshtml]
+[D:/DATN/Views/HocVu/PhanCongGiaoVien.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcUGhhbkNvbmdHaWFvVmllbi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/PhongHoc.cshtml]
+[D:/DATN/Views/HocVu/PhongHoc.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcUGhvbmdIb2MuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/ThietBi.cshtml]
+[D:/DATN/Views/HocVu/ThietBi.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcVGhpZXRCaS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/ThoiKhoaBieu.cshtml]
+[D:/DATN/Views/HocVu/ThoiKhoaBieu.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcVGhvaUtob2FCaWV1LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/_HocKyForm.cshtml]
+[D:/DATN/Views/HocVu/_HocKyForm.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcX0hvY0t5Rm9ybS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/_LopForm.cshtml]
+[D:/DATN/Views/HocVu/_LopForm.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcX0xvcEZvcm0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/_MonForm.cshtml]
+[D:/DATN/Views/HocVu/_MonForm.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcX01vbkZvcm0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/HocVu/_NamHocForm.cshtml]
+[D:/DATN/Views/HocVu/_NamHocForm.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9jVnVcX05hbUhvY0Zvcm0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Home/CoSoVatChat.cshtml]
+[D:/DATN/Views/Home/CoSoVatChat.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDb1NvVmF0Q2hhdC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Home/DoiNguGiaoVien.cshtml]
+[D:/DATN/Views/Home/DoiNguGiaoVien.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxEb2lOZ3VHaWFvVmllbi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Home/Index.cshtml]
+[D:/DATN/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Home/MoHinhDaoTao.cshtml]
+[D:/DATN/Views/Home/MoHinhDaoTao.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxNb0hpbmhEYW9UYW8uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Home/Privacy.cshtml]
+[D:/DATN/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Home/TamNhin.cshtml]
+[D:/DATN/Views/Home/TamNhin.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxUYW1OaGluLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Home/ThongDiepHieuTruong.cshtml]
+[D:/DATN/Views/Home/ThongDiepHieuTruong.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxUaG9uZ0RpZXBIaWV1VHJ1b25nLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/ChiTietDiemDanh.cshtml]
+[D:/DATN/Views/KetQuaHocTap/ChiTietDiemDanh.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXENoaVRpZXREaWVtRGFuaC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/DanhSachMienGiam.cshtml]
+[D:/DATN/Views/KetQuaHocTap/DanhSachMienGiam.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXERhbmhTYWNoTWllbkdpYW0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/Diem.cshtml]
+[D:/DATN/Views/KetQuaHocTap/Diem.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXERpZW0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/DiemDanh.cshtml]
+[D:/DATN/Views/KetQuaHocTap/DiemDanh.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXERpZW1EYW5oLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/GiaoVienDiemDanh.cshtml]
+[D:/DATN/Views/KetQuaHocTap/GiaoVienDiemDanh.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXEdpYW9WaWVuRGllbURhbmguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/HocPhi.cshtml]
+[D:/DATN/Views/KetQuaHocTap/HocPhi.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXEhvY1BoaS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/NhatKySuaDiem.cshtml]
+[D:/DATN/Views/KetQuaHocTap/NhatKySuaDiem.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXE5oYXRLeVN1YURpZW0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/PhieuDiem.cshtml]
+[D:/DATN/Views/KetQuaHocTap/PhieuDiem.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXFBoaWV1RGllbS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/XemDiem.cshtml]
+[D:/DATN/Views/KetQuaHocTap/XemDiem.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXFhlbURpZW0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/XemDiemDanh.cshtml]
+[D:/DATN/Views/KetQuaHocTap/XemDiemDanh.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXFhlbURpZW1EYW5oLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/KetQuaHocTap/XemHocPhi.cshtml]
+[D:/DATN/Views/KetQuaHocTap/XemHocPhi.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcS2V0UXVhSG9jVGFwXFhlbUhvY1BoaS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/LenLop/ImportStudents.cshtml]
+[D:/DATN/Views/LenLop/ImportStudents.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTGVuTG9wXEltcG9ydFN0dWRlbnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/LenLop/Index.cshtml]
+[D:/DATN/Views/LenLop/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTGVuTG9wXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/NhatKy/Index.cshtml]
+[D:/DATN/Views/NhatKy/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTmhhdEt5XEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/PhuHuynh/Create.cshtml]
+[D:/DATN/Views/PhuHuynh/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGh1SHV5bmhcQ3JlYXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/PhuHuynh/Edit.cshtml]
+[D:/DATN/Views/PhuHuynh/Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGh1SHV5bmhcRWRpdC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/PhuHuynh/Index.cshtml]
+[D:/DATN/Views/PhuHuynh/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGh1SHV5bmhcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/PhuHuynh/_Form.cshtml]
+[D:/DATN/Views/PhuHuynh/_Form.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGh1SHV5bmhcX0Zvcm0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/Error.cshtml]
+[D:/DATN/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_AcademicLayout.cshtml]
+[D:/DATN/Views/Shared/_AcademicLayout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9BY2FkZW1pY0xheW91dC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_AdminLayout.cshtml]
+[D:/DATN/Views/Shared/_AdminLayout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9BZG1pbkxheW91dC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_ParentLayout.cshtml]
+[D:/DATN/Views/Shared/_ParentLayout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9QYXJlbnRMYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_ResultLayout.cshtml]
+[D:/DATN/Views/Shared/_ResultLayout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9SZXN1bHRMYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_SidebarGioiThieu.cshtml]
+[D:/DATN/Views/Shared/_SidebarGioiThieu.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9TaWRlYmFyR2lvaVRoaWV1LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_SiteFooter.cshtml]
+[D:/DATN/Views/Shared/_SiteFooter.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9TaXRlRm9vdGVyLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_StudentLayout.cshtml]
+[D:/DATN/Views/Shared/_StudentLayout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9TdHVkZW50TGF5b3V0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_TeacherLayout.cshtml]
+[D:/DATN/Views/Shared/_TeacherLayout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9UZWFjaGVyTGF5b3V0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_ValidationScriptsPartial.cshtml]
+[D:/DATN/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/TaiKhoan/Index.cshtml]
+[D:/DATN/Views/TaiKhoan/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGFpS2hvYW5cSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/ThongBao/Index.cshtml]
+[D:/DATN/Views/ThongBao/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGhvbmdCYW9cSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/TinTucSuKien/Index.cshtml]
+[D:/DATN/Views/TinTucSuKien/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGluVHVjU3VLaWVuXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/_ViewImports.cshtml]
+[D:/DATN/Views/TongKet/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVG9uZ0tldFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DATN/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/_ViewStart.cshtml]
+[D:/DATN/Views/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Admin/OneDrive/Desktop/DATN/Views/Shared/_Layout.cshtml]
+[D:/DATN/Views/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = b-y15n3lqehh

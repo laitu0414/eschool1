@@ -27,6 +27,12 @@ namespace eSchool.ViewModels
         public int? IdPhongHoc { get; set; }
     }
 
+    public class DanhSachHocSinhLopViewModel
+    {
+        public LopHoc LopHoc { get; set; } = new();
+        public List<HocSinh> HocSinhs { get; set; } = new();
+    }
+
     public class MonHocFormViewModel
     {
         public int IdMonHoc { get; set; }

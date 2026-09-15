@@ -43,6 +43,7 @@ namespace eSchool.Controllers
             var roleId = HttpContext.Session.GetInt32("RoleId");
             var isGiaoVien = roleId == 2;
             var giaoVien = isGiaoVien ? GetCurrentGiaoVien() : null;
+            if (isGiaoVien && giaoVien == null) return Forbid();
 
             var vm = new AdminDiemPageViewModel
             {
@@ -62,6 +63,19 @@ namespace eSchool.Controllers
                 vm.LopHocs = vm.LopHocs.Where(x => assignedLopIds.Contains(int.Parse(x.Value))).ToList();
             }
 
+            if (lopId.HasValue && hocKyId.HasValue)
+            {
+                var selectedClass = _context.LopHocs.Find(lopId.Value);
+                var selectedSemester = _context.HocKys.Include(h => h.NamHoc).FirstOrDefault(h => h.IdHocKy == hocKyId);
+                if (selectedClass == null || selectedSemester?.NamHoc == null ||
+                    selectedClass.NamHoc?.Replace(" ", "") != selectedSemester.NamHoc.TenNamHoc.Replace(" ", ""))
+                {
+                    TempData["Error"] = "Lớp và học kỳ phải thuộc cùng năm học.";
+                    return RedirectToAction(nameof(Diem));
+                }
+            }
+            foreach (var option in vm.LopHocs) option.Selected = option.Value == lopId?.ToString();
+            foreach (var option in vm.HocKys) option.Selected = option.Value == hocKyId?.ToString();
             var hocSinhsQuery = _context.HocSinhs.Include(x => x.LopHoc).AsNoTracking().AsQueryable();
             if (lopId.HasValue)
             {
@@ -91,8 +105,9 @@ namespace eSchool.Controllers
 
             if (lopId.HasValue && hocKyId.HasValue)
             {
-                var diemsQuery = _context.Diems.AsNoTracking().Where(x => x.IdHocKy == hocKyId.Value);
-                var diems = diemsQuery.ToList();
+                var studentIds = hocSinhs.Select(h => h.IdHocSinh).ToList();
+                var diemsQuery = _context.Diems.AsNoTracking().Where(x => x.IdHocKy == hocKyId.Value && studentIds.Contains(x.IdHocSinh));
+                var diems = diemsQuery.ToList().GroupBy(d => new { d.IdHocSinh, d.IdMonHoc }).Select(g => g.OrderByDescending(d => d.IdDiem).First()).ToList();
                 var diemGroup = diems.GroupBy(x => x.IdHocSinh).ToDictionary(g => g.Key, g => g.ToList());
 
                 foreach (var hs in hocSinhs)
@@ -103,7 +118,7 @@ namespace eSchool.Controllers
                     {
                         if (hsDiems.Any(x => x.DiemTB.HasValue))
                         {
-                            tbHocKy = hsDiems.Where(x => x.DiemTB.HasValue).Average(x => x.DiemTB);
+                            tbHocKy = Math.Round(hsDiems.Where(x => x.DiemTB.HasValue).Average(x => x.DiemTB)!.Value, 2);
                         }
 
                         foreach (var d in hsDiems)
@@ -143,128 +158,138 @@ namespace eSchool.Controllers
             return View(vm);
         }
 
+        private bool AreGradesLocked() => _context.NhatKyHoatDongs.AsNoTracking()
+            .Where(n => n.HanhDong == "LenLop.ResultsLocked").OrderByDescending(n => n.IdNhatKy)
+            .Select(n => n.NoiDung).FirstOrDefault() == bool.TrueString;
+
+        private List<int> EditableSubjects(HocSinh student, HocKy semester)
+        {
+            if (HttpContext.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin)
+                return _context.MonHocs.Select(m => m.IdMonHoc).ToList();
+            var teacher = GetCurrentGiaoVien();
+            if (teacher == null || student.IdLopHoc == null) return new();
+            return _context.PhanCongGiangDays.Where(p => p.IdGiaoVien == teacher.IdGiaoVien &&
+                p.IdLop == student.IdLopHoc && (p.NamHoc == null || p.NamHoc == "" || p.NamHoc == student.LopHoc!.NamHoc) &&
+                (p.HocKy == null || p.HocKy == "" || p.HocKy == "Cả năm" || p.HocKy == semester.TenHocKy))
+                .Select(p => p.IdMonHoc).Distinct().ToList();
+        }
+
+        private static bool MatchesYear(HocSinh student, HocKy semester) =>
+            student.LopHoc?.NamHoc != null && semester.NamHoc != null &&
+            student.LopHoc.NamHoc.Replace(" ", "") == semester.NamHoc.TenNamHoc.Replace(" ", "");
+
+        private static string GradeSnapshot(IEnumerable<Diem> grades) =>
+            System.Text.Json.JsonSerializer.Serialize(grades.OrderBy(d => d.IdMonHoc).ThenBy(d => d.IdDiem)
+                .Select(d => new { d.IdDiem, d.IdMonHoc, d.IdNamHoc, d.Diem15Phut, d.Diem1Tiet, d.DiemGiuaKy, d.DiemCuoiKy }));
+
+        private static string GradeVersion(IEnumerable<Diem> grades) =>
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(GradeSnapshot(grades))));
+
         [HttpGet]
         [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         public IActionResult GetDiemHocSinh(int idHocSinh, int idHocKy)
         {
-            var hocKy = _context.HocKys.Find(idHocKy);
-            if (hocKy == null) return NotFound();
-
-            var hocSinh = _context.HocSinhs.Find(idHocSinh);
-            if (hocSinh == null) return NotFound();
-
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            var isGiaoVien = roleId == 2;
-            var giaoVien = isGiaoVien ? GetCurrentGiaoVien() : null;
-
-            var assignedMonHocs = new List<int>();
-            if (isGiaoVien && giaoVien != null && hocSinh.IdLopHoc.HasValue)
-            {
-                assignedMonHocs = _context.PhanCongGiangDays
-                    .Where(x => x.IdGiaoVien == giaoVien.IdGiaoVien && x.IdLop == hocSinh.IdLopHoc.Value)
-                    .Select(x => x.IdMonHoc)
-                    .ToList();
-            }
-
-            var monHocs = _context.MonHocs.OrderBy(x => x.TenMon).ToList();
-            var diems = _context.Diems.Where(x => x.IdHocSinh == idHocSinh && x.IdHocKy == idHocKy).ToList();
-
-            var list = monHocs.Select(m =>
-            {
-                var d = diems.FirstOrDefault(x => x.IdMonHoc == m.IdMonHoc);
-                return new DiemMonHocViewModel
-                {
-                    IdMonHoc = m.IdMonHoc,
-                    TenMon = m.TenMon,
-                    Diem15Phut = d?.Diem15Phut,
-                    Diem1Tiet = d?.Diem1Tiet,
-                    DiemGiuaKy = d?.DiemGiuaKy,
-                    DiemCuoiKy = d?.DiemCuoiKy,
-                    IsEditable = !isGiaoVien || assignedMonHocs.Contains(m.IdMonHoc)
-                };
-            }).ToList();
-
+            var semester = _context.HocKys.Include(h => h.NamHoc).FirstOrDefault(h => h.IdHocKy == idHocKy);
+            var student = _context.HocSinhs.Include(h => h.LopHoc).FirstOrDefault(h => h.IdHocSinh == idHocSinh);
+            if (student == null || semester == null) return NotFound();
+            if (!MatchesYear(student, semester)) return BadRequest(new { message = "Học kỳ không thuộc năm học của lớp." });
+            var allowed = EditableSubjects(student, semester);
+            if (HttpContext.Session.GetInt32("RoleId") == 2 && allowed.Count == 0) return Forbid();
+            var grades = _context.Diems.AsNoTracking().Where(d => d.IdHocSinh == idHocSinh && d.IdHocKy == idHocKy).ToList();
+            var locked = AreGradesLocked();
+            var subjects = _context.MonHocs.OrderBy(m => m.TenMon).ToList();
+            if (HttpContext.Session.GetInt32("RoleId") == 2) subjects = subjects.Where(m => allowed.Contains(m.IdMonHoc)).ToList();
             return Ok(new
             {
-                idNamHoc = hocKy.IdNamHoc,
-                diemMonHocs = list
+                idNamHoc = semester.IdNamHoc, version = GradeVersion(grades), isLocked = locked,
+                diemMonHocs = subjects.Select(m =>
+                {
+                    var grade = grades.Where(d => d.IdMonHoc == m.IdMonHoc).OrderByDescending(d => d.IdDiem).FirstOrDefault();
+                    return new DiemMonHocViewModel
+                    {
+                        IdMonHoc = m.IdMonHoc, TenMon = m.TenMon,
+                        Diem15Phut = grade?.Diem15Phut, Diem1Tiet = grade?.Diem1Tiet,
+                        DiemGiuaKy = grade?.DiemGiuaKy, DiemCuoiKy = grade?.DiemCuoiKy,
+                        IsEditable = !locked && student.TrangThai && allowed.Contains(m.IdMonHoc)
+                    };
+                })
             });
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         public IActionResult LuuDiemHocSinh([FromBody] LuuDiemHocSinhRequest req)
         {
-            if (req == null || req.IdHocSinh <= 0 || req.IdHocKy <= 0 || req.IdNamHoc <= 0)
+            if (!ModelState.IsValid || req == null || req.IdHocSinh <= 0 || req.IdHocKy <= 0 || req.IdNamHoc <= 0 ||
+                req.DiemMonHocs == null || req.DiemMonHocs.Count == 0 || req.DiemMonHocs.Any(m => m == null) ||
+                req.DiemMonHocs.GroupBy(m => m.IdMonHoc).Any(g => g.Count() > 1))
+                return BadRequest(new { success = false, message = "Danh sách điểm không hợp lệ hoặc có môn bị trùng." });
+            using var transaction = _context.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
+            if (AreGradesLocked()) return BadRequest(new { success = false, message = "Kết quả đã khóa. Không thể sửa điểm." });
+            var student = _context.HocSinhs.Include(h => h.LopHoc).FirstOrDefault(h => h.IdHocSinh == req.IdHocSinh);
+            var semester = _context.HocKys.Include(h => h.NamHoc).FirstOrDefault(h => h.IdHocKy == req.IdHocKy && h.IdNamHoc == req.IdNamHoc);
+            if (student == null || !student.TrangThai || semester == null || !MatchesYear(student, semester))
+                return BadRequest(new { success = false, message = "Học sinh đã ngừng học hoặc lớp, học kỳ, năm học không khớp." });
+            var allowed = EditableSubjects(student, semester);
+            if (req.DiemMonHocs.Any(m => !allowed.Contains(m.IdMonHoc))) return Forbid();
+            try
             {
-                return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ." });
+                foreach (var item in req.DiemMonHocs)
+                {
+                    item.Diem15Phut = DiemExcelReader.NormalizeInput(item.Diem15Phut);
+                    item.Diem1Tiet = DiemExcelReader.NormalizeInput(item.Diem1Tiet);
+                    item.DiemGiuaKy = DiemExcelReader.NormalizeInput(item.DiemGiuaKy);
+                    item.DiemCuoiKy = DiemExcelReader.NormalizeInput(item.DiemCuoiKy);
+                }
             }
-
-            var roleId = HttpContext.Session.GetInt32("RoleId");
-            var isGiaoVien = roleId == 2;
-            var giaoVien = isGiaoVien ? GetCurrentGiaoVien() : null;
-
-            var hocSinh = _context.HocSinhs.Find(req.IdHocSinh);
-            var hocKy = _context.HocKys.FirstOrDefault(x => x.IdHocKy == req.IdHocKy && x.IdNamHoc == req.IdNamHoc);
-
-            if (hocSinh == null || hocKy == null) return BadRequest(new { success = false, message = "Học sinh hoặc học kỳ không tồn tại." });
-
-            var assignedMonHocs = new List<int>();
-            if (isGiaoVien && giaoVien != null && hocSinh.IdLopHoc.HasValue)
-            {
-                assignedMonHocs = _context.PhanCongGiangDays
-                    .Where(x => x.IdGiaoVien == giaoVien.IdGiaoVien && x.IdLop == hocSinh.IdLopHoc.Value)
-                    .Select(x => x.IdMonHoc)
-                    .ToList();
-            }
-
-            var existingDiems = _context.Diems
-                .Where(x => x.IdHocSinh == req.IdHocSinh && x.IdHocKy == req.IdHocKy && x.IdNamHoc == req.IdNamHoc)
-                .ToList();
-
+            catch (FormatException ex) { return BadRequest(new { success = false, message = ex.Message }); }
+            var existing = _context.Diems.Where(d => d.IdHocSinh == req.IdHocSinh && d.IdHocKy == req.IdHocKy).ToList();
+            if (existing.GroupBy(d => d.IdMonHoc).Any(g => g.Count() > 1) ||
+                existing.Any(d => d.IdNamHoc.HasValue && d.IdNamHoc != req.IdNamHoc))
+                return Conflict(new { success = false, message = "Dữ liệu đang trùng môn hoặc sai năm học. Cần kiểm tra trước khi lưu." });
+            if (string.IsNullOrEmpty(req.Version) || req.Version != GradeVersion(existing))
+                return Conflict(new { success = false, message = "Điểm đã thay đổi hoặc phiên nhập đã cũ. Đóng và mở lại bảng điểm trước khi lưu." });
+            var before = GradeSnapshot(existing);
             foreach (var item in req.DiemMonHocs)
             {
-                if (isGiaoVien && !assignedMonHocs.Contains(item.IdMonHoc)) continue;
-
-                var hasGrade = !string.IsNullOrWhiteSpace(item.Diem15Phut) || !string.IsNullOrWhiteSpace(item.Diem1Tiet) || !string.IsNullOrWhiteSpace(item.DiemGiuaKy) || !string.IsNullOrWhiteSpace(item.DiemCuoiKy);
-                var diem = existingDiems.FirstOrDefault(x => x.IdMonHoc == item.IdMonHoc);
-
-                if (diem == null && hasGrade)
+                var grade = existing.FirstOrDefault(d => d.IdMonHoc == item.IdMonHoc);
+                var hasScores = new[] { item.Diem15Phut, item.Diem1Tiet, item.DiemGiuaKy, item.DiemCuoiKy }.Any(s => s != null);
+                if (grade == null && !hasScores) continue;
+                if (grade == null)
                 {
-                    diem = new Diem
-                    {
-                        IdHocSinh = req.IdHocSinh,
-                        IdMonHoc = item.IdMonHoc,
-                        IdHocKy = req.IdHocKy,
-                        IdNamHoc = req.IdNamHoc,
-                        HocKy = hocKy.TenHocKy
-                    };
-                    _context.Diems.Add(diem);
+                    grade = new Diem { IdHocSinh = req.IdHocSinh, IdMonHoc = item.IdMonHoc, IdHocKy = req.IdHocKy };
+                    _context.Diems.Add(grade);
+                    existing.Add(grade);
                 }
-
-                if (diem != null)
-                {
-                    diem.Diem15Phut = item.Diem15Phut;
-                    diem.Diem1Tiet = item.Diem1Tiet;
-                    diem.DiemGiuaKy = item.DiemGiuaKy;
-                    diem.DiemCuoiKy = item.DiemCuoiKy;
-                    diem.TinhDiemTrungBinh();
-                }
+                grade.IdNamHoc = req.IdNamHoc;
+                grade.HocKy = semester.TenHocKy;
+                grade.Diem15Phut = item.Diem15Phut; grade.Diem1Tiet = item.Diem1Tiet;
+                grade.DiemGiuaKy = item.DiemGiuaKy; grade.DiemCuoiKy = item.DiemCuoiKy;
+                grade.TinhDiemTrungBinh();
             }
-
-            if (roleId == SystemRoleIds.SystemAdmin) // If System Admin
+            var after = GradeSnapshot(existing);
+            if (before == after) return Ok(new { success = true, message = "Không có điểm thay đổi." });
+            student.DaDuyet = false;
+            _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
             {
-                var username = HttpContext.Session.GetString("Username") ?? "Admin";
-                _nhatKyService.GhiLog(username, "Sửa điểm", $"Sửa điểm cho học sinh {hocSinh.HoTen} ({hocSinh.MaHS}) ở học kỳ {hocKy.TenHocKy}");
-            }
-
-            _context.SaveChanges();
-            return Ok(new { success = true, message = "Đã lưu điểm thành công." });
+                TenDangNhap = HttpContext.Session.GetString("Username") ?? "Admin", HanhDong = "Sửa điểm",
+                NoiDung = $"Học sinh {student.MaHS}, {semester.TenHocKy}, {semester.NamHoc!.TenNamHoc}. Trước: {before}. Sau: {after}."
+            });
+            try { _context.SaveChanges(); transaction.Commit(); }
+            catch (DbUpdateException) { transaction.Rollback(); return Conflict(new { success = false, message = "Chưa lưu được điểm. Vui lòng tải lại và thử lại." }); }
+            return Ok(new { success = true, message = "Đã lưu điểm và nhật ký thay đổi." });
         }
-
         [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
         public IActionResult DownloadDiemTemplate(int lopId)
         {
+            if (!_context.LopHocs.Any(l => l.IdLop == lopId)) return BadRequest("Vui lòng chọn lớp hợp lệ.");
+            if (HttpContext.Session.GetInt32("RoleId") == 2)
+            {
+                var teacher = GetCurrentGiaoVien();
+                if (teacher == null || !_context.PhanCongGiangDays.Any(p => p.IdGiaoVien == teacher.IdGiaoVien && p.IdLop == lopId))
+                    return Forbid();
+            }
             var hocSinhs = _context.HocSinhs
                 .Where(x => x.IdLopHoc == lopId && x.TrangThai)
                 .OrderBy(x => x.HoTen)
@@ -294,6 +319,16 @@ namespace eSchool.Controllers
                 row++;
             }
 
+            worksheet.Columns(4, 7).Style.NumberFormat.Format = "@";
+            worksheet.SheetView.FreezeRows(1);
+            var help = workbook.Worksheets.Add("HuongDan");
+            help.Cell(1, 1).Value = "Nhập điểm trên trang NhapDiem; không sửa tiêu đề, ID hoặc mã học sinh.";
+            help.Cell(2, 1).Value = "Điểm từ 0 đến 10. Số thập phân: 7.5 hoặc 7,5. Nhiều điểm: 8; 7,5; 9 (dùng dấu chấm phẩy).";
+            help.Cell(3, 1).Value = "Ô trống giữ nguyên điểm cũ. Ô có điểm thay thế toàn bộ danh sách điểm của cột tương ứng.";
+            help.Cell(4, 1).Value = "Không dùng công thức, ngày tháng hoặc ký hiệu. Bất kỳ lỗi nào cũng hủy toàn bộ lần nhập.";
+            help.Cell(5, 1).Value = "Chọn đúng môn và học kỳ trên website trước khi nhập. Điểm trung bình được tính tự động khi đủ bốn nhóm điểm.";
+            help.Column(1).Width = 110;
+            help.Column(1).Style.Alignment.WrapText = true;
             worksheet.Columns().AdjustToContents();
 
             using var stream = new MemoryStream();
@@ -306,85 +341,112 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ImportDiemExcel(IFormFile? file, int lopId, int hocKyId, int monHocId)
         {
-            if (file == null || file.Length <= 0)
+            IActionResult ImportError(string message)
             {
-                TempData["Error"] = "Vui lòng chọn file Excel.";
+                TempData["Error"] = message;
                 return RedirectToAction(nameof(Diem), new { lopId, hocKyId });
             }
+            if (file == null || file.Length <= 0) return ImportError("Vui lòng chọn file Excel.");
+            if (!string.Equals(Path.GetExtension(file.FileName), ".xlsx", StringComparison.OrdinalIgnoreCase) ||
+                file.Length > 5 * 1024 * 1024)
+                return ImportError("Chỉ nhận file .xlsx dung lượng tối đa 5 MB.");
+            var lop = await _context.LopHocs.FindAsync(lopId);
+            var hocKy = await _context.HocKys.Include(h => h.NamHoc).SingleOrDefaultAsync(h => h.IdHocKy == hocKyId);
+            if (lop == null || hocKy?.NamHoc == null || !await _context.MonHocs.AnyAsync(m => m.IdMonHoc == monHocId))
+                return ImportError("Vui lòng chọn lớp, học kỳ và môn học hợp lệ.");
+            if (lop.NamHoc?.Replace(" ", "") != hocKy.NamHoc.TenNamHoc.Replace(" ", ""))
+                return ImportError("Học kỳ không thuộc năm học của lớp đã chọn.");
+            if (HttpContext.Session.GetInt32("RoleId") == 2)
+            {
+                var teacher = GetCurrentGiaoVien();
+                if (teacher == null || !await _context.PhanCongGiangDays.AnyAsync(p =>
+                    p.IdGiaoVien == teacher.IdGiaoVien && p.IdLop == lopId && p.IdMonHoc == monHocId &&
+                    (p.NamHoc == null || p.NamHoc == "" || p.NamHoc == lop.NamHoc) &&
+                    (p.HocKy == null || p.HocKy == "" || p.HocKy == "Cả năm" || p.HocKy == hocKy.TenHocKy)))
+                    return Forbid();
+            }
+            var locked = await _context.NhatKyHoatDongs.AsNoTracking()
+                .Where(n => n.HanhDong == "LenLop.ResultsLocked").OrderByDescending(n => n.IdNhatKy)
+                .Select(n => n.NoiDung).FirstOrDefaultAsync();
+            if (locked == bool.TrueString) return ImportError("Kết quả xét đã khóa. Vui lòng mở khóa trước khi nhập điểm.");
 
-            var hocKy = _context.HocKys.Find(hocKyId);
-            if (hocKy == null) return NotFound();
-
-            int successCount = 0;
+            List<DiemExcelRow> rows;
+            var errors = new List<string>();
             try
             {
                 using var stream = new MemoryStream();
                 await file.CopyToAsync(stream);
-                using var workbook = new ClosedXML.Excel.XLWorkbook(stream);
-                var worksheet = workbook.Worksheet(1);
-                var rows = worksheet.RangeUsed()?.RowsUsed()?.Skip(1);
+                stream.Position = 0;
+                using var workbook = new XLWorkbook(stream);
+                rows = DiemExcelReader.Read(workbook, errors);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                return ImportError("Không đọc được file Excel. Hãy dùng file mẫu .xlsx, không đặt mật khẩu và kiểm tra file không bị hỏng.");
+            }
+            var students = await _context.HocSinhs.Where(h => h.IdLopHoc == lopId && h.TrangThai)
+                .ToDictionaryAsync(h => h.IdHocSinh);
+            foreach (var row in rows)
+            {
+                if (!students.TryGetValue(row.StudentId, out var student))
+                    errors.Add($"Dòng {row.RowNumber}: học sinh không thuộc lớp hoặc đã ngừng học.");
+                else if (!string.Equals(student.MaHS.Trim(), row.StudentCode, StringComparison.OrdinalIgnoreCase))
+                    errors.Add($"Dòng {row.RowNumber}: mã học sinh không khớp ID.");
+            }
+            if (errors.Count > 0)
+                return ImportError("Chưa lưu điểm. " + string.Join(" | ", errors.Take(12)) +
+                    (errors.Count > 12 ? $" | Còn {errors.Count - 12} lỗi khác." : ""));
+            rows = rows.Where(r => r.Grades.Any(g => g != null)).ToList();
+            if (rows.Count == 0) return ImportError("File chưa có điểm để nhập. Ô trống giữ nguyên điểm cũ.");
 
-                if (rows == null || !rows.Any())
-                {
-                    TempData["Error"] = "File Excel không có dữ liệu.";
-                    return RedirectToAction(nameof(Diem), new { lopId, hocKyId });
-                }
-
+            await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            try
+            {
+                if (AreGradesLocked()) return ImportError("Kết quả đã khóa. Chưa lưu điểm.");
+                var ids = rows.Select(r => r.StudentId).ToList();
+                var existing = await _context.Diems.Where(d => ids.Contains(d.IdHocSinh) &&
+                    d.IdMonHoc == monHocId && d.IdHocKy == hocKyId).ToListAsync();
+                if (existing.GroupBy(d => d.IdHocSinh).Any(g => g.Count() > 1) ||
+                    existing.Any(d => d.IdNamHoc.HasValue && d.IdNamHoc != hocKy.IdNamHoc))
+                    return ImportError("Dữ liệu điểm hiện tại bị trùng hoặc sai năm học. Chưa lưu; cần kiểm tra dữ liệu trước.");
+                var beforeImport = GradeSnapshot(existing);
+                var byStudent = existing.ToDictionary(d => d.IdHocSinh);
+                var created = 0;
                 foreach (var row in rows)
                 {
-                    var worksheetRow = row.WorksheetRow();
-                    if (!int.TryParse(worksheetRow.Cell(1).GetString(), out int idHocSinh)) continue;
-
-                    var d15 = worksheetRow.Cell(4).GetString()?.Trim();
-                    var d1t = worksheetRow.Cell(5).GetString()?.Trim();
-                    var dgk = worksheetRow.Cell(6).GetString()?.Trim();
-                    var dck = worksheetRow.Cell(7).GetString()?.Trim();
-
-                    var diem = _context.Diems.FirstOrDefault(x => x.IdHocSinh == idHocSinh && x.IdMonHoc == monHocId && x.IdHocKy == hocKyId);
-                    if (diem == null)
+                    if (!byStudent.TryGetValue(row.StudentId, out var diem))
                     {
-                        if (string.IsNullOrWhiteSpace(d15) && string.IsNullOrWhiteSpace(d1t) && string.IsNullOrWhiteSpace(dgk) && string.IsNullOrWhiteSpace(dck)) continue;
-
-                        diem = new Diem
-                        {
-                            IdHocSinh = idHocSinh,
-                            IdMonHoc = monHocId,
-                            IdHocKy = hocKyId,
-                            IdNamHoc = hocKy.IdNamHoc,
-                            HocKy = hocKy.TenHocKy
-                        };
+                        diem = new Diem { IdHocSinh = row.StudentId, IdMonHoc = monHocId, IdHocKy = hocKyId };
                         _context.Diems.Add(diem);
+                        existing.Add(diem);
+                        created++;
                     }
-
-                    diem.Diem15Phut = string.IsNullOrWhiteSpace(d15) ? null : d15;
-                    diem.Diem1Tiet = string.IsNullOrWhiteSpace(d1t) ? null : d1t;
-                    diem.DiemGiuaKy = string.IsNullOrWhiteSpace(dgk) ? null : dgk;
-                    diem.DiemCuoiKy = string.IsNullOrWhiteSpace(dck) ? null : dck;
+                    diem.IdNamHoc = hocKy.IdNamHoc;
+                    diem.HocKy = hocKy.TenHocKy;
+                    if (row.Grades[0] != null) diem.Diem15Phut = row.Grades[0];
+                    if (row.Grades[1] != null) diem.Diem1Tiet = row.Grades[1];
+                    if (row.Grades[2] != null) diem.DiemGiuaKy = row.Grades[2];
+                    if (row.Grades[3] != null) diem.DiemCuoiKy = row.Grades[3];
                     diem.TinhDiemTrungBinh();
-                    successCount++;
+                    students[row.StudentId].DaDuyet = false;
                 }
-
-                if (successCount > 0)
+                _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
                 {
-                    var username = HttpContext.Session.GetString("Username") ?? "Admin";
-                    _nhatKyService.GhiLog(username, "Nhập điểm", $"Nhập điểm từ Excel cho {successCount} học sinh lớp có ID {lopId} ở học kỳ {hocKy.TenHocKy}");
-
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = $"Đã cập nhật điểm cho {successCount} học sinh thành công.";
-                }
-                else
-                {
-                    TempData["Error"] = "Không tìm thấy dữ liệu hợp lệ để cập nhật.";
-                }
+                    TenDangNhap = HttpContext.Session.GetString("Username") ?? "Admin",
+                    HanhDong = "Nhập điểm",
+                    NoiDung = $"Excel: lớp {lop.TenLop}, môn ID {monHocId}, học kỳ {hocKy.TenHocKy}, năm {hocKy.NamHoc.TenNamHoc}: {created} mới, {rows.Count - created} cập nhật. Trước: {beforeImport}. Sau: {GradeSnapshot(existing)}."
+                });
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                TempData["Success"] = $"Đã nhập điểm cho {rows.Count} học sinh ({created} mới, {rows.Count - created} cập nhật). Ô trống giữ nguyên điểm cũ; kết quả duyệt của học sinh được đặt lại để xét theo điểm mới.";
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                TempData["Error"] = $"Lỗi khi nhập dữ liệu: {ex.Message}";
+                await transaction.RollbackAsync();
+                return ImportError("Không lưu được điểm. Toàn bộ lần nhập đã hủy; vui lòng thử lại.");
             }
-
             return RedirectToAction(nameof(Diem), new { lopId, hocKyId });
         }
-
         [RoleAuthorize(3, 4)]
         public IActionResult XemDiem(int? namHocId, int? hocKyId)
         {
@@ -422,6 +484,8 @@ namespace eSchool.Controllers
                 HocKys = GetHocKySelectList()
             };
 
+            foreach (var option in vm.NamHocs) option.Selected = option.Value == namHocId?.ToString();
+            foreach (var option in vm.HocKys) option.Selected = option.Value == hocKyId?.ToString();
             ViewBag.HocSinh = hocSinh;
             ViewBag.FilterNamHocId = namHocId;
             ViewBag.FilterHocKyId = hocKyId;
@@ -433,66 +497,47 @@ namespace eSchool.Controllers
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult LuuDiem(DiemFormViewModel vm)
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return Error(nameof(Diem), "Dữ liệu điểm không hợp lệ.");
+            if (vm.IdDiem > 0 && !_context.Diems.Any(d => d.IdDiem == vm.IdDiem && d.IdHocSinh == vm.IdHocSinh &&
+                d.IdMonHoc == vm.IdMonHoc && d.IdHocKy == vm.IdHocKy && d.IdNamHoc == vm.IdNamHoc)) return NotFound();
+            var current = _context.Diems.AsNoTracking().Where(d => d.IdHocSinh == vm.IdHocSinh && d.IdHocKy == vm.IdHocKy).ToList();
+            var result = LuuDiemHocSinh(new LuuDiemHocSinhRequest
             {
-                return Error(nameof(Diem), "Thong tin diem chua hop le.");
-            }
-
-            var hocKy = _context.HocKys.Include(x => x.NamHoc)
-                .FirstOrDefault(x => x.IdHocKy == vm.IdHocKy && x.IdNamHoc == vm.IdNamHoc);
-            if (hocKy == null)
-            {
-                return Error(nameof(Diem), "Hoc ky khong thuoc nam hoc da chon.");
-            }
-
-            var diem = vm.IdDiem > 0
-                ? _context.Diems.Find(vm.IdDiem)
-                : _context.Diems.FirstOrDefault(x =>
-                    x.IdHocSinh == vm.IdHocSinh &&
-                    x.IdMonHoc == vm.IdMonHoc &&
-                    x.IdHocKy == vm.IdHocKy &&
-                    x.IdNamHoc == vm.IdNamHoc);
-
-            if (diem == null)
-            {
-                diem = new Diem();
-                _context.Diems.Add(diem);
-            }
-
-            diem.IdHocSinh = vm.IdHocSinh;
-            diem.IdMonHoc = vm.IdMonHoc;
-            diem.IdHocKy = vm.IdHocKy;
-            diem.IdNamHoc = vm.IdNamHoc;
-            diem.HocKy = hocKy.TenHocKy;
-            diem.Diem15Phut = vm.Diem15Phut;
-            diem.Diem1Tiet = vm.Diem1Tiet;
-            diem.DiemGiuaKy = vm.DiemGiuaKy;
-            diem.DiemCuoiKy = vm.DiemCuoiKy;
-            diem.TinhDiemTrungBinh();
-
-            var username = HttpContext.Session.GetString("Username") ?? "Admin";
-            var hocSinhName = _context.HocSinhs.Find(vm.IdHocSinh)?.HoTen ?? "Không rõ";
-            _nhatKyService.GhiLog(username, "Sửa điểm", $"Sửa điểm (form) cho học sinh {hocSinhName} ở học kỳ {hocKy.TenHocKy}");
-
-            _context.SaveChanges();
-
-            return Success(nameof(Diem), "Da luu diem.");
+                IdHocSinh = vm.IdHocSinh, IdHocKy = vm.IdHocKy, IdNamHoc = vm.IdNamHoc, Version = GradeVersion(current),
+                DiemMonHocs = new() { new DiemMonHocViewModel
+                {
+                    IdMonHoc = vm.IdMonHoc, Diem15Phut = vm.Diem15Phut?.Replace(",", ";"),
+                    Diem1Tiet = vm.Diem1Tiet?.Replace(",", ";"), DiemGiuaKy = vm.DiemGiuaKy?.Replace(",", ";"),
+                    DiemCuoiKy = vm.DiemCuoiKy?.Replace(",", ";")
+                }}
+            });
+            if (result is not OkObjectResult) return result;
+            return Success(nameof(Diem), "Đã lưu điểm.");
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult XoaDiem(int id)
         {
+            using var transaction = _context.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
+            if (AreGradesLocked()) return Error(nameof(Diem), "Kết quả đã khóa. Không thể xóa điểm.");
             var diem = _context.Diems.Find(id);
             if (diem == null)
             {
                 return NotFound();
             }
 
+            var student = _context.HocSinhs.Find(diem.IdHocSinh);
+            if (student != null) student.DaDuyet = false;
+            _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
+            {
+                TenDangNhap = HttpContext.Session.GetString("Username") ?? "Admin",
+                HanhDong = "Sửa điểm", NoiDung = $"Xóa điểm học sinh ID {diem.IdHocSinh}, học kỳ ID {diem.IdHocKy}: {GradeSnapshot(new[] { diem })}"
+            });
             _context.Diems.Remove(diem);
             _context.SaveChanges();
-            return Success(nameof(Diem), "Da xoa diem.");
+            transaction.Commit();
+            return Success(nameof(Diem), "Đã xóa điểm và lưu nhật ký.");
         }
 
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
@@ -1409,6 +1454,7 @@ namespace eSchool.Controllers
                 .OrderBy(x => x.MonHoc!.TenMon)
                 .ToList();
 
+            diems = diems.GroupBy(d => d.IdMonHoc).Select(g => g.OrderByDescending(d => d.IdDiem).First()).ToList();
             var pdf = BuildScoreReportPdf(phieu, diems);
             return File(pdf, "application/pdf", $"PhieuDiem_{phieu.HocSinh?.MaHS}_{phieu.NamHoc?.TenNamHoc}.pdf");
         }
@@ -1463,7 +1509,7 @@ namespace eSchool.Controllers
                         });
 
                         var average = diems.Where(x => x.DiemTB.HasValue).Select(x => x.DiemTB!.Value).DefaultIfEmpty().Average();
-                        column.Item().AlignRight().Text($"Diem trung binh chung: {(diems.Any(x => x.DiemTB.HasValue) ? average.ToString("0.00") : "-")}").Bold();
+                        column.Item().AlignRight().Text($"TB cac mon da co diem: {(diems.Any(x => x.DiemTB.HasValue) ? average.ToString("0.00") : "-")}").Bold();
                     });
                     page.Footer().AlignCenter().Text($"Ngay lap: {phieu.NgayLap:dd/MM/yyyy HH:mm}");
                 });

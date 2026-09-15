@@ -55,17 +55,18 @@ namespace eSchool.Models
         {
             if (string.IsNullOrWhiteSpace(gradesStr)) return (0m, 0);
 
-            var parts = gradesStr.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            var parts = gradesStr.Split(',');
             var sum = 0m;
             var count = 0;
 
             foreach (var part in parts)
             {
-                if (decimal.TryParse(part.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var value) && value >= 0 && value <= 10)
+                if (decimal.TryParse(part.Trim(), System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var value) && value >= 0 && value <= 10)
                 {
                     sum += value;
                     count++;
                 }
+                else return (0m, -1);
             }
 
             return (sum, count);
@@ -78,7 +79,7 @@ namespace eSchool.Models
             var gk = GetSumAndCountFromString(DiemGiuaKy);
             var ck = GetSumAndCountFromString(DiemCuoiKy);
 
-            if (p15.Count == 0 || p1t.Count == 0 || gk.Count == 0 || ck.Count == 0)
+            if (p15.Count <= 0 || p1t.Count <= 0 || gk.Count <= 0 || ck.Count <= 0)
             {
                 DiemTB = null;
                 return;

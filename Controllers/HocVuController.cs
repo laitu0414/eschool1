@@ -40,7 +40,38 @@ namespace eSchool.Controllers
             var phongHocMap = _context.PhongHocs.Where(x => x.IdLop != null).ToDictionary(x => x.IdLop.Value, x => x.IdPhongHoc);
             ViewBag.PhongHocMap = phongHocMap;
 
-            return View(query.OrderBy(x => x.TenLop).ToList());
+            var lopHocs = query.OrderBy(x => x.TenLop).ToList();
+            var lopIds = lopHocs.Select(x => x.IdLop).ToList();
+            ViewBag.SiSoMap = _context.HocSinhs
+                .Where(x => x.IdLopHoc.HasValue && lopIds.Contains(x.IdLopHoc.Value))
+                .GroupBy(x => x.IdLopHoc!.Value)
+                .ToDictionary(x => x.Key, x => x.Count());
+
+            return View(lopHocs);
+        }
+
+        public IActionResult DanhSachHocSinhLop(int id)
+        {
+            var lopHoc = _context.LopHocs
+                .Include(x => x.GiaoVienChuNhiem)
+                .AsNoTracking()
+                .FirstOrDefault(x => x.IdLop == id);
+            if (lopHoc == null)
+                return NotFound();
+
+            var hocSinhs = _context.HocSinhs
+                .Include(x => x.TaiKhoan)
+                .AsNoTracking()
+                .Where(x => x.IdLopHoc == id)
+                .OrderBy(x => x.HoTen)
+                .ThenBy(x => x.MaHS)
+                .ToList();
+
+            return View(new DanhSachHocSinhLopViewModel
+            {
+                LopHoc = lopHoc,
+                HocSinhs = hocSinhs
+            });
         }
 
         [HttpPost]
@@ -59,7 +90,8 @@ namespace eSchool.Controllers
             if (vm.IdGiaoVienCN.HasValue)
             {
                 var daChuNhiem = _context.LopHocs.Any(x =>
-                    x.IdGiaoVienCN == vm.IdGiaoVienCN.Value);
+                    x.IdGiaoVienCN == vm.IdGiaoVienCN.Value &&
+                    x.NamHoc == vm.NamHoc);
 
                 if (daChuNhiem)
                 {
@@ -117,7 +149,8 @@ namespace eSchool.Controllers
             {
                 var daChuNhiemLopKhac = _context.LopHocs.Any(x =>
                     x.IdGiaoVienCN == vm.IdGiaoVienCN.Value &&
-                    x.IdLop != lop.IdLop);
+                    x.IdLop != lop.IdLop &&
+                    x.NamHoc == vm.NamHoc);
 
                 if (daChuNhiemLopKhac)
                 {
@@ -1349,6 +1382,68 @@ namespace eSchool.Controllers
                 .Select(x => new SelectListItem(x.TenNamHoc, x.IdNamHoc.ToString())).ToList();
         }
 
+        private string? GetPreviousAcademicYearName(NamHoc targetNamHoc)
+        {
+            return _context.NamHocs
+                .AsNoTracking()
+                .Where(x => x.NgayKetThuc < targetNamHoc.NgayBatDau)
+                .OrderByDescending(x => x.NgayKetThuc)
+                .Select(x => x.TenNamHoc)
+                .FirstOrDefault();
+        }
+
+        private int? SelectAutomaticHomeroomTeacher(
+            LopHoc lop,
+            string? previousNamHoc,
+            IReadOnlyList<int> teacherIds,
+            IDictionary<int, int> homeroomLoads)
+        {
+            if (!teacherIds.Any())
+                return null;
+
+            int? preferredTeacherId = null;
+            var predecessorClassName = GetPredecessorClassName(lop.TenLop);
+            if (!string.IsNullOrWhiteSpace(previousNamHoc) && predecessorClassName != null)
+            {
+                preferredTeacherId = _context.LopHocs
+                    .AsNoTracking()
+                    .Where(x => x.NamHoc == previousNamHoc &&
+                                x.TenLop == predecessorClassName &&
+                                x.IdGiaoVienCN.HasValue)
+                    .Select(x => x.IdGiaoVienCN)
+                    .FirstOrDefault();
+            }
+
+            var availableTeacherIds = teacherIds
+                .Where(id => !homeroomLoads.ContainsKey(id))
+                .ToList();
+            if (!availableTeacherIds.Any())
+                return null;
+
+            var selectedTeacherId = preferredTeacherId.HasValue &&
+                                    availableTeacherIds.Contains(preferredTeacherId.Value)
+                ? preferredTeacherId.Value
+                : availableTeacherIds.First();
+
+            homeroomLoads[selectedTeacherId] = homeroomLoads.TryGetValue(selectedTeacherId, out var currentLoad)
+                ? currentLoad + 1
+                : 1;
+
+            return selectedTeacherId;
+        }
+
+        private static string? GetPredecessorClassName(string? className)
+        {
+            if (string.IsNullOrWhiteSpace(className))
+                return null;
+
+            var match = System.Text.RegularExpressions.Regex.Match(className.Trim(), @"^(?<grade>[6-9])(?<suffix>.+)$");
+            if (!match.Success || !int.TryParse(match.Groups["grade"].Value, out var grade) || grade <= 6)
+                return null;
+
+            return $"{grade - 1}{match.Groups["suffix"].Value}";
+        }
+
         private static void NormalizeLop(LopHocFormViewModel vm)
         {
             vm.MaLop = vm.MaLop?.Trim() ?? string.Empty;
@@ -2119,6 +2214,7 @@ namespace eSchool.Controllers
             _context.NamHocs.Add(newNamHoc);
             _context.SaveChanges();
 
+            var autoAssignedCount = 0;
             var match = System.Text.RegularExpressions.Regex.Match(newNamHoc.TenNamHoc, @"^(\d{4})-(\d{4})$");
             if (match.Success)
             {
@@ -2145,6 +2241,14 @@ namespace eSchool.Controllers
                     _context.SaveChanges();
 
                     string prefix = startYear.ToString().Substring(2, 2);
+                    var previousNamHoc = GetPreviousAcademicYearName(newNamHoc);
+                    var teacherIds = _context.GiaoViens
+                        .AsNoTracking()
+                        .OrderBy(x => x.HoTen)
+                        .Select(x => x.IdGiaoVien)
+                        .ToList();
+                    var homeroomLoads = new Dictionary<int, int>();
+
                     for (int khoi = 6; khoi <= 9; khoi++)
                     {
                         for (int i = 1; i <= 5; i++)
@@ -2160,6 +2264,15 @@ namespace eSchool.Controllers
                                 BuoiHoc = (khoi == 6 || khoi == 7) ? "Sáng" : "Chiều",
                                 NamHoc = newNamHoc.TenNamHoc
                             };
+
+                            newLop.IdGiaoVienCN = SelectAutomaticHomeroomTeacher(
+                                newLop,
+                                previousNamHoc,
+                                teacherIds,
+                                homeroomLoads);
+                            if (newLop.IdGiaoVienCN.HasValue)
+                                autoAssignedCount++;
+
                             _context.LopHocs.Add(newLop);
                             _context.SaveChanges();
 
@@ -2169,7 +2282,7 @@ namespace eSchool.Controllers
                 }
             }
 
-            TempData["Success"] = "Đã thêm năm học, tạo 20 lớp và xếp TKB thành công.";
+            TempData["Success"] = $"Đã thêm năm học, tạo 20 lớp, tự phân công {autoAssignedCount} giáo viên chủ nhiệm và xếp TKB thành công.";
             return RedirectToAction("Index", "LenLop");
         }
     }

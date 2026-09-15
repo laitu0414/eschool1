@@ -6,7 +6,23 @@
     var lopStats = ViewBag.LopStats as List<LopStat> ?? new List<LopStat>();
     var khoiStats = ViewBag.KhoiStats as List<KhoiStat> ?? new List<KhoiStat>();
     var hocSinhs = ViewBag.HocSinhs as List<HocSinh> ?? new List<HocSinh>();
+    var khoiFilters = hocSinhs
+        .Select(h => h.LopHoc?.Khoi)
+        .Where(khoi => !string.IsNullOrWhiteSpace(khoi))
+        .Select(khoi => khoi!)
+        .Distinct()
+        .OrderBy(khoi => khoi)
+        .ToList();
+    var lopFilters = hocSinhs
+        .Select(h => h.LopHoc?.TenLop)
+        .Where(lop => !string.IsNullOrWhiteSpace(lop))
+        .Select(lop => lop!)
+        .Distinct()
+        .OrderBy(lop => lop)
+        .ToList();
 
+    var assessments = ViewBag.PromotionAssessments as Dictionary<int, PromotionAssessment> ?? new();
+    var academicYears = ViewBag.AcademicYears as List<eSchool.Models.NamHoc> ?? new();
     int totalHS = ViewBag.TotalHS ?? 0;
     int duDieuKien = ViewBag.DuDieuKien ?? 0;
     int chuaDuDieuKien = ViewBag.ChuaDuDieuKien ?? 0;
@@ -19,7 +35,7 @@
     int daTongKet = ViewBag.DaTongKet ?? 0;
     int chuaTongKet = ViewBag.ChuaTongKet ?? 0;
 
-    bool isLocked = TempData["IsLocked"] != null && (bool)TempData["IsLocked"];
+    bool isLocked = ViewBag.IsLocked is bool locked && locked;
 }
 
 <style>
@@ -90,9 +106,24 @@
         width: 80px; height: 80px; background: #ecfdf5; color: #10b981;
         border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-size: 2.5rem; margin-bottom: 10px;
     }
+    .student-review-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .student-review-filter .student-review-search { flex: 1 1 260px; min-width: 220px; }
+    .student-review-filter .form-select { width: auto; min-width: 145px; }
+    .student-review-filter-count { color: #64748b; font-size: .825rem; }
+    @@media (max-width: 768px) {
+        .student-review-filter > * { width: 100% !important; }
+        .student-review-filter .form-select { min-width: 0; }
+    }
 </style>
 
-<div class="xet-duyet-container">
+<div class="xet-duyet-container"><a asp-controller="TongKet" asp-action="Index" class="btn btn-outline-primary mb-3">Kiểm tra điểm cả năm / Tổng kết lớp</a>
+@if (isLocked)
+{
+    <form method="post" action="/LenLop/UnlockResults" class="mb-3">
+        @Html.AntiForgeryToken()
+        <button class="btn btn-outline-warning" type="submit">Mở khóa kết quả để xét lại</button>
+    </form>
+}<div class="alert alert-info">Xét sơ bộ theo điểm: đủ điểm hai học kỳ và ĐTB năm từ 5,0. Chưa bao gồm tổng kết rèn luyện và chuyên cần. Lớp 9 được xét điều kiện tốt nghiệp; khối 6–8 được đăng ký lớp năm kế tiếp sau khi duyệt và khóa.</div>
 
     <!-- STEP 1 -->
     <div id="step1" class="wizard-step active">
@@ -107,11 +138,11 @@
                 <div class="card-box h-100 mb-0 d-flex flex-column justify-content-center">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted fw-bold small">Trạng thái</span>
-                        <span class="badge-soft-success">Đã hoàn thành</span>
+                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã đủ dữ liệu điểm" : "Chưa đủ dữ liệu điểm")</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1 small">
                         <span class="text-muted">Hoàn thành lúc:</span>
-                        <span class="fw-bold">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                        <span class="fw-bold">@("Đánh giá theo dữ liệu hiện tại")</span>
                     </div>
                     <div class="d-flex justify-content-between small">
                         <span class="text-muted">Người thực hiện:</span>
@@ -237,11 +268,11 @@
                 <div class="card-box h-100 mb-0 d-flex flex-column justify-content-center">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted fw-bold small">Trạng thái</span>
-                        <span class="badge-soft-success">Đã hoàn thành</span>
+                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã đủ dữ liệu điểm" : "Chưa đủ dữ liệu điểm")</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1 small">
                         <span class="text-muted">Hoàn thành lúc:</span>
-                        <span class="fw-bold">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                        <span class="fw-bold">@("Đánh giá theo dữ liệu hiện tại")</span>
                     </div>
                     <div class="d-flex justify-content-between small">
                         <span class="text-muted">Người thực hiện:</span>
@@ -408,22 +439,44 @@
         </div>
 
         <div class="card-box">
-            <div class="d-flex gap-2 mb-3">
-                <input type="text" class="form-control form-control-sm w-25" placeholder="Tìm kiếm học sinh...">
-                <select class="form-select form-select-sm w-auto"><option>Khối: Tất cả</option></select>
-                <select class="form-select form-select-sm w-auto"><option>Lớp: Tất cả</option></select>
-                <select class="form-select form-select-sm w-auto"><option>Trạng thái: Tất cả</option></select>
-                <button class="btn btn-primary btn-sm px-4"><i class="bi bi-search"></i> Tìm kiếm</button>
-            </div>
+            <form id="studentReviewFilter" class="student-review-filter mb-3">
+                <input id="studentReviewSearch" type="search" class="form-control form-control-sm student-review-search"
+                       placeholder="Tìm theo mã, họ tên hoặc lớp..." autocomplete="off">
+                <select id="studentReviewGrade" class="form-select form-select-sm" aria-label="Lọc theo khối">
+                    <option value="">Khối: Tất cả</option>
+                    @foreach (var khoi in khoiFilters)
+                    {
+                        <option value="@khoi">Khối: @khoi</option>
+                    }
+                </select>
+                <select id="studentReviewClass" class="form-select form-select-sm" aria-label="Lọc theo lớp">
+                    <option value="">Lớp: Tất cả</option>
+                    @foreach (var lop in lopFilters)
+                    {
+                        <option value="@lop">Lớp: @lop</option>
+                    }
+                </select>
+                <select id="studentReviewStatus" class="form-select form-select-sm" aria-label="Lọc theo trạng thái">
+                    <option value="">Trạng thái: Tất cả</option>
+                    <option value="eligible">Đủ điều kiện</option>
+                    <option value="ineligible">Không đủ điều kiện</option>
+                    <option value="approved">Đã duyệt</option>
+                    <option value="pending">Chờ duyệt</option>
+                    <option value="inactive">Bỏ học / ngừng học</option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm px-4"><i class="bi bi-search"></i> Tìm kiếm</button>
+                <button type="button" id="studentReviewReset" class="btn btn-light border btn-sm px-3">Làm mới</button>
+                <span id="studentReviewFilterCount" class="student-review-filter-count ms-auto">@hocSinhs.Count học sinh</span>
+            </form>
             
             <form id="duyetForm" method="post">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="ids" id="selectedIds">
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table-custom text-center align-middle">
                         <thead style="position: sticky; top: 0; z-index: 1;">
                             <tr>
                                 <th><input type="checkbox" id="checkAll"></th>
-                                <th>STT</th>
                                 <th>Mã học sinh</th>
                                 <th class="text-start">Họ và tên</th>
                                 <th>Lớp</th>
@@ -433,27 +486,51 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @{ int stt = 1; }
                             @foreach(var hs in hocSinhs)
                             {
-                                bool isEligible = hs.TrangThai && (hs.GhiChu == null || !hs.GhiChu.Contains("Không đủ điều kiện"));
-                                <tr>
-                                    <td><input type="checkbox" class="chk-hs" value="@hs.IdHocSinh"></td>
-                                    <td>@(stt++)</td>
+                                var assessment = assessments.GetValueOrDefault(hs.IdHocSinh) ?? new PromotionAssessment();
+                                bool isEligible = assessment.IsEligible;
+                                var resultStatus = isEligible ? "eligible" : (hs.TrangThai ? "ineligible" : "inactive");
+                                var approvalStatus = hs.DaDuyet && isEligible ? "approved" : (isEligible ? "pending" : resultStatus);
+                                <tr class="student-review-row"
+                                    data-khoi="@(hs.LopHoc?.Khoi ?? string.Empty)"
+                                    data-lop="@(hs.LopHoc?.TenLop ?? string.Empty)"
+                                    data-result-status="@resultStatus"
+                                    data-approval-status="@approvalStatus">
+                                    <td><input type="checkbox" class="chk-hs" value="@hs.IdHocSinh" disabled="@(!isLocked && isEligible ? null : "disabled")"></td>
                                     <td class="fw-bold">@hs.MaHS</td>
                                     <td class="text-start">@hs.HoTen</td>
                                     <td>@(hs.LopHoc?.TenLop)</td>
                                     <td>
-                                        @if(isEligible) { <span class="text-dark fw-bold">Đủ điều kiện</span> }
-                                        else { <span class="text-danger fw-bold">Không đủ điều kiện</span> }
+                                        <span class="@(isEligible ? "text-success" : "text-danger")">@assessment.Decision</span>
+                                        <div class="small text-muted">@assessment.Reason</div>
+                                        @if (assessment.AnnualAverage.HasValue) { <div class="small">ĐTB năm: @assessment.AnnualAverage.Value.ToString("0.00")</div> }
                                     </td>
                                     <td>
-                                        @if(hs.DaDuyet) { <span class="badge-soft-success">Đã duyệt</span> }
+                                        @if(hs.DaDuyet && isEligible) { <span class="badge-soft-success">Đã duyệt</span> }
+                                        else if (!hs.TrangThai) { <span class="badge bg-secondary">Không xét</span> }
+                                        else if (!isEligible) { <span class="badge-soft-danger">Không duyệt</span> }
                                         else { <span class="badge-soft-warning">Chờ duyệt</span> }
                                     </td>
-                                    <td><button type="button" class="btn btn-sm btn-light border text-primary"><i class="bi bi-eye"></i></button></td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal" data-bs-target="#studentAssessmentModal"
+                                                data-student-id="@hs.IdHocSinh" data-student-code="@hs.MaHS"
+                                                data-student-name="@hs.HoTen" data-student-class="@hs.LopHoc?.TenLop"
+                                                data-decision="@assessment.Decision" data-reason="@assessment.Reason"
+                                                data-average="@(assessment.AnnualAverage?.ToString("0.00") ?? "Chưa đủ dữ liệu")"
+                                                data-approved="@((hs.DaDuyet && isEligible).ToString().ToLowerInvariant())"
+                                                data-can-approve="@((!isLocked && isEligible && !hs.DaDuyet).ToString().ToLowerInvariant())"
+                                                data-can-reject="@((!isLocked && hs.DaDuyet).ToString().ToLowerInvariant())"
+                                                title="Xem chi tiết kết quả xét" aria-label="Xem kết quả xét của @hs.HoTen">
+                                            <i class="bi bi-eye" aria-hidden="true"></i> Chi tiết
+                                        </button>
+                                    </td>
                                 </tr>
                             }
+                            <tr id="studentReviewEmpty" hidden>
+                                <td colspan="7" class="py-4 text-muted">Không tìm thấy học sinh phù hợp với điều kiện lọc.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -463,10 +540,11 @@
         <div class="d-flex justify-content-between align-items-center mt-3">
             <div class="d-flex gap-2">
                 <form method="post" action="/LenLop/BulkApproveAllEligible" class="m-0">
+                    @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-check-all"></i> Duyệt tất cả đủ điều kiện</button>
                 </form>
                 <button type="button" class="btn btn-primary fw-bold" onclick="submitForm('/LenLop/BulkApprove')"><i class="bi bi-check-square"></i> Duyệt đã chọn</button>
-                <button type="button" class="btn btn-danger fw-bold" onclick="submitForm('/LenLop/BulkReject')"><i class="bi bi-x-square"></i> Từ chối đã chọn</button>
+                <button type="button" class="btn btn-danger fw-bold" onclick="submitForm('/LenLop/BulkReject')"><i class="bi bi-x-square"></i> Hủy duyệt đã chọn</button>
             </div>
             <button class="btn btn-primary fw-bold" onclick="nextStep(4)">Tiếp theo: Khóa kết quả <i class="bi bi-arrow-right ms-1"></i></button>
         </div>
@@ -523,10 +601,11 @@
         
         <div class="lock-icon-container">
             <div class="lock-icon mb-3"><i class="bi bi-lock-fill"></i></div>
-            <h5 class="fw-bold text-dark">Kết quả chưa được khóa</h5>
-            <p class="text-muted">Vui lòng khóa kết quả để hoàn tất quy trình.</p>
-            <form method="post" action="/LenLop/LockResults">
-                <button type="submit" class="btn btn-primary fw-bold px-4 py-2 mt-2"><i class="bi bi-lock"></i> Khóa kết quả</button>
+            <h5 class="fw-bold text-dark">@(isLocked ? "Kết quả đã được khóa" : "Kết quả chưa được khóa")</h5>
+            <p class="text-muted">@(isLocked ? "Có thể mở khóa để xét lại." : "Vui lòng khóa kết quả để hoàn tất quy trình.")</p>
+            <form method="post" action="@(isLocked ? "/LenLop/UnlockResults" : "/LenLop/LockResults")">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-primary fw-bold px-4 py-2 mt-2"><i class="bi bi-lock"></i> @(isLocked ? "Mở khóa kết quả" : "Khóa kết quả")</button>
             </form>
         </div>
 
@@ -548,11 +627,11 @@
                 <div class="card-box h-100 d-flex flex-column justify-content-center">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted fw-bold small">Trạng thái</span>
-                        <span class="badge-soft-success">Đã hoàn thành</span>
+                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã đủ dữ liệu điểm" : "Chưa đủ dữ liệu điểm")</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1 small">
                         <span class="text-muted">Hoàn thành lúc:</span>
-                        <span class="fw-bold">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                        <span class="fw-bold">@("Đánh giá theo dữ liệu hiện tại")</span>
                     </div>
                     <div class="d-flex justify-content-between small">
                         <span class="text-muted">Người thực hiện:</span>
@@ -601,14 +680,50 @@
 
 </div>
 
+<div class="modal fade" id="studentAssessmentModal" tabindex="-1" aria-labelledby="studentAssessmentTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studentAssessmentTitle">Chi tiết kết quả xét</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row mb-0">
+                    <dt class="col-4">Mã học sinh</dt><dd class="col-8" data-detail="studentCode"></dd>
+                    <dt class="col-4">Họ tên</dt><dd class="col-8" data-detail="studentName"></dd>
+                    <dt class="col-4">Lớp</dt><dd class="col-8" data-detail="studentClass"></dd>
+                    <dt class="col-4">ĐTB cả năm</dt><dd class="col-8" data-detail="average"></dd>
+                    <dt class="col-4">Kết quả xét</dt><dd class="col-8" data-detail="decision"></dd>
+                    <dt class="col-4">Lý do</dt><dd class="col-8" data-detail="reason"></dd>
+                    <dt class="col-4">Duyệt kết quả</dt><dd class="col-8" id="studentAssessmentApproval"></dd>
+                </dl>
+                @if (isLocked) { <div class="alert alert-warning mb-0">Kết quả đã khóa. Mở khóa để thay đổi duyệt.</div> }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <form method="post" action="@Url.Action("RejectStudent", "LenLop")" id="studentAssessmentReject" hidden>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" />
+                    <button type="submit" class="btn btn-outline-danger">Hủy duyệt</button>
+                </form>
+                <form method="post" action="@Url.Action("ApproveStudent", "LenLop")" id="studentAssessmentApprove" hidden>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" />
+                    <button type="submit" class="btn btn-success">Duyệt học sinh</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     // Handle Wizard Steps
     let isLocked = @(isLocked.ToString().ToLower());
     let chuaTongKet = @chuaTongKet;
     
     function nextStep(stepNumber) {
+        if (!Number.isInteger(stepNumber) || stepNumber < 1 || stepNumber > 5) return;
         if (stepNumber === 2 && chuaTongKet > 0) {
-            alert("Lỗi: Hệ thống ghi nhận còn " + chuaTongKet + " học sinh chưa được tổng kết điểm và hạnh kiểm. Vui lòng hoàn thành tổng kết cho toàn bộ học sinh trước khi xét duyệt điều kiện.");
+            alert("Lỗi: Hệ thống ghi nhận còn " + chuaTongKet + " học sinh chưa được tổng kết điểm. Vui lòng hoàn thành tổng kết cho toàn bộ học sinh trước khi xét duyệt điều kiện.");
             return;
         }
 
@@ -633,15 +748,119 @@
             }
         }
         
+        const assessmentModal = document.getElementById('studentAssessmentModal');
+        assessmentModal.addEventListener('show.bs.modal', event => {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+            const data = trigger.dataset;
+            assessmentModal.querySelectorAll('[data-detail]').forEach(element => {
+                element.textContent = data[element.dataset.detail] || '—';
+            });
+            document.getElementById('studentAssessmentApproval').textContent =
+                data.approved === 'true' ? 'Đã duyệt' : 'Chưa duyệt';
+            const approveForm = document.getElementById('studentAssessmentApprove');
+            const rejectForm = document.getElementById('studentAssessmentReject');
+            approveForm.hidden = data.canApprove !== 'true';
+            rejectForm.hidden = data.canReject !== 'true';
+            [approveForm, rejectForm].forEach(form => {
+                form.querySelector('input[name="id"]').value = data.studentId;
+            });
+        });
+        // Tìm kiếm và lọc danh sách xét duyệt ở bước 3.
+        const reviewFilterForm = document.getElementById('studentReviewFilter');
+        const reviewSearchInput = document.getElementById('studentReviewSearch');
+        const reviewGradeSelect = document.getElementById('studentReviewGrade');
+        const reviewClassSelect = document.getElementById('studentReviewClass');
+        const reviewStatusSelect = document.getElementById('studentReviewStatus');
+        const reviewResetButton = document.getElementById('studentReviewReset');
+        const reviewRows = Array.from(document.querySelectorAll('.student-review-row'));
+        const reviewEmptyRow = document.getElementById('studentReviewEmpty');
+        const reviewFilterCount = document.getElementById('studentReviewFilterCount');
+
+        const normalizeSearchText = (value) => (value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .replace(/Đ/g, 'd')
+            .toLowerCase()
+            .trim();
+
+        const updateCheckAllState = () => {
+            const visibleCheckboxes = reviewRows
+                .filter(row => !row.hidden)
+                .map(row => row.querySelector('.chk-hs'))
+                .filter(checkbox => checkbox && !checkbox.disabled);
+
+            if (!checkAll) return;
+
+            checkAll.checked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(checkbox => checkbox.checked);
+            checkAll.indeterminate = visibleCheckboxes.some(checkbox => checkbox.checked) && !checkAll.checked;
+        };
+
+        const applyStudentReviewFilter = () => {
+            const keyword = normalizeSearchText(reviewSearchInput?.value);
+            const khoi = reviewGradeSelect?.value || '';
+            const lop = reviewClassSelect?.value || '';
+            const status = reviewStatusSelect?.value || '';
+            let visibleCount = 0;
+
+            reviewRows.forEach(row => {
+                const matchesKeyword = !keyword || normalizeSearchText(row.textContent).includes(keyword);
+                const matchesKhoi = !khoi || row.dataset.khoi === khoi;
+                const matchesLop = !lop || row.dataset.lop === lop;
+                const matchesStatus = !status ||
+                    (status === 'approved' && row.dataset.approvalStatus === 'approved') ||
+                    (status === 'pending' && row.dataset.approvalStatus === 'pending') ||
+                    (status === 'eligible' && row.dataset.resultStatus === 'eligible') ||
+                    (status === 'ineligible' && row.dataset.resultStatus === 'ineligible') ||
+                    (status === 'inactive' && row.dataset.resultStatus === 'inactive');
+                const isVisible = matchesKeyword && matchesKhoi && matchesLop && matchesStatus;
+
+                row.hidden = !isVisible;
+                if (!isVisible) {
+                    const checkbox = row.querySelector('.chk-hs');
+                    if (checkbox) checkbox.checked = false;
+                } else {
+                    visibleCount++;
+                }
+            });
+
+            if (reviewEmptyRow) reviewEmptyRow.hidden = visibleCount !== 0;
+            if (reviewFilterCount) reviewFilterCount.textContent = `${visibleCount} / ${reviewRows.length} học sinh`;
+            updateCheckAllState();
+        };
+
+        if (reviewFilterForm) {
+            reviewFilterForm.addEventListener('submit', event => {
+                event.preventDefault();
+                applyStudentReviewFilter();
+            });
+        }
+
+        reviewSearchInput?.addEventListener('input', applyStudentReviewFilter);
+        reviewGradeSelect?.addEventListener('change', applyStudentReviewFilter);
+        reviewClassSelect?.addEventListener('change', applyStudentReviewFilter);
+        reviewStatusSelect?.addEventListener('change', applyStudentReviewFilter);
+        reviewResetButton?.addEventListener('click', () => {
+            reviewFilterForm?.reset();
+            applyStudentReviewFilter();
+        });
+
         // Handle Checkbox in Step 3
         const checkAll = document.getElementById('checkAll');
         const checkBoxes = document.querySelectorAll('.chk-hs');
         
         if (checkAll) {
             checkAll.addEventListener('change', function() {
-                checkBoxes.forEach(cb => cb.checked = this.checked);
+                reviewRows.filter(row => !row.hidden).forEach(row => {
+                    const checkbox = row.querySelector('.chk-hs');
+                    if (checkbox && !checkbox.disabled) checkbox.checked = this.checked;
+                });
+                updateCheckAllState();
             });
         }
+
+        checkBoxes.forEach(checkbox => checkbox.addEventListener('change', updateCheckAllState));
     });
     
     function submitForm(actionUrl) {
@@ -763,7 +982,7 @@
                         <div class="col-md-3">
                             <label class="form-label-custom mb-2">Năm học</label>
                             <select name="NamHoc" class="form-select">
-                                <option value="2026-2027">2026 - 2027</option>
+                                @foreach (var year in academicYears) { <option value="@year.TenNamHoc">@year.TenNamHoc</option> }
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -787,40 +1006,19 @@
                         </div>
                     </div>
                     
-                    <h6 class="fw-bold mb-3" style="color: #1e3a8a;">DANH SÁCH XẾP LỚP THEO KHỐI</h6>
-                    <div class="table-responsive border rounded-3 mb-3">
-                        <table class="table table-hover align-middle text-center mb-0">
-                            <thead class="table-light text-muted small">
-                                <tr>
-                                    <th class="py-3">Khối</th>
-                                    <th>Sĩ số hiện tại</th>
-                                    <th>Số lớp cần</th>
-                                    <th>Sĩ số trung bình/lớp</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
+                    <h6 class="fw-bold mb-3">ĐĂNG KÝ LỚP KHÁC NĂM HỌC HIỆN TẠI</h6>
+                    <p class="small text-muted">Xếp đều học sinh khối 6–8 đã duyệt vào các lớp có sẵn của năm kế tiếp. Học sinh lớp 9 không xếp lớp. Danh sách dưới đây gồm các đăng ký đã lưu.</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead><tr><th>Mã HS</th><th>Họ tên</th><th>Lớp đăng ký</th><th>Năm học</th></tr></thead>
                             <tbody>
-                                @foreach(var k in khoiStats)
-                                {
-                                    int soLop = (int)Math.Ceiling((double)k.DuDieuKien / 40);
-                                    if (soLop == 0) soLop = 1;
-                                    double siSoTB = Math.Round((double)k.DuDieuKien / soLop, 2);
-                                    
-                                    <tr>
-                                        <td class="fw-bold">@k.Khoi</td>
-                                        <td>@k.DuDieuKien</td>
-                                        <td>@soLop</td>
-                                        <td>@siSoTB</td>
-                                        <td><span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Chưa xếp lớp</span></td>
-                                        <td><button type="button" class="btn btn-light btn-sm text-primary"><i class="bi bi-eye"></i></button></td>
-                                    </tr>
-                                }
+                            @foreach (var registration in (ViewBag.NextYearRegistrations as List<eSchool.Models.DangKyLop> ?? new()))
+                            {
+                                <tr><td>@registration.HocSinh?.MaHS</td><td>@registration.HocSinh?.HoTen</td><td>@registration.LopHoc?.TenLop</td><td>@registration.LopHoc?.NamHoc</td></tr>
+                            }
                             </tbody>
                         </table>
                     </div>
-                    
-                    <div class="small text-dark fw-bold">Gợi ý: <span class="fw-normal">Sĩ số lý tưởng mỗi lớp từ 35 - 45 học sinh.</span></div>
                 </div>
             </form>
         </div>
@@ -848,7 +1046,7 @@
                                     <label class="col-sm-4 form-label-custom mb-0">Năm học</label>
                                     <div class="col-sm-8">
                                         <select name="NamHoc" class="form-select">
-                                            <option>2025 - 2026</option>
+                                            <option value="">Tất cả năm học</option>@foreach (var year in academicYears) { <option value="@year.TenNamHoc">@year.TenNamHoc</option> }
                                         </select>
                                     </div>
                                 </div>
@@ -879,7 +1077,7 @@
                                 <div class="row mb-3 align-items-center">
                                     <label class="col-sm-4 form-label-custom mb-0">Loại kết quả</label>
                                     <div class="col-sm-8">
-                                        <select name="LoaiKetQua" class="form-select"><option>Tất cả</option></select>
+                                        <select name="LoaiKetQua" class="form-select"><option value="">Tất cả</option><option value="approved">Đã duyệt</option><option value="eligible">Đủ điều kiện</option><option value="ineligible">Chưa đủ điều kiện</option></select>
                                     </div>
                                 </div>
                                 <div class="row mb-3 align-items-center">
@@ -929,7 +1127,7 @@
                 </div>
                 
                 <div class="modal-footer border-top-0 px-4 pb-4">
-                    <button type="button" class="btn btn-white border px-4 text-primary"><i class="bi bi-eye me-1"></i> Xem trước</button>
+                    <button type="submit" class="btn btn-white border px-4 text-primary"><i class="bi bi-eye me-1"></i> Xem trước</button>
                     <button type="submit" class="btn btn-primary px-4" style="background-color: #1d4ed8;">
                         <i class="bi bi-printer me-1"></i> Tạo và in
                     </button>
@@ -965,7 +1163,7 @@
                                     <label class="col-sm-4 form-label-custom mb-0">Năm học</label>
                                     <div class="col-sm-8">
                                         <select name="NamHoc" class="form-select">
-                                            <option>2025 - 2026</option>
+                                            <option value="">Tất cả năm học</option>@foreach (var year in academicYears) { <option value="@year.TenNamHoc">@year.TenNamHoc</option> }
                                         </select>
                                     </div>
                                 </div>

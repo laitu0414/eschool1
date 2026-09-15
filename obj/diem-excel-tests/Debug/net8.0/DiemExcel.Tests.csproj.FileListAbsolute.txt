@@ -1,0 +1,17 @@
+D:\DATN\obj\diem-excel-tests\bin\net8.0\DiemExcel.Tests.exe
+D:\DATN\obj\diem-excel-tests\bin\net8.0\DiemExcel.Tests.deps.json
+D:\DATN\obj\diem-excel-tests\bin\net8.0\DiemExcel.Tests.runtimeconfig.json
+D:\DATN\obj\diem-excel-tests\bin\net8.0\DiemExcel.Tests.dll
+D:\DATN\obj\diem-excel-tests\bin\net8.0\DiemExcel.Tests.pdb
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.csproj.AssemblyReference.cache
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.GeneratedMSBuildEditorConfig.editorconfig
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.AssemblyInfoInputs.cache
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.AssemblyInfo.cs
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.csproj.CoreCompileInputs.cache
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.sourcelink.json
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExce.A915D27B.Up2Date
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.dll
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\refint\DiemExcel.Tests.dll
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.pdb
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\DiemExcel.Tests.genruntimeconfig.cache
+D:\DATN\obj\diem-excel-tests\Debug\net8.0\ref\DiemExcel.Tests.dll

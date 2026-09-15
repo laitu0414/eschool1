@@ -58,23 +58,24 @@ namespace eSchool.Services
             return data;
         }
 
-        public bool Create(string username, string password, int idChucVu, string? email)
+        public bool Create(string sdt, string password, int idChucVu, string? email)
         {
-            username = username?.Trim() ?? string.Empty;
+            sdt = sdt?.Trim() ?? string.Empty;
             email = email?.Trim();
 
-            if (string.IsNullOrWhiteSpace(username) ||
+            if (!System.Text.RegularExpressions.Regex.IsMatch(sdt, @"^0\d{9}$") ||
                 password?.Length < 6 ||
                 idChucVu == SystemRoleIds.SystemAdmin ||
                 !_accountRepo.RoleExists(idChucVu))
                 return false;
 
-            if (_accountRepo.ExistsUsername(username, idChucVu))
+            if (_accountRepo.ExistsUsername(sdt, idChucVu))
                 return false;
 
             var account = new TaiKhoan
             {
-                Username = username,
+                // Số điện thoại vẫn được lưu ở cột Username để tương thích dữ liệu và luồng đăng nhập hiện có.
+                Username = sdt,
                 Password = BCrypt.Net.BCrypt.HashPassword(password),
                 Email = string.IsNullOrWhiteSpace(email) ? null : email,
                 IdChucVu = idChucVu,
@@ -87,7 +88,7 @@ namespace eSchool.Services
             return true;
         }
 
-        public bool Update(int id, int idChucVu, bool trangThai, string? email)
+        public bool Update(int id, int idChucVu, string? email)
         {
             var account = _accountRepo.GetById(id);
 
@@ -102,8 +103,6 @@ namespace eSchool.Services
 
             account.Email = string.IsNullOrWhiteSpace(email) ? null : email;
             account.IdChucVu = idChucVu;
-            account.TrangThai = trangThai;
-
             _accountRepo.Update(account);
             _accountRepo.Save();
 
