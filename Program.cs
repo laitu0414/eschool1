@@ -61,6 +61,7 @@ namespace eschool
                 try
                 {
                     dbContext.Database.Migrate();
+                    EnsureCompatibilityColumns(dbContext);
 
                     var defaultRoles = new Dictionary<int, string>
                     {
@@ -132,6 +133,23 @@ namespace eschool
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
+        }
+
+        private static void EnsureCompatibilityColumns(AppDbContext dbContext)
+        {
+            dbContext.Database.ExecuteSqlRaw("""
+                IF OBJECT_ID(N'dbo.HocSinhs', N'U') IS NOT NULL
+                   AND COL_LENGTH(N'dbo.HocSinhs', N'AnhDaiDien') IS NULL
+                BEGIN
+                    ALTER TABLE [dbo].[HocSinhs] ADD [AnhDaiDien] nvarchar(max) NULL;
+                END;
+
+                IF OBJECT_ID(N'dbo.GiaoViens', N'U') IS NOT NULL
+                   AND COL_LENGTH(N'dbo.GiaoViens', N'AnhDaiDien') IS NULL
+                BEGIN
+                    ALTER TABLE [dbo].[GiaoViens] ADD [AnhDaiDien] nvarchar(255) NULL;
+                END;
+                """);
         }
     }
 }

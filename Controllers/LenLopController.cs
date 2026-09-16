@@ -17,16 +17,16 @@ namespace eSchool.Controllers
 {
     public class LopStat
     {
-        public string Khoi { get; set; }
-        public string TenLop { get; set; }
+        public string Khoi { get; set; } = string.Empty;
+        public string TenLop { get; set; } = string.Empty;
         public int SiSo { get; set; }
         public int DaTongKet { get; set; }
-        public string TrangThai { get; set; }
+        public string TrangThai { get; set; } = string.Empty;
     }
 
     public class KhoiStat
     {
-        public string Khoi { get; set; }
+        public string Khoi { get; set; } = string.Empty;
         public int TongSoHS { get; set; }
         public int DuDieuKien { get; set; }
         public int ChuaDuDieuKien { get; set; }
@@ -137,10 +137,13 @@ namespace eSchool.Controllers
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
-            var hs = await _context.HocSinhs.FindAsync(id);
+            var hs = await _context.HocSinhs
+                .Include(h => h.LopHoc)
+                .FirstOrDefaultAsync(h => h.IdHocSinh == id);
             if (hs != null)
             {
-                if (!IsEligibleForPromotion(hs))
+                var assessment = (await BuildPromotionAssessmentsAsync(new[] { hs }))[hs.IdHocSinh];
+                if (!assessment.IsEligible)
                 {
                     TempData["Error"] = $"Học sinh {hs.MaHS} không đủ điều kiện để duyệt.";
                     return RedirectToAction(nameof(Index));
@@ -187,9 +190,13 @@ namespace eSchool.Controllers
             }
             
             var students = await _context.HocSinhs
+                .Include(h => h.LopHoc)
                 .Where(h => idList.Contains(h.IdHocSinh))
                 .ToListAsync();
-            var eligibleStudents = students.Where(IsEligibleForPromotion).ToList();
+            var assessments = await BuildPromotionAssessmentsAsync(students);
+            var eligibleStudents = students
+                .Where(h => assessments.TryGetValue(h.IdHocSinh, out var assessment) && assessment.IsEligible)
+                .ToList();
             foreach (var hs in eligibleStudents)
             {
                 hs.DaDuyet = true;
@@ -285,6 +292,13 @@ namespace eSchool.Controllers
                     .Where(id => id > 0)
                     .Distinct()
                     .ToList();
+
+        private static bool IsEligibleForPromotion(HocSinh student)
+        {
+            return student.TrangThai &&
+                (string.IsNullOrWhiteSpace(student.GhiChu) ||
+                 !student.GhiChu.Contains("Không đủ điều kiện", StringComparison.OrdinalIgnoreCase));
+        }
 
         private async Task<Dictionary<int, PromotionAssessment>> BuildPromotionAssessmentsAsync(
             IReadOnlyCollection<HocSinh> students)
