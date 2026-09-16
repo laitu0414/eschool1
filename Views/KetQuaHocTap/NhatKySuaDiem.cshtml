@@ -57,7 +57,7 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 32px; height: 32px; font-weight: bold;">
-                                            @log.TenDangNhap.Substring(0, 1).ToUpper()
+                                            @(string.IsNullOrWhiteSpace(log.TenDangNhap) ? "?" : log.TenDangNhap.Substring(0, 1).ToUpper())
                                         </div>
                                         <span class="fw-medium">@log.TenDangNhap</span>
                                     </div>

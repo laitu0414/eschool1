@@ -1,4 +1,4 @@
-﻿* {
+* {
     box-sizing: border-box;
 }
 
@@ -97,15 +97,29 @@ body {
     padding-top: 18px;
 }
 
+.logout {
+    background-color: #ef4444 !important;
+    color: white !important;
+}
+
 .logout:hover {
-    background: #ef4444;
+    background-color: #dc2626 !important;
 }
 
 /* MAIN */
-.main {
+.main,
+.content {
     margin-left: 270px;
     width: calc(100% - 270px);
     min-height: 100vh;
+}
+
+.filter-dropdown .dropdown-menu {
+    width: 320px;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
 .topbar {

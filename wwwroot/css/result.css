@@ -9,7 +9,7 @@ body { margin:0; background:var(--bg); color:#3f1d1d; font-family:"Segoe UI",Ari
 .sidebar-menu{display:flex;flex:1;flex-direction:column;gap:6px}
 .menu-item{display:flex;align-items:center;gap:13px;min-height:49px;padding:12px 14px;border-radius:12px;color:rgba(255,255,255,.85);text-decoration:none}
 .menu-item i{width:23px;text-align:center;font-size:18px}.menu-item:hover{color:#fff;background:rgba(255,255,255,.12)}.menu-item.active{color:#fff;background:var(--accent);box-shadow:0 8px 20px rgba(69,10,10,.3)}
-.sidebar-bottom{padding-top:16px;border-top:1px solid rgba(255,255,255,.14)}.sidebar-bottom .menu-item{min-height:43px;padding-block:9px}.logout:hover{background:rgba(17,24,39,.35)}
+.sidebar-bottom{padding-top:16px;border-top:1px solid rgba(255,255,255,.14)}.sidebar-bottom .menu-item{min-height:43px;padding-block:9px}.logout{background-color:#ef4444!important;color:white!important}.logout:hover{background-color:#dc2626!important}
 .main{min-height:100vh;margin-left:270px}.topbar{position:sticky;top:0;z-index:900;display:flex;min-height:84px;align-items:center;justify-content:space-between;padding:14px 32px;background:rgba(255,255,255,.96);border-bottom:1px solid #eadede}
 .topbar small{color:#7c6b6b}.topbar h1{margin:2px 0 0;font-size:23px;font-weight:750}.result-user{display:flex;align-items:center;gap:10px}.result-user i{display:grid;width:42px;height:42px;place-items:center;border-radius:50%;color:#fff;background:var(--accent);font-size:20px}
 .page{padding:28px 32px}.page-card{overflow:hidden;padding:22px;border:1px solid #eadede;border-radius:17px;background:#fff;box-shadow:0 8px 24px rgba(127,29,29,.06)}

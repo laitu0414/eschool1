@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "vjco4OHeV3F47oVGw/DjmmPHq4kxZKPtlhCqpUm921M=",
+  "Hash": "DIkrNWCTp83w69qUttUq6EjWHNcpWpmtNRVyMW73tdc=",
   "Source": "eSchool",
   "BasePath": "_content/eSchool",
   "Mode": "Default",
@@ -129,6 +129,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\home-portal.css"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\pagination.css",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "css/pagination.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\pagination.css"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\result.css",
@@ -549,6 +568,25 @@
       "OriginalItemSpec": "wwwroot\\image\\news_75f4a01f6adc456294929e1fd63309f4.jpg"
     },
     {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\news_87dc480a08e946738155a523313ac27b.jpg",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "image/news_87dc480a08e946738155a523313ac27b.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\image\\news_87dc480a08e946738155a523313ac27b.jpg"
+    },
+    {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\news_9e3ecb4daf1a49039a4e7a9ba9244525.jpg",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -737,6 +775,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\js\\student.js"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\table-pagination.js",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "js/table-pagination.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\table-pagination.js"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",

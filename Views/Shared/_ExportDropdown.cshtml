@@ -1,0 +1,142 @@
+﻿<div class="dropdown me-2">
+    <button type="button" class="btn btn-outline-secondary h-100 px-3" data-bs-toggle="dropdown" aria-expanded="false" title="Xuất dữ liệu">
+        <i class="bi bi-download"></i>
+    </button>
+    <ul class="dropdown-menu shadow">
+        <li>
+            <a class="dropdown-item py-2" href="#" onclick="exportToExcel(event)">
+                <i class="bi bi-file-earmark-excel me-2 text-success"></i> Excel (.xlsx)
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item py-2" href="#" onclick="exportToPdf(event)">
+                <i class="bi bi-file-earmark-pdf me-2 text-danger"></i> PDF (.pdf)
+            </a>
+        </li>
+    </ul>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+
+<script>
+    function getTableDataForExport() {
+        const table = document.querySelector('table');
+        if (!table) return null;
+        
+        const data = [];
+        const headers = [];
+        
+        const ths = table.querySelectorAll('thead th');
+        const skipCols = new Set();
+        
+        ths.forEach((th, index) => {
+            const text = th.innerText.trim().toLowerCase();
+            if (th.classList.contains('app-table-checkbox-col') || text === 'thao tác' || text === 'hành động') {
+                skipCols.add(index);
+            } else {
+                headers.push(th.innerText.trim());
+            }
+        });
+        
+        data.push(headers);
+        
+        const trs = table.querySelectorAll('tbody tr:not(.app-table-empty-row)');
+        trs.forEach(tr => {
+            const rowData = [];
+            const tds = tr.querySelectorAll('td');
+            tds.forEach((td, index) => {
+                if (!skipCols.has(index)) {
+                    rowData.push(td.innerText.trim());
+                }
+            });
+            if (rowData.length > 0) {
+                data.push(rowData);
+            }
+        });
+        
+        return data;
+    }
+
+    async function exportToExcel(e) {
+        e.preventDefault();
+        const data = getTableDataForExport();
+        if (!data || data.length <= 1) {
+            alert('Không có dữ liệu để xuất!');
+            return;
+        }
+        
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Data');
+        
+        const headerRow = sheet.addRow(data[0]);
+        headerRow.eachCell(cell => {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E78' } };
+            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+            cell.alignment = { horizontal: 'center' };
+            cell.border = {
+                top: {style:'thin', color: {argb:'FF1F4E78'}},
+                left: {style:'thin', color: {argb:'FF1F4E78'}},
+                bottom: {style:'thin', color: {argb:'FF1F4E78'}},
+                right: {style:'thin', color: {argb:'FF1F4E78'}}
+            };
+        });
+        
+        for (let i = 1; i < data.length; i++) {
+            const row = sheet.addRow(data[i]);
+            row.eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9EAD3' } };
+                cell.border = {
+                    top: {style:'thin', color: {argb:'FF8FCE00'}},
+                    left: {style:'thin', color: {argb:'FF8FCE00'}},
+                    bottom: {style:'thin', color: {argb:'FF8FCE00'}},
+                    right: {style:'thin', color: {argb:'FF8FCE00'}}
+                };
+            });
+        }
+        
+        sheet.columns.forEach(column => {
+            column.width = 20;
+        });
+        
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        let filename = document.title ? document.title.split('-')[0].trim() : "Export";
+        link.download = filename + ".xlsx";
+        link.click();
+    }
+
+    function exportToPdf(e) {
+        e.preventDefault();
+        const data = getTableDataForExport();
+        if (!data || data.length <= 1) {
+            alert('Không có dữ liệu để xuất!');
+            return;
+        }
+        
+        let html = '<table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 14px;">';
+        html += '<thead><tr>';
+        data[0].forEach(h => {
+            html += '<th style="background-color: #1f4e78; color: white; padding: 10px; border: 1px solid #8fce00;">' + h + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+        
+        for (let i = 1; i < data.length; i++) {
+            html += '<tr>';
+            data[i].forEach(cell => {
+                html += '<td style="background-color: #d9ead3; color: black; padding: 8px; border: 1px solid #8fce00;">' + cell + '</td>';
+            });
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>' + document.title + '</title></head><body>');
+        printWindow.document.write('<h2 style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px;">' + (document.title.split('-')[0].trim()) + '</h2>');
+        printWindow.document.write(html);
+        printWindow.document.write('<script>window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 500); }<\/script>');
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+    }
+</script>

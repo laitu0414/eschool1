@@ -21,6 +21,10 @@
       "PackagePath": "staticwebassets\\css\\home-portal.css"
     },
     {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\pagination.css",
+      "PackagePath": "staticwebassets\\css\\pagination.css"
+    },
+    {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\result.css",
       "PackagePath": "staticwebassets\\css\\result.css"
     },
@@ -109,6 +113,10 @@
       "PackagePath": "staticwebassets\\image\\news_75f4a01f6adc456294929e1fd63309f4.jpg"
     },
     {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\news_87dc480a08e946738155a523313ac27b.jpg",
+      "PackagePath": "staticwebassets\\image\\news_87dc480a08e946738155a523313ac27b.jpg"
+    },
+    {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\news_9e3ecb4daf1a49039a4e7a9ba9244525.jpg",
       "PackagePath": "staticwebassets\\image\\news_9e3ecb4daf1a49039a4e7a9ba9244525.jpg"
     },
@@ -147,6 +155,10 @@
     {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\student.js",
       "PackagePath": "staticwebassets\\js\\student.js"
+    },
+    {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\table-pagination.js",
+      "PackagePath": "staticwebassets\\js\\table-pagination.js"
     },
     {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\lib\\bootstrap\\LICENSE",

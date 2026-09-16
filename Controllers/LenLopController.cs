@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -58,11 +58,12 @@ namespace eSchool.Controllers
         {
             var allHocSinh = await _context.HocSinhs.Include(h => h.LopHoc).ToListAsync();
             var allLops = await _context.LopHocs.ToListAsync();
+            ViewBag.AcademicYears = await _context.NamHocs.AsNoTracking().OrderByDescending(y => y.NgayBatDau).ToListAsync();
             var assessments = await BuildPromotionAssessmentsAsync(allHocSinh);
 
             int totalHS = allHocSinh.Count;
             int activeHS = allHocSinh.Count(h => h.TrangThai);
-            int inactiveHS = allHocSinh.Count(h => !h.TrangThai); // Bo hoc/chuyen truong
+            int inactiveHS = allHocSinh.Count(h => !h.TrangThai); // Bỏ học/chuyển trường
 
             int chuaDuDieuKien = allHocSinh.Count(h => h.TrangThai &&
                 (!assessments.TryGetValue(h.IdHocSinh, out var assessment) || !assessment.IsEligible));
@@ -73,7 +74,7 @@ namespace eSchool.Controllers
             ViewBag.DuDieuKien = duDieuKien;
             ViewBag.ChuaDuDieuKien = chuaDuDieuKien;
             ViewBag.BoHoc = boHoc;
-            
+
             int daDuyet = allHocSinh.Count(h => h.TrangThai && h.DaDuyet &&
                 assessments.TryGetValue(h.IdHocSinh, out var assessment) && assessment.IsEligible);
             int choDuyet = allHocSinh.Count(h => !h.DaDuyet &&
@@ -89,13 +90,15 @@ namespace eSchool.Controllers
             ViewBag.DaTongKet = daTongKet;
             ViewBag.ChuaTongKet = chuaTongKet;
 
-            var lopStats = allLops.Select(l => {
+            var lopStats = allLops.Select(l =>
+            {
                 int siso = allHocSinh.Count(h => h.IdLopHoc == l.IdLop);
                 int ctk = allHocSinh.Count(h => h.IdLopHoc == l.IdLop && h.TrangThai &&
                     (!assessments.TryGetValue(h.IdHocSinh, out var assessment) || !assessment.IsComplete));
                 int completed = allHocSinh.Count(h => h.IdLopHoc == l.IdLop && h.TrangThai &&
                     assessments.TryGetValue(h.IdHocSinh, out var assessment) && assessment.IsComplete);
-                return new LopStat {
+                return new LopStat
+                {
                     Khoi = l.Khoi ?? "",
                     TenLop = l.TenLop,
                     SiSo = siso,
@@ -105,14 +108,15 @@ namespace eSchool.Controllers
             }).OrderBy(l => l.Khoi).ThenBy(l => l.TenLop).ToList();
             ViewBag.LopStats = lopStats;
 
-            // Stats for Step 2
-            var khoiStats = allHocSinh.Where(h => h.LopHoc != null).GroupBy(h => h.LopHoc.Khoi).Select(g => {
+            var khoiStats = allHocSinh.Where(h => h.LopHoc != null).GroupBy(h => h.LopHoc.Khoi).Select(g =>
+            {
                 int total = g.Count();
                 int cdk = g.Count(h => h.TrangThai &&
                     (!assessments.TryGetValue(h.IdHocSinh, out var assessment) || !assessment.IsEligible));
                 int bh = g.Count(h => !h.TrangThai);
                 int dk = g.Count(h => assessments.TryGetValue(h.IdHocSinh, out var assessment) && assessment.IsEligible);
-                return new KhoiStat {
+                return new KhoiStat
+                {
                     Khoi = g.Key,
                     TongSoHS = total,
                     DuDieuKien = dk,
@@ -123,9 +127,16 @@ namespace eSchool.Controllers
             }).OrderBy(g => g.Khoi).ToList();
             ViewBag.KhoiStats = khoiStats;
 
-            // List of students for Step 3
             ViewBag.HocSinhs = allHocSinh.OrderBy(h => h.LopHoc?.TenLop).ThenBy(h => h.HoTen).ToList();
             ViewBag.PromotionAssessments = assessments;
+
+            var studentIds = allHocSinh.Select(h => h.IdHocSinh).ToList();
+            ViewBag.NextYearRegistrations = await _context.DangKyLops.AsNoTracking()
+                .Include(d => d.HocSinh).ThenInclude(h => h.LopHoc)
+                .Include(d => d.LopHoc)
+                .Where(d => studentIds.Contains(d.IdHocSinh) && d.HocSinh != null && d.HocSinh.LopHoc != null &&
+                    d.LopHoc != null && d.LopHoc.NamHoc != d.HocSinh.LopHoc.NamHoc)
+                .OrderBy(d => d.LopHoc.NamHoc).ThenBy(d => d.LopHoc.TenLop).ThenBy(d => d.HocSinh.HoTen).ToListAsync();
 
             return View();
         }
@@ -137,23 +148,20 @@ namespace eSchool.Controllers
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
-            var hs = await _context.HocSinhs
-                .Include(h => h.LopHoc)
-                .FirstOrDefaultAsync(h => h.IdHocSinh == id);
-            if (hs != null)
-            {
-                var assessment = (await BuildPromotionAssessmentsAsync(new[] { hs }))[hs.IdHocSinh];
-                if (!assessment.IsEligible)
-                {
-                    TempData["Error"] = $"Học sinh {hs.MaHS} không đủ điều kiện để duyệt.";
-                    return RedirectToAction(nameof(Index));
-                }
+            var hs = await _context.HocSinhs.Include(h => h.LopHoc).FirstOrDefaultAsync(h => h.IdHocSinh == id);
+            if (hs == null)
+                return NotFound();
 
-                hs.DaDuyet = true;
-                hs.GhiChu = "Đã duyệt";
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"Đã duyệt học sinh {hs.MaHS}.";
+            var assessments = await BuildPromotionAssessmentsAsync(new[] { hs });
+            if (!assessments.TryGetValue(hs.IdHocSinh, out var assessment) || !assessment.IsEligible)
+            {
+                TempData["Error"] = $"Học sinh {hs.MaHS} không đủ điều kiện để duyệt.";
+                return RedirectToAction(nameof(Index));
             }
+
+            hs.DaDuyet = true;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Đã duyệt học sinh {hs.MaHS}.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -164,14 +172,13 @@ namespace eSchool.Controllers
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
-            var hs = await _context.HocSinhs.FindAsync(id);
-            if (hs != null)
-            {
-                hs.DaDuyet = false;
-                hs.GhiChu = "Không đủ điều kiện";
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"Đã từ chối học sinh {hs.MaHS}.";
-            }
+            var hs = await _context.HocSinhs.Include(h => h.LopHoc).FirstOrDefaultAsync(h => h.IdHocSinh == id);
+            if (hs == null)
+                return NotFound();
+
+            hs.DaDuyet = false;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Đã hủy duyệt học sinh {hs.MaHS}.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -188,7 +195,7 @@ namespace eSchool.Controllers
                 TempData["Error"] = "Vui lòng chọn ít nhất một học sinh hợp lệ để duyệt.";
                 return RedirectToAction(nameof(Index));
             }
-            
+
             var students = await _context.HocSinhs
                 .Include(h => h.LopHoc)
                 .Where(h => idList.Contains(h.IdHocSinh))
@@ -197,10 +204,10 @@ namespace eSchool.Controllers
             var eligibleStudents = students
                 .Where(h => assessments.TryGetValue(h.IdHocSinh, out var assessment) && assessment.IsEligible)
                 .ToList();
+
             foreach (var hs in eligibleStudents)
             {
                 hs.DaDuyet = true;
-                hs.GhiChu = "Đã duyệt nhóm";
             }
             await _context.SaveChangesAsync();
             TempData["Success"] = eligibleStudents.Any()
@@ -208,7 +215,7 @@ namespace eSchool.Controllers
                 : "Không có học sinh đủ điều kiện trong danh sách đã chọn.";
             return RedirectToAction(nameof(Index));
         }
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkReject(string ids)
@@ -222,20 +229,19 @@ namespace eSchool.Controllers
                 TempData["Error"] = "Vui lòng chọn ít nhất một học sinh hợp lệ để từ chối.";
                 return RedirectToAction(nameof(Index));
             }
-            
+
             var students = await _context.HocSinhs
                 .Where(h => idList.Contains(h.IdHocSinh) && h.TrangThai)
                 .ToListAsync();
             foreach (var hs in students)
             {
                 hs.DaDuyet = false;
-                hs.GhiChu = "Không đủ điều kiện";
             }
             await _context.SaveChangesAsync();
-            TempData["Success"] = $"Đã từ chối {students.Count} học sinh.";
+            TempData["Success"] = $"Đã hủy duyệt {students.Count} học sinh.";
             return RedirectToAction(nameof(Index));
         }
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkApproveAllEligible()
@@ -243,13 +249,14 @@ namespace eSchool.Controllers
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
-            var students = await _context.HocSinhs
-                .Where(h => h.TrangThai && (h.GhiChu == null || !h.GhiChu.Contains("Không đủ điều kiện")) && !h.DaDuyet)
-                .ToListAsync();
+            var candidates = await _context.HocSinhs.Include(h => h.LopHoc)
+                .Where(h => h.TrangThai && !h.DaDuyet).ToListAsync();
+            var assessments = await BuildPromotionAssessmentsAsync(candidates);
+            var students = candidates.Where(h => assessments[h.IdHocSinh].IsEligible).ToList();
+
             foreach (var hs in students)
             {
                 hs.DaDuyet = true;
-                hs.GhiChu = "Đã duyệt";
             }
             await _context.SaveChangesAsync();
             TempData["Success"] = $"Đã duyệt tất cả học sinh đủ điều kiện ({students.Count}).";
@@ -258,25 +265,51 @@ namespace eSchool.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult LockResults()
+        public async Task<IActionResult> LockResults()
         {
-            var hasPendingEligibleStudents = _context.HocSinhs
-                .Any(h => h.TrangThai &&
-                          (h.GhiChu == null || !h.GhiChu.Contains("Không đủ điều kiện")) &&
-                          !h.DaDuyet);
-            if (hasPendingEligibleStudents)
+            if (IsResultsLocked())
+                return RedirectWithLockedResultsMessage();
+
+            var students = await _context.HocSinhs.Include(h => h.LopHoc).Where(h => h.TrangThai).ToListAsync();
+            var assessments = await BuildPromotionAssessmentsAsync(students);
+            if (students.Count == 0 || assessments.Values.Any(a => !a.IsComplete))
             {
-                TempData["Error"] = "Còn học sinh đủ điều kiện chưa được duyệt. Vui lòng hoàn tất duyệt trước khi khóa kết quả.";
+                TempData["Error"] = "Chưa có học sinh hoặc còn thiếu dữ liệu tổng kết. Không thể khóa kết quả.";
                 return RedirectToAction(nameof(Index));
             }
+            if (students.Any(h => assessments[h.IdHocSinh].IsEligible && !h.DaDuyet))
+            {
+                TempData["Error"] = "Còn học sinh đủ điều kiện chưa được duyệt.";
+                return RedirectToAction(nameof(Index));
+            }
+            foreach (var student in students.Where(h => !assessments[h.IdHocSinh].IsEligible))
+                student.DaDuyet = false;
 
-            HttpContext.Session.SetString(ResultsLockedSessionKey, bool.TrueString);
+            RecordLockState(true);
+            await _context.SaveChangesAsync();
             TempData["Success"] = "Đã khóa kết quả xét lên lớp / tốt nghiệp.";
             return RedirectToAction(nameof(Index));
         }
 
         private bool IsResultsLocked() =>
             bool.TryParse(HttpContext.Session.GetString(ResultsLockedSessionKey), out var isLocked) && isLocked;
+
+        private void RecordLockState(bool locked) => _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
+        {
+            TenDangNhap = User.Identity?.Name ?? "Admin",
+            HanhDong = ResultsLockedSessionKey,
+            NoiDung = locked.ToString()
+        });
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnlockResults()
+        {
+            RecordLockState(false);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Đã mở khóa kết quả.";
+            return RedirectToAction(nameof(Index));
+        }
 
         private IActionResult RedirectWithLockedResultsMessage()
         {
@@ -293,174 +326,126 @@ namespace eSchool.Controllers
                     .Distinct()
                     .ToList();
 
-        private static bool IsEligibleForPromotion(HocSinh student)
+        private async Task<Dictionary<int, PromotionAssessment>> BuildPromotionAssessmentsAsync(IReadOnlyCollection<HocSinh> students)
         {
-            return student.TrangThai &&
-                (string.IsNullOrWhiteSpace(student.GhiChu) ||
-                 !student.GhiChu.Contains("Không đủ điều kiện", StringComparison.OrdinalIgnoreCase));
-        }
-
-        private async Task<Dictionary<int, PromotionAssessment>> BuildPromotionAssessmentsAsync(
-            IReadOnlyCollection<HocSinh> students)
-        {
-            var results = new Dictionary<int, PromotionAssessment>();
-            if (students.Count == 0)
-                return results;
-
-            var studentIds = students.Select(x => x.IdHocSinh).ToList();
-            var academicYearNames = students
-                .Select(x => x.LopHoc?.NamHoc)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Cast<string>()
-                .Distinct()
-                .ToList();
-            var academicYears = await _context.NamHocs
-                .AsNoTracking()
-                .Where(x => academicYearNames.Contains(x.TenNamHoc))
-                .ToListAsync();
-            var academicYearByName = academicYears.ToDictionary(x => x.TenNamHoc, x => x);
-            var academicYearIds = academicYears.Select(x => x.IdNamHoc).ToList();
-            var semesters = await _context.HocKys
-                .AsNoTracking()
-                .Where(x => academicYearIds.Contains(x.IdNamHoc))
-                .OrderBy(x => x.NgayBatDau)
-                .ToListAsync();
-            var grades = await _context.Diems
-                .AsNoTracking()
-                .Where(x => studentIds.Contains(x.IdHocSinh) && x.IdNamHoc.HasValue && academicYearIds.Contains(x.IdNamHoc.Value))
-                .ToListAsync();
-
-            foreach (var student in students)
+            var annual = await new eSchool.Services.AnnualScoreService(_context).BuildAsync(students);
+            return annual.ToDictionary(r => r.Student.IdHocSinh, r => new PromotionAssessment
             {
-                var assessment = new PromotionAssessment();
-                results[student.IdHocSinh] = assessment;
-
-                if (!student.TrangThai)
-                {
-                    assessment.IsComplete = true;
-                    assessment.Decision = "Không xét";
-                    assessment.Reason = "Học sinh đã ngừng học hoặc chuyển trường.";
-                    continue;
-                }
-
-                if (student.LopHoc == null || string.IsNullOrWhiteSpace(student.LopHoc.NamHoc) ||
-                    !academicYearByName.TryGetValue(student.LopHoc.NamHoc, out var academicYear))
-                {
-                    assessment.Decision = "Chưa đủ dữ liệu";
-                    assessment.Reason = "Chưa xác định được năm học của lớp.";
-                    continue;
-                }
-
-                var yearSemesters = semesters
-                    .Where(x => x.IdNamHoc == academicYear.IdNamHoc)
-                    .OrderBy(x => x.NgayBatDau)
-                    .Take(2)
-                    .ToList();
-                if (yearSemesters.Count < 2)
-                {
-                    assessment.Decision = "Chưa đủ dữ liệu";
-                    assessment.Reason = "Năm học chưa có đủ hai học kỳ.";
-                    continue;
-                }
-
-                var yearlyGrades = grades
-                    .Where(x => x.IdHocSinh == student.IdHocSinh && x.IdNamHoc == academicYear.IdNamHoc)
-                    .GroupBy(x => x.IdMonHoc)
-                    .ToList();
-                if (!yearlyGrades.Any())
-                {
-                    assessment.Decision = "Chưa đủ dữ liệu";
-                    assessment.Reason = "Chưa nhập điểm cho năm học này.";
-                    continue;
-                }
-
-                var subjectAverages = new List<decimal>();
-                var incompleteSubjects = 0;
-                foreach (var subjectGrades in yearlyGrades)
-                {
-                    var firstSemester = subjectGrades
-                        .Where(x => x.IdHocKy == yearSemesters[0].IdHocKy)
-                        .OrderByDescending(x => x.IdDiem)
-                        .FirstOrDefault();
-                    var secondSemester = subjectGrades
-                        .Where(x => x.IdHocKy == yearSemesters[1].IdHocKy)
-                        .OrderByDescending(x => x.IdDiem)
-                        .FirstOrDefault();
-
-                    if (!firstSemester?.DiemTB.HasValue == true || !secondSemester?.DiemTB.HasValue == true)
-                    {
-                        incompleteSubjects++;
-                        continue;
-                    }
-
-                    subjectAverages.Add(Math.Round((firstSemester.DiemTB.Value + secondSemester.DiemTB.Value * 2) / 3, 2));
-                }
-
-                if (incompleteSubjects > 0)
-                {
-                    assessment.Decision = "Chưa đủ dữ liệu";
-                    assessment.Reason = $"Còn {incompleteSubjects} môn chưa có điểm trung bình của cả hai học kỳ.";
-                    continue;
-                }
-
-                assessment.IsComplete = true;
-                assessment.AnnualAverage = Math.Round(subjectAverages.Average(), 2);
-                assessment.IsEligible = assessment.AnnualAverage >= 5m;
-                var isGraduation = string.Equals(student.LopHoc.Khoi?.Trim(), "9", StringComparison.OrdinalIgnoreCase);
-                assessment.Decision = assessment.IsEligible
-                    ? (isGraduation ? "Đủ điều kiện tốt nghiệp" : "Đủ điều kiện lên lớp")
-                    : "Chưa đủ điều kiện";
-                assessment.Reason = assessment.IsEligible
-                    ? "Đã đủ điểm trung bình cả hai học kỳ và ĐTB cả năm đạt từ 5.0."
-                    : "ĐTB cả năm dưới 5.0.";
-            }
-
-            return results;
+                AnnualAverage = r.Average,
+                IsComplete = !r.Student.TrangThai || (r.Complete && r.Finalized),
+                IsEligible = r.Student.TrangThai && r.Eligible && r.Finalized,
+                Decision = !r.Student.TrangThai ? "Không xét" : !r.Complete ? "Chưa đủ dữ liệu" :
+                    !r.Finalized ? "Chưa tổng kết / cần tổng kết lại" :
+                    r.Eligible ? (r.Student.LopHoc?.Khoi?.Trim() == "9" ? "Đạt điều kiện học tập tốt nghiệp" : "Đạt điều kiện học tập lên lớp") : "Chưa đủ điều kiện",
+                Reason = r.Reason + (r.Student.TrangThai && r.Complete && !r.Finalized
+                    ? " Hãy tổng kết tại Điểm cả năm trước khi duyệt." : "")
+            });
         }
-
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AutoAssignClass(string NamHoc, string Khoi, string TrangThai)
         {
-            // Dummy logic cho demo: Thông báo xếp lớp thành công
-            // Trong thực tế sẽ cần lấy danh sách học sinh đủ điều kiện và chia đều vào các lớp mới sinh ra
-            TempData["Success"] = $"Đã xếp lớp tự động cho năm học {NamHoc} thành công!";
+            if (!IsResultsLocked())
+            {
+                TempData["Error"] = "Vui lòng khóa kết quả trước khi xếp lớp.";
+                return RedirectToAction(nameof(Index));
+            }
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            var targetYear = await _context.NamHocs.SingleOrDefaultAsync(y => y.TenNamHoc == NamHoc);
+            if (targetYear == null)
+            {
+                TempData["Error"] = "Năm học đích không tồn tại.";
+                return RedirectToAction(nameof(Index));
+            }
+            var years = await _context.NamHocs.AsNoTracking().ToListAsync();
+            var sourceYear = years.Where(y => y.NgayBatDau < targetYear.NgayBatDau)
+                .OrderByDescending(y => y.NgayBatDau).FirstOrDefault();
+            if (sourceYear == null || sourceYear.NgayKetThuc >= targetYear.NgayBatDau)
+            {
+                TempData["Error"] = "Không xác định được năm học liền trước hợp lệ.";
+                return RedirectToAction(nameof(Index));
+            }
+            var students = await _context.HocSinhs.Include(h => h.LopHoc)
+                .Where(h => h.TrangThai && h.DaDuyet && h.LopHoc != null && h.LopHoc.NamHoc == sourceYear.TenNamHoc)
+                .OrderBy(h => h.MaHS).ToListAsync();
+            if (!string.IsNullOrWhiteSpace(Khoi) && Khoi != "All")
+                students = students.Where(h => h.LopHoc!.Khoi == Khoi).ToList();
+            var assessments = await BuildPromotionAssessmentsAsync(students);
+            students = students.Where(h => assessments[h.IdHocSinh].IsEligible &&
+                int.TryParse(h.LopHoc!.Khoi?.Trim(), out var grade) && grade >= 6 && grade < 9).ToList();
+            var targets = await _context.LopHocs.Where(l => l.NamHoc == NamHoc).OrderBy(l => l.TenLop).ToListAsync();
+            var counts = await _context.DangKyLops.Where(d => d.LopHoc!.NamHoc == NamHoc)
+                .GroupBy(d => d.IdLop).Select(g => new { Id = g.Key, Count = g.Select(d => d.IdHocSinh).Distinct().Count() })
+                .ToDictionaryAsync(g => g.Id, g => g.Count);
+            var registered = await _context.DangKyLops.Where(d => d.LopHoc!.NamHoc == NamHoc)
+                .Select(d => d.IdHocSinh).ToListAsync();
+            var assigned = 0;
+            foreach (var student in students)
+            {
+                if (registered.Contains(student.IdHocSinh)) continue;
+                var nextGrade = (int.Parse(student.LopHoc!.Khoi!.Trim()) + 1).ToString();
+                var target = targets.Where(l => l.Khoi?.Trim() == nextGrade)
+                    .OrderBy(l => counts.GetValueOrDefault(l.IdLop)).ThenBy(l => l.TenLop).FirstOrDefault();
+                if (target == null)
+                {
+                    TempData["Error"] = $"Chưa có lớp khối {nextGrade} trong năm học {NamHoc}. Chưa lưu xếp lớp.";
+                    return RedirectToAction(nameof(Index));
+                }
+                _context.DangKyLops.Add(new DangKyLop { IdHocSinh = student.IdHocSinh, IdLop = target.IdLop });
+                counts[target.IdLop] = counts.GetValueOrDefault(target.IdLop) + 1;
+                assigned++;
+            }
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            TempData["Success"] = $"Đã đăng ký lớp năm học mới cho {assigned} học sinh. Lớp hiện tại được giữ để bảo toàn kết quả năm đang xét.";
             return RedirectToAction(nameof(Index));
         }
-
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> PrintResults(string NamHoc, string Khoi, string Lop, string LoaiKetQua, string HinhThucIn, string MauIn)
         {
             var query = _context.HocSinhs.Include(h => h.LopHoc).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(NamHoc)) query = query.Where(h => h.LopHoc != null && h.LopHoc.NamHoc == NamHoc);
             if (!string.IsNullOrEmpty(Khoi)) query = query.Where(h => h.LopHoc != null && h.LopHoc.Khoi == Khoi);
             if (!string.IsNullOrEmpty(Lop)) query = query.Where(h => h.LopHoc != null && h.LopHoc.TenLop == Lop);
             var students = await query.OrderBy(h => h.LopHoc.TenLop).ThenBy(h => h.HoTen).ToListAsync();
 
+            if (MauIn == "Danh sách tốt nghiệp lớp 9") students = students.Where(h => h.LopHoc?.Khoi?.Trim() == "9").ToList();
+            var assessments = await BuildPromotionAssessmentsAsync(students);
+            if (LoaiKetQua == "approved") students = students.Where(h => h.DaDuyet && assessments[h.IdHocSinh].IsEligible).ToList();
+            if (LoaiKetQua == "eligible") students = students.Where(h => assessments[h.IdHocSinh].IsEligible).ToList();
+            if (LoaiKetQua == "ineligible") students = students.Where(h => !assessments[h.IdHocSinh].IsEligible).ToList();
             QuestPDF.Settings.License = LicenseType.Community;
-            var document = Document.Create(container => {
-                container.Page(page => {
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
                     page.Size(PageSizes.A4);
                     page.Margin(2, Unit.Centimetre);
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontSize(12));
-                    
+
                     page.Header().Text(MauIn ?? "Danh sách kết quả").SemiBold().FontSize(20).FontColor(Colors.Blue.Darken2);
-                    page.Content().PaddingVertical(1, Unit.Centimetre).Column(x => {
+                    page.Content().PaddingVertical(1, Unit.Centimetre).Column(x =>
+                    {
                         x.Spacing(10);
                         x.Item().Text($"Năm học: {NamHoc}");
                         x.Item().Text($"Khối: {Khoi}");
                         x.Item().Text($"Lớp: {Lop}");
                         x.Item().Text($"Loại kết quả: {LoaiKetQua}");
                         x.Item().PaddingTop(20).Text("Danh sách học sinh").Bold();
-                        
+
                         int i = 1;
                         foreach (var hs in students)
                         {
-                            string trangThai = hs.DaDuyet ? "Đã duyệt" : (hs.GhiChu ?? (hs.TrangThai ? "Đủ điều kiện" : "Bỏ học"));
+                            var assessment = assessments[hs.IdHocSinh];
+                            string trangThai = assessment.Decision + (hs.DaDuyet && assessment.IsEligible ? " - Đã duyệt" : " - Chưa duyệt");
                             string lopName = hs.LopHoc != null ? hs.LopHoc.TenLop : "";
                             x.Item().Text($"{i++}. {hs.MaHS} - {hs.HoTen} - Lớp {lopName} - {trangThai}");
                         }
                     });
-                    page.Footer().AlignCenter().Text(x => {
+                    page.Footer().AlignCenter().Text(x =>
+                    {
                         x.Span("Trang ");
                         x.CurrentPageNumber();
                         x.Span(" / ");
@@ -468,7 +453,7 @@ namespace eSchool.Controllers
                     });
                 });
             });
-            
+
             byte[] pdfBytes = document.GeneratePdf();
             if (HinhThucIn == "Preview")
             {
@@ -478,27 +463,30 @@ namespace eSchool.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExportExcel(string NamHoc, string Khoi, string Lop, string LoaiDuLieu, string DinhDangFile, List<string> BaoGom)
         {
             var query = _context.HocSinhs.Include(h => h.LopHoc).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(NamHoc)) query = query.Where(h => h.LopHoc != null && h.LopHoc.NamHoc == NamHoc);
             if (!string.IsNullOrEmpty(Khoi)) query = query.Where(h => h.LopHoc != null && h.LopHoc.Khoi == Khoi);
             if (!string.IsNullOrEmpty(Lop)) query = query.Where(h => h.LopHoc != null && h.LopHoc.TenLop == Lop);
             var students = await query.OrderBy(h => h.LopHoc.TenLop).ThenBy(h => h.HoTen).ToListAsync();
 
+            var assessments = await BuildPromotionAssessmentsAsync(students);
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("KetQua");
             worksheet.Cell(1, 1).Value = "Kết quả xét lên lớp - " + NamHoc;
             worksheet.Cell(1, 1).Style.Font.Bold = true;
             worksheet.Cell(1, 1).Style.Font.FontSize = 14;
-            
+
             int col = 1;
             if (BaoGom != null && BaoGom.Count > 0)
             {
-                foreach(var field in BaoGom)
+                foreach (var field in BaoGom)
                 {
                     worksheet.Cell(3, col).Value = field;
-                    worksheet.Cell(3, col).Style.Font.Bold = true;
-                    worksheet.Cell(3, col).Style.Fill.BackgroundColor = XLColor.LightGray;
+                    
+                    
                     col++;
                 }
             }
@@ -509,17 +497,23 @@ namespace eSchool.Controllers
                 worksheet.Cell(3, 3).Value = "Lớp";
                 worksheet.Cell(3, 4).Value = "Trạng thái";
             }
-            
+
             int row = 4;
             foreach (var hs in students)
             {
-                string trangThai = hs.DaDuyet ? "Đã duyệt" : (hs.GhiChu ?? (hs.TrangThai ? "Đủ điều kiện" : "Bỏ học"));
+                var assessment = assessments[hs.IdHocSinh];
+                string trangThai = assessment.Decision + (hs.DaDuyet && assessment.IsEligible ? " - Đã duyệt" : " - Chưa duyệt");
                 if (BaoGom != null && BaoGom.Count > 0)
                 {
                     int c = 1;
-                    foreach(var field in BaoGom)
+                    foreach (var field in BaoGom)
                     {
-                        if (field.Contains("Mã", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = hs.MaHS;
+                        if (field == "Thông tin học sinh") worksheet.Cell(row, c).Value = $"{hs.MaHS} - {hs.HoTen} - {hs.LopHoc?.TenLop}";
+                        else if (field == "Kết quả học tập") worksheet.Cell(row, c).Value = assessment.AnnualAverage?.ToString("0.00") ?? "Chưa đủ dữ liệu";
+                        else if (field == "Kết quả rèn luyện") worksheet.Cell(row, c).Value = "Chưa có dữ liệu";
+                        else if (field == "Điều kiện xét") worksheet.Cell(row, c).Value = assessment.Reason;
+                        else if (field == "Ghi chú") worksheet.Cell(row, c).Value = hs.GhiChu ?? "";
+                        else if (field.Contains("Mã", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = hs.MaHS;
                         else if (field.Contains("Tên", StringComparison.OrdinalIgnoreCase) || field.Contains("Họ", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = hs.HoTen;
                         else if (field.Contains("Lớp", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = hs.LopHoc?.TenLop;
                         else if (field.Contains("Trạng", StringComparison.OrdinalIgnoreCase) || field.Contains("Kết quả", StringComparison.OrdinalIgnoreCase)) worksheet.Cell(row, c).Value = trangThai;
@@ -536,12 +530,14 @@ namespace eSchool.Controllers
                 }
                 row++;
             }
-            
+
             worksheet.Columns().AdjustToContents();
-            
+
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet, 3);
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
             return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"KetQua_{NamHoc}.xlsx");
         }
     }
 }
+

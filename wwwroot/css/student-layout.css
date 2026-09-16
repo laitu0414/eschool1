@@ -127,8 +127,13 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.menu-item.logout {
+    background-color: #ef4444 !important;
+    color: white !important;
+}
+
 .menu-item.logout:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background-color: #dc2626 !important;
 }
 
 .main {

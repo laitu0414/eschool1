@@ -1,4 +1,4 @@
-using eSchool.Infrastructure;
+﻿using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -947,9 +947,7 @@ namespace eSchool.Controllers
             worksheet.Cell(1, 6).Value = "Địa Chỉ";
             worksheet.Cell(1, 7).Value = "Mã Môn";
 
-            var headerRow = worksheet.Row(1);
-            headerRow.Style.Font.Bold = true;
-            headerRow.Style.Fill.BackgroundColor = XLColor.LightGray;
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
 
             worksheet.Cell(2, 1).Value = "Trần Văn B";
             worksheet.Cell(2, 2).Value = "01/01/1980";
@@ -1119,3 +1117,4 @@ namespace eSchool.Controllers
         }
     }
 }
+

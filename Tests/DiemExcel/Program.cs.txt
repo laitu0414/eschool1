@@ -1,0 +1,148 @@
+using ClosedXML.Excel;
+using eSchool.Services;
+
+var passed = 0;
+void Check(bool condition, string name)
+{
+    if (!condition) throw new Exception("FAIL: " + name);
+    passed++;
+    Console.WriteLine("PASS: " + name);
+}
+using var workbook = new XLWorkbook();
+var sheet = workbook.AddWorksheet("NhapDiem");
+for (int i = 0; i < DiemExcelReader.Headers.Length; i++) sheet.Cell(1, i + 1).Value = DiemExcelReader.Headers[i];
+var cell = sheet.Cell(2, 4);
+foreach (var (input, expected) in new[] { ("7,5", "7.5"), ("8; 7,5; 9", "8,7.5,9"), ("0;10", "0,10"), ("  ", (string?)null), ("8.25", "8.25") })
+{
+    cell.Value = input;
+    Check(DiemExcelReader.ReadGrade(cell) == expected, input);
+}
+cell.Value = 7.5;
+Check(DiemExcelReader.ReadGrade(cell) == "7.5", "numeric Excel cell");
+foreach (var input in new[] { "-1", "11", "abc", "8;;9", "8;", "7,5,9", "1e1", "NaN" })
+{
+    cell.Value = input;
+    var rejected = false;
+    try { DiemExcelReader.ReadGrade(cell); } catch (FormatException) { rejected = true; }
+    Check(rejected, "reject " + input);
+}
+cell.FormulaA1 = "1+1";
+var formulaRejected = false;
+try { DiemExcelReader.ReadGrade(cell); } catch (FormatException) { formulaRejected = true; }
+Check(formulaRejected, "reject formula");
+cell.Clear();
+sheet.Cell(2, 1).Value = 1;
+sheet.Cell(2, 2).Value = "HS001";
+sheet.Cell(2, 3).Value = "Nguyễn Văn A";
+sheet.Cell(2, 4).Value = "8; 7,5";
+using var stream = new MemoryStream();
+workbook.SaveAs(stream);
+stream.Position = 0;
+using var reread = new XLWorkbook(stream);
+var errors = new List<string>();
+var rows = DiemExcelReader.Read(reread, errors);
+Check(errors.Count == 0 && rows.Count == 1 && rows[0].Grades[0] == "8,7.5", "xlsx round trip");
+sheet.Cell(3, 1).Value = 1;
+sheet.Cell(3, 2).Value = "HS001";
+errors.Clear();
+DiemExcelReader.Read(workbook, errors);
+Check(errors.Any(e => e.Contains("bị lặp")), "duplicate student rejected");
+sheet.Cell(1, 4).Value = "Sai cột";
+errors.Clear();
+DiemExcelReader.Read(workbook, errors);
+Check(errors.Count > 0, "wrong headers rejected");
+using var wrong = new XLWorkbook();
+wrong.AddWorksheet("Sheet1");
+errors.Clear();
+DiemExcelReader.Read(wrong, errors);
+Check(errors.Count > 0, "wrong sheet rejected");
+var grade = new eSchool.Models.Diem { Diem15Phut = "8,9", Diem1Tiet = "7", DiemGiuaKy = "8", DiemCuoiKy = "9" };
+grade.TinhDiemTrungBinh();
+Check(grade.DiemTB == 8.38m, "weighted subject average 1-1-2-3");
+grade.DiemCuoiKy = null;
+grade.TinhDiemTrungBinh();
+Check(grade.DiemTB == null, "missing final exam gives no average");
+foreach (var invalid in new[] { "8,abc", "8,11", "8,,9", "8,-1" })
+{
+    grade.DiemCuoiKy = invalid;
+    grade.TinhDiemTrungBinh();
+    Check(grade.DiemTB == null, "invalid stored grade prevents average: " + invalid);
+}
+grade.Diem15Phut = "0"; grade.Diem1Tiet = "0"; grade.DiemGiuaKy = "0"; grade.DiemCuoiKy = "0";
+grade.TinhDiemTrungBinh();
+Check(grade.DiemTB == 0, "zero grades are real scores");
+Check(DiemExcelReader.NormalizeInput("8; 9") == "8,9", "manual and Excel normalize identically");
+var getMethod = typeof(eSchool.Controllers.KetQuaHocTapController).GetMethod("LuuDiemHocSinh")!;
+Check(getMethod.GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.ValidateAntiForgeryTokenAttribute), true).Any(), "manual save requires anti-forgery");
+var versionMethod = typeof(eSchool.Controllers.KetQuaHocTapController).GetMethod("GradeVersion", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
+var originalVersion = (string)versionMethod.Invoke(null, new object[] { new[] { grade } })!;
+grade.DiemCuoiKy = "10";
+var modifiedVersion = (string)versionMethod.Invoke(null, new object[] { new[] { grade } })!;
+Check(originalVersion != modifiedVersion, "concurrency version changes when score changes");
+var originalCulture = System.Globalization.CultureInfo.CurrentCulture;
+try
+{
+    foreach (var culture in new[] { "vi-VN", "en-US" })
+    {
+        System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo(culture);
+        using var numericBook = new XLWorkbook();
+        var numericSheet = numericBook.AddWorksheet("NhapDiem");
+        for (var column = 1; column <= 7; column++) numericSheet.Cell(1, column).Value = DiemExcelReader.Headers[column - 1];
+        numericSheet.Cell(2, 1).Value = 252; numericSheet.Cell(2, 2).Value = "HS00043";
+        for (var column = 4; column <= 7; column++) numericSheet.Cell(2, column).Value = 7.5;
+        using var numericStream = new MemoryStream(); numericBook.SaveAs(numericStream); numericStream.Position = 0;
+        using var importedBook = new XLWorkbook(numericStream);
+        var numericErrors = new List<string>();
+        var imported = DiemExcelReader.Read(importedBook, numericErrors).Single();
+        Check(numericErrors.Count == 0 && imported.Grades.All(g => g == "7.5"), culture + " numeric Excel 7.5 keeps decimal point");
+        var importedGrade = new eSchool.Models.Diem { Diem15Phut = imported.Grades[0], Diem1Tiet = imported.Grades[1], DiemGiuaKy = imported.Grades[2], DiemCuoiKy = imported.Grades[3] };
+        importedGrade.TinhDiemTrungBinh();
+        Check(importedGrade.DiemTB == 7.5m, culture + " four Excel scores 7.5 average to 7.50");
+    }
+}
+finally { System.Globalization.CultureInfo.CurrentCulture = originalCulture; }
+Check(AnnualScoreService.CalculateAnnual(6m, 9m) == 8m, "annual weights HK2 twice");
+Check(AnnualScoreService.CalculateAnnual(null, 9m) == null, "annual requires HK1");
+Check(AnnualScoreService.CalculateAnnual(9m, 11m) == null, "annual rejects scores over ten");
+var annualStudent = new HocSinh { IdHocSinh = 1, IdLopHoc = 1, TrangThai = true, LopHoc = new eSchool.Models.LopHoc { IdLop = 1, Khoi = "8", NamHoc = "2025-2026" } };
+var annualYear = new eSchool.Models.NamHoc { IdNamHoc = 1, TenNamHoc = "2025 - 2026" };
+var annualTerms = new List<eSchool.Models.HocKy> {
+    new() { IdHocKy = 1, IdNamHoc = 1, NgayBatDau = new DateTime(2025,9,1) },
+    new() { IdHocKy = 2, IdNamHoc = 1, NgayBatDau = new DateTime(2026,1,1) }
+};
+var annualAssignments = new List<eSchool.Models.PhanCongGiangDay> { new() { IdLop = 1, IdMonHoc = 1, NamHoc = "2025-2026" } };
+var annualSubjects = new List<eSchool.Models.MonHoc> { new() { IdMonHoc = 1, TenMon = "Toán" }, new() { IdMonHoc = 2, TenMon = "Văn" } };
+var annualGrades = new List<eSchool.Models.Diem> {
+    new() { IdDiem=1, IdHocSinh=1, IdMonHoc=1, IdHocKy=1, IdNamHoc=1, Diem15Phut="6",Diem1Tiet="6",DiemGiuaKy="6",DiemCuoiKy="6",DiemTB=1 },
+    new() { IdDiem=2, IdHocSinh=1, IdMonHoc=1, IdHocKy=2, IdNamHoc=1, Diem15Phut="9",Diem1Tiet="9",DiemGiuaKy="9",DiemCuoiKy="9",DiemTB=1 }
+};
+AnnualStudentScore EvaluateAnnual() => AnnualScoreService.Evaluate(annualStudent, annualYear, annualTerms, annualAssignments, annualGrades, annualSubjects);
+var annualResult = EvaluateAnnual();
+Check(annualResult.Complete && annualResult.Eligible && annualResult.Average == 8, "annual recomputes stale averages and evaluates eligibility");
+Check(!annualResult.Finalized, "complete data alone is not a finalized result");
+var annualFingerprint = annualResult.Fingerprint;
+annualGrades[1].DiemCuoiKy = "8";
+Check(EvaluateAnnual().Fingerprint != annualFingerprint, "score edit invalidates annual fingerprint");
+annualGrades[1].DiemCuoiKy = "9";
+annualAssignments.Add(new() { IdLop = 1, IdMonHoc = 2 });
+Check(!EvaluateAnnual().Complete && EvaluateAnnual().Average == null, "missing assigned subject prevents summary");
+annualAssignments.RemoveAt(1);
+annualGrades.Add(annualGrades[0]);
+Check(!EvaluateAnnual().Complete, "duplicate semester grade prevents summary");
+annualGrades.RemoveAt(2);
+annualGrades[1].IdNamHoc = 2;
+Check(!EvaluateAnnual().Complete, "wrong year prevents summary");
+annualGrades[1].IdNamHoc = 1;
+annualGrades[0].DiemGiuaKy = null;
+Check(!EvaluateAnnual().Complete, "missing grade component prevents summary");
+annualGrades[0].DiemGiuaKy = "6";
+annualStudent.TrangThai = false;
+Check(!EvaluateAnnual().Eligible, "inactive student cannot qualify");
+annualStudent.TrangThai = true;
+annualAssignments.Clear();
+Check(!EvaluateAnnual().Complete, "unconfigured curriculum cannot finalize");
+Check(AnnualScoreService.NormalizeYear("2025 - 2026") == "2025-2026", "year format normalization");
+foreach (var annualGrade in annualGrades) { annualGrade.Diem15Phut="4"; annualGrade.Diem1Tiet="4"; annualGrade.DiemGiuaKy="4"; annualGrade.DiemCuoiKy="4"; }
+annualAssignments.Add(new() { IdLop=1, IdMonHoc=1 });
+Check(EvaluateAnnual().Complete && !EvaluateAnnual().Eligible, "complete but low scores do not qualify");
+Console.WriteLine($"Passed {passed} checks.");

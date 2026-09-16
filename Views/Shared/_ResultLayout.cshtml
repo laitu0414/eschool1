@@ -14,6 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/result.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/footer.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/pagination.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body>
     <aside class="sidebar">
@@ -27,7 +28,7 @@
 
         <div class="menu-title">H&#7884;C SINH</div>
 
-        <nav class="sidebar-menu">
+        <nav class="sidebar-menu"><a asp-controller="TongKet" asp-action="Index" class="menu-item"><i class="bi bi-calendar-check"></i><span>Điểm cả năm / Tổng kết</span></a>
             <a asp-controller="KetQuaHocTap" asp-action="Diem" class="@MenuClass("Diem")">
                 <i class="bi bi-bar-chart-fill"></i><span>Qu&#7843;n l&#253; &#273;i&#7875;m</span>
             </a>
@@ -82,6 +83,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/required-fields.js" asp-append-version="true"></script>
+    <script src="~/js/table-pagination.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -90,7 +90,8 @@ body {
 }
 
 .sidebar-bottom .menu-item { min-height: 43px; padding-block: 9px; }
-.logout:hover { background: rgba(239,68,68,.35); }
+.logout { background-color: #ef4444 !important; color: white !important; }
+.logout:hover { background-color: #dc2626 !important; }
 
 .main { min-height: 100vh; margin-left: 275px; }
 

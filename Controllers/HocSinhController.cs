@@ -1,4 +1,4 @@
-using eSchool.Infrastructure;
+﻿using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.Services;
 using eSchool.ViewModels;
@@ -634,9 +634,7 @@ namespace eSchool.Controllers
             worksheet.Cell(1, 7).Value = "Tên Lớp";
 
             // Make headers bold
-            var headerRow = worksheet.Row(1);
-            headerRow.Style.Font.Bold = true;
-            headerRow.Style.Fill.BackgroundColor = XLColor.LightGray;
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
 
             // Sample data
             worksheet.Cell(2, 1).Value = "Nguyễn Văn A";
@@ -782,3 +780,4 @@ namespace eSchool.Controllers
         }
     }
 }
+

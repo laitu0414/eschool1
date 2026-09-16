@@ -1,9 +1,49 @@
+
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100vh;
+}
+
+.app,
+.app-layout,
+.academic-app,
+.teacher-app,
+.student-app,
+.parent-app,
+.result-app {
+    min-height: 100vh;
+}
+
+main,
+.main,
+.content,
+.academic-content,
+.teacher-main,
+.student-main,
+.parent-main,
+.result-main {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100vh !important;
+}
+
+.page,
+main > .page,
+.main > .page,
+.content > .page,
+.academic-content > .page {
+    flex: 1 0 auto !important;
+}
+
 .eschool-footer {
     position: relative;
     z-index: 1;
     width: 100%;
-    margin-top: 32px;
-    padding: 0 24px 24px;
+    margin-top: auto !important; /* Luôn neo footer ở sát đáy trang, không bao giờ nhảy lơ lửng */
+    padding: 24px 24px 24px;
     color: #334155;
 }
 

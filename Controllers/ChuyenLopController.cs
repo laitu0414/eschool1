@@ -1,4 +1,4 @@
-using eSchool.Infrastructure;
+﻿using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -173,9 +173,7 @@ namespace eSchool.Controllers
             worksheet.Cell(1, 4).Value = "Lý do";
             worksheet.Cell(1, 5).Value = "Ghi chú";
 
-            var headerRow = worksheet.Row(1);
-            headerRow.Style.Font.Bold = true;
-            headerRow.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
 
             worksheet.Cell(2, 1).Value = "HS001";
             worksheet.Cell(2, 2).Value = "6A2";
@@ -294,3 +292,4 @@ namespace eSchool.Controllers
         }
     }
 }
+

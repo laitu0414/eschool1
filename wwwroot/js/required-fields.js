@@ -23,10 +23,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const tbody = table.querySelector("tbody");
         if (!thead || !tbody) return;
 
-        const firstHeader = thead.querySelector("th, td");
-        if (!firstHeader) return;
+        let targetHeader = thead.querySelector("th, td");
+        if (targetHeader && targetHeader.classList.contains("app-table-checkbox-col")) {
+            targetHeader = targetHeader.nextElementSibling;
+        }
+        if (!targetHeader) return;
 
-        const headerText = firstHeader.textContent.trim().toLowerCase();
+        const headerText = targetHeader.textContent.trim().toLowerCase();
         if (headerText === "stt" || headerText === "số tt" || headerText === "thứ" || 
             headerText === "tiết" || headerText === "thời gian" || headerText.includes("giờ")) return;
 
@@ -35,7 +38,12 @@ document.addEventListener("DOMContentLoaded", () => {
             th.textContent = "STT";
             th.style.width = "60px";
             th.className = "text-center";
-            tr.insertBefore(th, tr.firstChild);
+            const firstChild = tr.firstElementChild;
+            if (firstChild && firstChild.classList.contains("app-table-checkbox-col")) {
+                tr.insertBefore(th, firstChild.nextElementSibling);
+            } else {
+                tr.insertBefore(th, tr.firstElementChild);
+            }
         });
 
         let stt = 1;
@@ -48,7 +56,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const td = document.createElement("td");
                 td.textContent = stt++;
                 td.className = "text-center text-muted fw-medium align-middle";
-                tr.insertBefore(td, tr.firstChild);
+                const firstChild = tr.firstElementChild;
+                if (firstChild && firstChild.classList.contains("app-table-checkbox-cell")) {
+                    tr.insertBefore(td, firstChild.nextElementSibling);
+                } else {
+                    tr.insertBefore(td, tr.firstElementChild);
+                }
             }
         });
     });
