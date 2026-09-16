@@ -442,8 +442,19 @@
 
         // Listen for changes in tbody rows
         const body = getBody(table);
-        const observer = new MutationObserver(() => {
-            render();
+        let renderDebounce = null;
+        let isInternalRowChange = false;
+        const observer = new MutationObserver((mutations) => {
+            if (isInternalRowChange) return;
+            const hasTr = mutations.some(m => Array.from(m.addedNodes).some(n => n.nodeName === 'TR') || Array.from(m.removedNodes).some(n => n.nodeName === 'TR'));
+            if (hasTr) {
+                clearTimeout(renderDebounce);
+                renderDebounce = setTimeout(() => {
+                    isInternalRowChange = true;
+                    render();
+                    setTimeout(() => { isInternalRowChange = false; }, 50);
+                }, 50);
+            }
         });
         observer.observe(body, { childList: true });
     }
@@ -466,6 +477,22 @@
 
     window.addEventListener("load", initPagination);
 
-    const observer = new MutationObserver(() => initPagination());
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    let pageObserverTimer = null;
+    const observer = new MutationObserver(mutations => {
+        let hasNewTable = false;
+        for (const m of mutations) {
+            for (const n of m.addedNodes) {
+                if (n.nodeType === 1 && (n.tagName === 'TABLE' || (n.querySelector && n.querySelector('table:not([data-pagination-ready="true"])')))) {
+                    hasNewTable = true;
+                    break;
+                }
+            }
+            if (hasNewTable) break;
+        }
+        if (hasNewTable) {
+            clearTimeout(pageObserverTimer);
+            pageObserverTimer = setTimeout(initPagination, 100);
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 })();

@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "DIkrNWCTp83w69qUttUq6EjWHNcpWpmtNRVyMW73tdc=",
+  "Hash": "h01wswQ7oe5TSrIe7cr1FgyQLgas+emQAoZk4dkwaZ8=",
   "Source": "eSchool",
   "BasePath": "_content/eSchool",
   "Mode": "Default",
@@ -224,6 +224,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\student.css"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\table-column-manager.css",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "css/table-column-manager.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\table-column-manager.css"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\teacher.css",
@@ -454,6 +473,25 @@
       "OriginalItemSpec": "wwwroot\\image\\giaovien.png"
     },
     {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\header-banner-bg.jpg",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "image/header-banner-bg.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\image\\header-banner-bg.jpg"
+    },
+    {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\khat-khao-cong-hien.png",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -471,6 +509,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\image\\khat-khao-cong-hien.png"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\logo.png",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "image/logo.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\image\\logo.png"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\mohinh.png",
@@ -701,6 +758,25 @@
       "OriginalItemSpec": "wwwroot\\image\\teachers\\d22f8ac224ea441db58322e9e3861a64.jpg"
     },
     {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\images\\header-banner-bg.jpg",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "images/header-banner-bg.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\images\\header-banner-bg.jpg"
+    },
+    {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\images\\khat-khao-cong-hien.png",
       "SourceId": "eSchool",
       "SourceType": "Discovered",
@@ -718,6 +794,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\images\\khat-khao-cong-hien.png"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\images\\logo.png",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "images/logo.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\images\\logo.png"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\required-fields.js",
@@ -775,6 +870,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\js\\student.js"
+    },
+    {
+      "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\table-column-manager.js",
+      "SourceId": "eSchool",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\",
+      "BasePath": "_content/eSchool",
+      "RelativePath": "js/table-column-manager.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\table-column-manager.js"
     },
     {
       "Identity": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\table-pagination.js",

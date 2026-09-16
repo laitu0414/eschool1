@@ -19,19 +19,33 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("table").forEach(table => {
         // Skip specialized tables like calendar, timetable, etc.
         if (table.classList.contains("no-stt")) return;
+        if (table.dataset.sttGenerated === "true") return;
+
         const thead = table.querySelector("thead");
         const tbody = table.querySelector("tbody");
         if (!thead || !tbody) return;
 
-        let targetHeader = thead.querySelector("th, td");
-        if (targetHeader && targetHeader.classList.contains("app-table-checkbox-col")) {
-            targetHeader = targetHeader.nextElementSibling;
-        }
-        if (!targetHeader) return;
+        const allThs = Array.from(thead.querySelectorAll("th, td"));
+        const alreadyHasStt = allThs.some(th => {
+            const titleEl = th.querySelector(".th-title-text");
+            let text = "";
+            if (titleEl) {
+                text = titleEl.textContent.trim().toLowerCase();
+            } else {
+                const clone = th.cloneNode(true);
+                clone.querySelectorAll(".th-column-resizer, .th-menu-dropdown, .th-sort-indicator, .th-pin-indicator, input, button, ul, select").forEach(el => el.remove());
+                text = clone.textContent.trim().toLowerCase();
+            }
+            return text === "stt" || text === "số tt" || text === "#" || text === "no." || 
+                   text === "thứ" || text === "tiết" || text === "thời gian" || text.includes("giờ");
+        });
 
-        const headerText = targetHeader.textContent.trim().toLowerCase();
-        if (headerText === "stt" || headerText === "số tt" || headerText === "thứ" || 
-            headerText === "tiết" || headerText === "thời gian" || headerText.includes("giờ")) return;
+        if (alreadyHasStt) {
+            table.dataset.sttGenerated = "true";
+            return;
+        }
+
+        table.dataset.sttGenerated = "true";
 
         thead.querySelectorAll("tr").forEach(tr => {
             const th = document.createElement("th");

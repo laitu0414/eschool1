@@ -55,9 +55,15 @@ body {
     flex: 0 0 44px;
     place-items: center;
     border-radius: 13px;
-    color: var(--student-sidebar);
     background: #fff;
-    font-size: 22px;
+    padding: 2px;
+    overflow: hidden;
+}
+
+.sidebar-logo .logo-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .sidebar-logo strong,

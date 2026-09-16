@@ -41,6 +41,10 @@
       "PackagePath": "staticwebassets\\css\\student.css"
     },
     {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\table-column-manager.css",
+      "PackagePath": "staticwebassets\\css\\table-column-manager.css"
+    },
+    {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\css\\teacher.css",
       "PackagePath": "staticwebassets\\css\\teacher.css"
     },
@@ -89,8 +93,16 @@
       "PackagePath": "staticwebassets\\image\\giaovien.png"
     },
     {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\header-banner-bg.jpg",
+      "PackagePath": "staticwebassets\\image\\header-banner-bg.jpg"
+    },
+    {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\khat-khao-cong-hien.png",
       "PackagePath": "staticwebassets\\image\\khat-khao-cong-hien.png"
+    },
+    {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\logo.png",
+      "PackagePath": "staticwebassets\\image\\logo.png"
     },
     {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\image\\mohinh.png",
@@ -141,8 +153,16 @@
       "PackagePath": "staticwebassets\\image\\teachers\\d22f8ac224ea441db58322e9e3861a64.jpg"
     },
     {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\images\\header-banner-bg.jpg",
+      "PackagePath": "staticwebassets\\images\\header-banner-bg.jpg"
+    },
+    {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\images\\khat-khao-cong-hien.png",
       "PackagePath": "staticwebassets\\images\\khat-khao-cong-hien.png"
+    },
+    {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\images\\logo.png",
+      "PackagePath": "staticwebassets\\images\\logo.png"
     },
     {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\required-fields.js",
@@ -155,6 +175,10 @@
     {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\student.js",
       "PackagePath": "staticwebassets\\js\\student.js"
+    },
+    {
+      "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\table-column-manager.js",
+      "PackagePath": "staticwebassets\\js\\table-column-manager.js"
     },
     {
       "Id": "C:\\Users\\Admin\\Desktop\\eschool\\wwwroot\\js\\table-pagination.js",

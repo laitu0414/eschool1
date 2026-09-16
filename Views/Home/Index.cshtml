@@ -23,6 +23,7 @@
     <title>@ViewData["Title"]</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/footer.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/home-portal.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body>
@@ -39,7 +40,7 @@
         .eschool-top-bar {
             background-color: #ffffff;
             color: #1f2937;
-            padding: 12px clamp(18px, 5vw, 64px);
+            padding: 10px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -98,103 +99,20 @@
             font-size: 0.9rem;
         }
 
-        /* Tier 2 */
+        /* Tier 2: Seamless Banner */
         .eschool-middle-bar {
-            background-color: #ffffff;
-            padding: 15px 30px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
+            display: block;
+            width: 100%;
+            line-height: 0;
+            border-bottom: 2px solid #0d47a1;
+            background-color: #e0f2fe;
+            text-decoration: none;
             overflow: hidden;
-            height: 140px;
         }
-        .eschool-brand-section {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            z-index: 2;
-        }
-        .eschool-logo {
-            width: 90px;
-            height: 90px;
-            background-color: #f1f5f9;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1a4175;
-            font-size: 40px;
-            border: 2px solid #e2e8f0;
-        }
-        .eschool-titles {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        .eschool-titles .title-small {
-            color: #1a4175;
-            font-size: 22px;
-            font-weight: 800;
-            margin: 0;
-            text-transform: uppercase;
-        }
-        .eschool-titles .title-large {
-            color: #e51d20;
-            font-size: 36px;
-            font-weight: 900;
-            margin: 5px 0;
-            text-transform: uppercase;
-        }
-        .eschool-titles .slogan {
-            color: #475569;
-            font-size: 15px;
-            font-style: italic;
-            margin: 0;
-        }
-
-        /* Background image blending on the right */
-        .eschool-middle-bg {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 55%;
-            background: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80') no-repeat right center;
-            background-size: cover;
-            z-index: 1;
-            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40%);
-            mask-image: linear-gradient(to right, transparent 0%, black 40%);
-        }
-
-        /* Search bar on the right */
-        .eschool-search-container {
-            z-index: 2;
-            position: relative;
-            margin-right: 20px;
-        }
-        .eschool-search-box {
-            display: flex;
-            align-items: center;
-            background: #ffffff;
-            border-radius: 25px;
-            padding: 8px 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 300px;
-            border: 1px solid #e2e8f0;
-        }
-        .eschool-search-box input {
-            border: none;
-            outline: none;
-            flex: 1;
-            padding: 5px;
-            font-size: 15px;
-        }
-        .eschool-search-box i {
-            color: #1a4175;
-            font-size: 18px;
-            cursor: pointer;
+        .eschool-middle-bar img {
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
         /* Tier 3 - New Blue Centered Nav */
@@ -257,7 +175,7 @@
         <div class="eschool-top-bar">
             <div class="left-info">
                 <a asp-controller="Home" asp-action="Index" class="eschool-login-brand">
-                    <i class="bi bi-mortarboard-fill"></i>
+                    <img src="~/images/logo.png" alt="THCS eSchool" style="width: 24px; height: 24px; object-fit: contain; border-radius: 50%; vertical-align: middle; margin-right: 6px; background: #fff;" />
                     <span>eSchool Education</span>
                 </a>
             </div>
@@ -274,28 +192,10 @@
             </div>
         </div>
 
-        <!-- Tier 2: Middle Bar -->
-        <div class="eschool-middle-bar">
-            <div class="eschool-brand-section">
-                <div class="eschool-logo">
-                    <i class="bi bi-mortarboard-fill"></i>
-                </div>
-                <div class="eschool-titles">
-                    <h2 class="title-small">TRƯỜNG TRUNG HỌC CƠ SỞ</h2>
-                    <h1 class="title-large">ESCHOOL</h1>
-                    <p class="slogan">"Học tập sáng tạo - Rèn luyện chăm ngoan - Vui chơi lành mạnh"</p>
-                </div>
-            </div>
-            
-            <div class="eschool-search-container">
-                <div class="eschool-search-box">
-                    <input type="text" placeholder="Tìm kiếm..">
-                    <i class="bi bi-search"></i>
-                </div>
-            </div>
-
-            <div class="eschool-middle-bg"></div>
-        </div>
+        <!-- Tier 2: Middle Banner -->
+        <a asp-controller="Home" asp-action="Index" class="eschool-middle-bar" title="Trường THCS eSchool">
+            <img src="~/images/header-banner-bg.jpg" alt="Trường THCS eSchool" />
+        </a>
 
         <!-- Tier 3: Nav Bar (Blue & Centered) -->
         <div class="eschool-nav-bar">
@@ -395,23 +295,7 @@
             }
         </main>
 
-        <footer class="portal-footer" id="lien-he">
-            <div>
-                <div class="portal-footer-brand">
-                    <span class="portal-brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
-                    <div>
-                        <strong>eSchool</strong>
-                        <p>Nền tảng quản lý trường học dành cho admin, giáo viên, học sinh và phụ huynh.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="portal-footer-contact">
-                <h3>Liên hệ</h3>
-                <p><i class="bi bi-geo-alt-fill"></i> Hà Nội, Việt Nam</p>
-                <p><i class="bi bi-telephone-fill"></i> 1900 9999</p>
-                <p><i class="bi bi-envelope-fill"></i> support@eschool.local</p>
-            </div>
-        </footer>
+        @await Html.PartialAsync("_SiteFooter")
     </div>
 
     <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
@@ -421,7 +305,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body pt-0 px-4 px-md-5 pb-4 pb-md-5">
-                    <div class="portal-login-logo"><i class="bi bi-mortarboard-fill"></i></div>
+                    <div class="portal-login-logo"><img src="~/images/logo.png" alt="THCS eSchool" style="width: 100%; height: 100%; object-fit: contain; border-radius: inherit;" /></div>
                     <h2>Đăng nhập eSchool</h2>
                     <p id="selectedLoginPortal">@selectedLoginPortalName</p>
 

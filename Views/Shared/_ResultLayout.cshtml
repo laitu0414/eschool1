@@ -10,46 +10,49 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - eSchool</title>
+    <link rel="icon" type="image/png" href="~/images/logo.png" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/result.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/footer.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/pagination.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/table-column-manager.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body>
     <aside class="sidebar">
         <div class="brand">
-            <span class="brand-icon"><i class="bi bi-clipboard2-data-fill"></i></span>
+            <span class="brand-icon"><img src="~/images/logo.png" alt="THCS eSchool" /></span>
             <span>
                 <strong>eSchool</strong>
-                <small>K&#7871;t qu&#7843; h&#7885;c t&#7853;p</small>
+                <small>Kết quả học tập</small>
             </span>
         </div>
 
-        <div class="menu-title">H&#7884;C SINH</div>
+        <div class="menu-title">HỌC SINH</div>
 
-        <nav class="sidebar-menu"><a asp-controller="TongKet" asp-action="Index" class="menu-item"><i class="bi bi-calendar-check"></i><span>Điểm cả năm / Tổng kết</span></a>
+        <nav class="sidebar-menu">
+            <a asp-controller="TongKet" asp-action="Index" class="menu-item"><i class="bi bi-calendar-check"></i><span>Điểm cả năm / Tổng kết</span></a>
             <a asp-controller="KetQuaHocTap" asp-action="Diem" class="@MenuClass("Diem")">
-                <i class="bi bi-bar-chart-fill"></i><span>Qu&#7843;n l&#253; &#273;i&#7875;m</span>
+                <i class="bi bi-bar-chart-fill"></i><span>Quản lý điểm</span>
             </a>
             <a asp-controller="KetQuaHocTap" asp-action="DiemDanh" class="@MenuClass("DiemDanh")">
-                <i class="bi bi-person-check-fill"></i><span>&#272;i&#7875;m danh</span>
+                <i class="bi bi-person-check-fill"></i><span>Điểm danh</span>
             </a>
             <a asp-controller="KetQuaHocTap" asp-action="HocPhi" class="@MenuClass("HocPhi")">
-                <i class="bi bi-cash-coin"></i><span>H&#7885;c ph&#237;</span>
+                <i class="bi bi-cash-coin"></i><span>Học phí</span>
             </a>
             <a asp-controller="KetQuaHocTap" asp-action="PhieuDiem" class="@MenuClass("PhieuDiem")">
-                <i class="bi bi-printer-fill"></i><span>In phi&#7871;u &#273;i&#7875;m</span>
+                <i class="bi bi-printer-fill"></i><span>In phiếu điểm</span>
             </a>
         </nav>
 
         <div class="sidebar-bottom">
             <a asp-controller="Admin" asp-action="Index" class="menu-item">
-                <i class="bi bi-arrow-left"></i><span>V&#7873; trang qu&#7843;n tr&#7883;</span>
+                <i class="bi bi-arrow-left"></i><span>Về trang quản trị</span>
             </a>
             <form asp-controller="Account" asp-action="Logout" method="post">
                 <button type="submit" class="menu-item logout border-0 w-100 text-start">
-                    <i class="bi bi-box-arrow-right"></i><span>&#272;&#259;ng xu&#7845;t</span>
+                    <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
                 </button>
             </form>
         </div>
@@ -58,7 +61,7 @@
     <main class="main">
         <header class="topbar">
             <div>
-                <small>H&#7879; th&#7889;ng qu&#7843;n l&#253; nh&#224; tr&#432;&#7901;ng</small>
+                <small>Hệ thống quản lý nhà trường</small>
                 <h1>@ViewData["Title"]</h1>
             </div>
             <div class="result-user">
@@ -84,6 +87,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/required-fields.js" asp-append-version="true"></script>
     <script src="~/js/table-pagination.js" asp-append-version="true"></script>
+    <script src="~/js/table-column-manager.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
