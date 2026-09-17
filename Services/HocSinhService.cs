@@ -1,4 +1,4 @@
-﻿using eSchool.Models;
+using eSchool.Models;
 using eSchool.Repositories;
 using eSchool.ViewModels;
 
@@ -28,6 +28,7 @@ namespace eSchool.Services
                     DiaChi = x.DiaChi,
                     AnhDaiDien = x.AnhDaiDien,
                     TrangThai = x.TrangThai,
+                    DaTotNghiep = x.DaTotNghiep,
                     IdTaiKhoan = x.IdTaiKhoan,
                     TenTaiKhoan = x.TaiKhoan != null ? x.TaiKhoan.Username : null,
                     IdLopHoc = x.IdLopHoc,
@@ -52,6 +53,7 @@ namespace eSchool.Services
                 DiaChi = x.DiaChi,
                 AnhDaiDien = x.AnhDaiDien,
                 TrangThai = x.TrangThai,
+                    DaTotNghiep = x.DaTotNghiep,
                 IdTaiKhoan = x.IdTaiKhoan,
                 TenTaiKhoan = x.TaiKhoan != null ? x.TaiKhoan.Username : null,
                 IdLopHoc = x.IdLopHoc,
@@ -93,9 +95,9 @@ namespace eSchool.Services
             hs.Email = vm.Email?.Trim();
             hs.DiaChi = vm.DiaChi?.Trim();
             hs.AnhDaiDien = vm.AnhDaiDien;
-            hs.TrangThai = vm.TrangThai;
+            hs.TrangThai = !hs.DaTotNghiep && vm.TrangThai;
             hs.IdTaiKhoan = vm.IdTaiKhoan;
-            hs.IdLopHoc = vm.IdLopHoc;
+            if (!hs.DaTotNghiep) hs.IdLopHoc = vm.IdLopHoc;
 
             _repo.Update(hs);
             _repo.Save();

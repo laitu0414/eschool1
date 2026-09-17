@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -33,6 +33,7 @@ namespace eSchool.ViewModels
         public IFormFile? AnhTaiLen { get; set; }
 
         public bool TrangThai { get; set; } = true;
+        public bool DaTotNghiep { get; set; }
 
         public int? IdTaiKhoan { get; set; }
         public string? TenTaiKhoan { get; set; }

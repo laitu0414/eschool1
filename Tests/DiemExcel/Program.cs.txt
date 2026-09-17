@@ -145,4 +145,46 @@ Check(AnnualScoreService.NormalizeYear("2025 - 2026") == "2025-2026", "year form
 foreach (var annualGrade in annualGrades) { annualGrade.Diem15Phut="4"; annualGrade.Diem1Tiet="4"; annualGrade.DiemGiuaKy="4"; annualGrade.DiemCuoiKy="4"; }
 annualAssignments.Add(new() { IdLop=1, IdMonHoc=1 });
 Check(EvaluateAnnual().Complete && !EvaluateAnnual().Eligible, "complete but low scores do not qualify");
+annualGrades[0].IdNamHoc = null;
+Check(EvaluateAnnual().Complete, "legacy grade with valid semester can be finalized");
+annualGrades[0].IdNamHoc = 1;
+var requiredOnlyFingerprint = EvaluateAnnual().Fingerprint;
+annualGrades.Add(new() { IdDiem=99, IdHocSinh=1, IdMonHoc=2, IdHocKy=1, IdNamHoc=1 });
+Check(EvaluateAnnual().Complete && EvaluateAnnual().Fingerprint == requiredOnlyFingerprint, "unassigned subject does not invalidate promotion summary");
+annualGrades.RemoveAt(2);
+annualGrades[0].DiemCuoiKy = null;
+Check(EvaluateAnnual().Subjects[0].Error.Contains("HK1"), "missing semester is named for correction");
+foreach (var label in new[] { "9", "Khối 9", " khối 9 ", "Khoi 9" })
+    Check(AnnualScoreService.ParseGradeLevel(label) == 9, "recognize graduation grade: " + label);
+Check(AnnualScoreService.ParseGradeLevel("Khối 8") == 8, "recognize promotion grade");
+Check(AnnualScoreService.ParseGradeLevel("9A2") == null, "do not confuse class name with grade");
+foreach (var item in annualGrades) { item.Diem15Phut="8"; item.Diem1Tiet="8"; item.DiemGiuaKy="8"; item.DiemCuoiKy="8"; }
+annualStudent.LopHoc!.Khoi = "Khối 9";
+Check(EvaluateAnnual().Complete && EvaluateAnnual().Eligible, "completed Khoi 9 qualifies for academic graduation assessment");
+Check(PromotionLockService.Key(6) != PromotionLockService.Key(7), "academic year locks have independent keys");
+var finalRecord = new eSchool.Controllers.FinalPromotionRow(1, "HS001", "Học sinh thử", "9A1", 9, 7.5m, "Đã duyệt điều kiện học tập tốt nghiệp");
+var finalJson = System.Text.Json.JsonSerializer.Serialize(new[] { finalRecord });
+var finalCopy = System.Text.Json.JsonSerializer.Deserialize<List<eSchool.Controllers.FinalPromotionRow>>(finalJson)!;
+Check(finalCopy.Count == 1 && finalCopy[0] == finalRecord, "finalized graduation snapshot round trip preserves identity and result");
+annualGrades[0].DiemCuoiKy = "1";
+Check(finalCopy[0].Average == 7.5m, "saved snapshot independent of later grade edits");
+foreach (var action in new[] { "LockResults", "UnlockResults", "AutoAssignClass" })
+    Check(typeof(eSchool.Controllers.LenLopController).GetMethod(action)!.GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.ValidateAntiForgeryTokenAttribute), true).Any(), action + " protects state changes");
+var graduate = new HocSinh { IdHocSinh=400, IdLopHoc=36, IdTaiKhoan=500, TrangThai=true, DaDuyet=true, GhiChu="Giữ hồ sơ", LopHoc=new eSchool.Models.LopHoc { Khoi="Khối 9", NamHoc="2026 - 2027" } };
+var graduationDate = new DateTime(2027, 6, 1);
+Check(GraduationService.MarkGraduated(graduate, "2026 - 2027", graduationDate), "graduation changes status once");
+Check(graduate.DaTotNghiep && !graduate.TrangThai && graduate.NgayTotNghiep == graduationDate && graduate.NamHocTotNghiep == "2026 - 2027", "graduation persists status date and year");
+Check(graduate.IdLopHoc == 36 && graduate.IdTaiKhoan == 500 && graduate.GhiChu == "Giữ hồ sơ", "graduation retains class account and student notes");
+Check(!GraduationService.MarkGraduated(graduate, "2026 - 2027", graduationDate.AddDays(1)) && graduate.NgayTotNghiep == graduationDate, "duplicate confirmation preserves original date");
+var rejectedYear = false;
+try { GraduationService.MarkGraduated(graduate, "2027 - 2028", graduationDate); } catch (InvalidOperationException) { rejectedYear=true; }
+Check(rejectedYear, "cannot graduate again in another year");
+var younger = new HocSinh { TrangThai=true, DaDuyet=true, LopHoc=new eSchool.Models.LopHoc { Khoi="Khối 8", NamHoc="2026 - 2027" } };
+var rejectedGrade = false;
+try { GraduationService.MarkGraduated(younger, "2026 - 2027", graduationDate); } catch (InvalidOperationException) { rejectedGrade=true; }
+Check(rejectedGrade && !younger.DaTotNghiep && younger.TrangThai, "grade eight cannot graduate");
+annualStudent.DaTotNghiep = true;
+Check(!EvaluateAnnual().Eligible && EvaluateAnnual().Reason.Contains("đã tốt nghiệp"), "graduates excluded even if active flag is inconsistent");
+Check(new eSchool.Migrations.AddGraduationStatus().UpOperations.OfType<Microsoft.EntityFrameworkCore.Migrations.Operations.AddColumnOperation>().Count() == 3, "migration adds exactly three graduation columns");
+Check(typeof(eSchool.Controllers.LenLopController).GetMethod("ConfirmGraduation")!.GetCustomAttributes(typeof(Microsoft.AspNetCore.Mvc.ValidateAntiForgeryTokenAttribute), true).Any(), "graduation confirmation requires anti-forgery");
 Console.WriteLine($"Passed {passed} checks.");

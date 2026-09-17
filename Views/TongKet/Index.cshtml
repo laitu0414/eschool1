@@ -47,7 +47,7 @@
                 <input type="hidden" name="version" value="@Model.Version" />
                 <button type="submit" class="btn btn-success" disabled="@(Model.Locked || Model.Students.Count == 0 || Model.Students.Any(s => !s.Complete))">Tổng kết lớp</button>
             </form>
-            <a asp-controller="LenLop" asp-action="Index" class="btn btn-primary">Xét lên lớp / tốt nghiệp</a>
+            <a asp-controller="LenLop" asp-action="Index" asp-route-yearId="@Model.YearId" class="btn btn-primary">Xét lên lớp / tốt nghiệp</a>
         }
     </div>
     @if (Model.Locked) { <div class="alert alert-warning">Kết quả xét đang khóa. Chỉ được xem và xuất báo cáo.</div> }

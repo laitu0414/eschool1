@@ -43,6 +43,10 @@ public class HocSinh
     public DateTime? NgayNhapHoc { get; set; }
 
     public bool TrangThai { get; set; } = true;
+    public bool DaTotNghiep { get; set; }
+    public DateTime? NgayTotNghiep { get; set; }
+    [StringLength(20)]
+    public string? NamHocTotNghiep { get; set; }
         // Indicates whether the student has been approved in the promotion process
         public bool DaDuyet { get; set; } = false;
 

@@ -116,11 +116,19 @@
     }
 </style>
 
-<div class="xet-duyet-container"><a asp-controller="TongKet" asp-action="Index" class="btn btn-outline-primary mb-3">Kiểm tra điểm cả năm / Tổng kết lớp</a>
+<div class="xet-duyet-container">
+<form method="get" asp-action="Index" class="d-flex gap-2 align-items-center mb-3">
+    <label for="promotionYear">Năm học xét</label>
+    <select id="promotionYear" name="yearId" class="form-select w-auto">
+    @foreach (var year in academicYears) { <option value="@year.IdNamHoc" selected="@(year.IdNamHoc == (int?)ViewBag.ProcessingYearId)">@year.TenNamHoc</option> }
+    </select>
+    <button type="submit" class="btn btn-primary">Xem năm học</button>
+</form><h4 class="mb-3">Xét năm học: @(ViewBag.ProcessingYear ?? "Chưa có năm học")</h4><a asp-controller="TongKet" asp-action="Index" asp-route-yearId="@ViewBag.ProcessingYearId" class="btn btn-outline-primary mb-3" title="Kiểm tra điểm cả năm / tổng kết lớp">Điểm cả năm / Tổng kết lớp</a>
 @if (isLocked)
 {
     <form method="post" action="/LenLop/UnlockResults" class="mb-3">
         @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
         <button class="btn btn-outline-warning" type="submit">Mở khóa kết quả để xét lại</button>
     </form>
 }<div class="alert alert-info">Xét sơ bộ theo điểm: đủ điểm hai học kỳ và ĐTB năm từ 5,0. Chưa bao gồm tổng kết rèn luyện và chuyên cần. Lớp 9 được xét điều kiện tốt nghiệp; khối 6–8 được đăng ký lớp năm kế tiếp sau khi duyệt và khóa.</div>
@@ -138,7 +146,7 @@
                 <div class="card-box h-100 mb-0 d-flex flex-column justify-content-center">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted fw-bold small">Trạng thái</span>
-                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã đủ dữ liệu điểm" : "Chưa đủ dữ liệu điểm")</span>
+                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã tổng kết" : "Chưa tổng kết / cần tổng kết lại")</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1 small">
                         <span class="text-muted">Hoàn thành lúc:</span>
@@ -258,6 +266,7 @@
 
     <!-- STEP 2 -->
     <div id="step2" class="wizard-step">
+        <button type="button" class="btn btn-outline-secondary mb-3" onclick="nextStep(1)"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Quay lại bước 1</button>
         <div class="step-title-container">
             <div class="step-title"><span>2</span> 2. XÉT ĐIỀU KIỆN</div>
         </div>
@@ -268,7 +277,7 @@
                 <div class="card-box h-100 mb-0 d-flex flex-column justify-content-center">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted fw-bold small">Trạng thái</span>
-                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã đủ dữ liệu điểm" : "Chưa đủ dữ liệu điểm")</span>
+                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã tổng kết" : "Chưa tổng kết / cần tổng kết lại")</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1 small">
                         <span class="text-muted">Hoàn thành lúc:</span>
@@ -370,6 +379,7 @@
 
     <!-- STEP 3 -->
     <div id="step3" class="wizard-step">
+        <button type="button" class="btn btn-outline-secondary mb-3" onclick="nextStep(2)"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Quay lại bước 2</button>
         <div class="step-title-container">
             <div class="step-title"><span>3</span> 3. KIỂM TRA & DUYỆT KẾT QUẢ</div>
         </div>
@@ -471,6 +481,7 @@
             
             <form id="duyetForm" method="post">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
                 <input type="hidden" name="ids" id="selectedIds">
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table-custom text-center align-middle">
@@ -497,7 +508,7 @@
                                     data-lop="@(hs.LopHoc?.TenLop ?? string.Empty)"
                                     data-result-status="@resultStatus"
                                     data-approval-status="@approvalStatus">
-                                    <td><input type="checkbox" class="chk-hs" value="@hs.IdHocSinh" disabled="@(!isLocked && isEligible ? null : "disabled")"></td>
+                                    <td><input type="checkbox" class="chk-hs" value="@hs.IdHocSinh" disabled="@(!isLocked && (isEligible || hs.DaDuyet) ? null : "disabled")"></td>
                                     <td class="fw-bold">@hs.MaHS</td>
                                     <td class="text-start">@hs.HoTen</td>
                                     <td>@(hs.LopHoc?.TenLop)</td>
@@ -541,7 +552,8 @@
             <div class="d-flex gap-2">
                 <form method="post" action="/LenLop/BulkApproveAllEligible" class="m-0">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-check-all"></i> Duyệt tất cả đủ điều kiện</button>
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
+                    <button type="submit" class="btn btn-success fw-bold" disabled="@isLocked"><i class="bi bi-check-all"></i> Duyệt tất cả đủ điều kiện</button>
                 </form>
                 <button type="button" class="btn btn-primary fw-bold" onclick="submitForm('/LenLop/BulkApprove')"><i class="bi bi-check-square"></i> Duyệt đã chọn</button>
                 <button type="button" class="btn btn-danger fw-bold" onclick="submitForm('/LenLop/BulkReject')"><i class="bi bi-x-square"></i> Hủy duyệt đã chọn</button>
@@ -605,18 +617,36 @@
             <p class="text-muted">@(isLocked ? "Có thể mở khóa để xét lại." : "Vui lòng khóa kết quả để hoàn tất quy trình.")</p>
             <form method="post" action="@(isLocked ? "/LenLop/UnlockResults" : "/LenLop/LockResults")">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
                 <button type="submit" class="btn btn-primary fw-bold px-4 py-2 mt-2"><i class="bi bi-lock"></i> @(isLocked ? "Mở khóa kết quả" : "Khóa kết quả")</button>
             </form>
         </div>
 
         <div class="mt-3">
-            <button class="btn btn-light fw-bold border bg-white" onclick="nextStep(3)"><i class="bi bi-arrow-left me-1"></i> Quay lại</button>
+            <button type="button" class="btn btn-light fw-bold border bg-white" onclick="nextStep(3)"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Quay lại bước 3</button>
         </div>
     </div>
 
 
     <!-- STEP 5 -->
     <div id="step5" class="wizard-step">
+        <div class="card-box">
+            <h5>Xác nhận tốt nghiệp</h5>
+<p>Đã xác nhận tốt nghiệp: @ViewBag.GraduatedCount học sinh.</p>
+<a asp-action="Alumni" asp-route-yearId="@ViewBag.ProcessingYearId" class="btn btn-outline-success mb-3">Danh sách cựu học sinh</a>
+@if (isLocked && (ViewBag.FinalResults as List<FinalPromotionRow> ?? new()).Any(r => r.Grade == 9 && r.Decision == "Đã duyệt điều kiện học tập tốt nghiệp"))
+{
+<form asp-action="ConfirmGraduation" method="post" class="border rounded p-3 mb-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
+    <p>Xác nhận cho các học sinh khối 9 đã duyệt trong kết quả đã chốt. Học sinh chuyển sang “Đã tốt nghiệp”; hồ sơ và điểm vẫn được giữ nguyên. Sau xác nhận không thể mở khóa năm học bằng thao tác thông thường.</p>
+    <label class="d-block mb-2"><input type="checkbox" name="confirmed" value="true" required /> Tôi đã kiểm tra và xác nhận các điều kiện tốt nghiệp ngoài điểm học tập.</label>
+    <button type="submit" class="btn btn-success">Xác nhận tốt nghiệp</button>
+</form>
+}
+
+        </div>
+        <button type="button" class="btn btn-outline-secondary mb-3" onclick="nextStep(4)"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Quay lại bước 4</button>
         <div class="step-title-container">
             <div class="step-title"><span>5</span> 5. HOÀN TẤT</div>
         </div>
@@ -627,7 +657,7 @@
                 <div class="card-box h-100 d-flex flex-column justify-content-center">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted fw-bold small">Trạng thái</span>
-                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã đủ dữ liệu điểm" : "Chưa đủ dữ liệu điểm")</span>
+                        <span class="badge-soft-warning">@(chuaTongKet == 0 ? "Đã tổng kết" : "Chưa tổng kết / cần tổng kết lại")</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1 small">
                         <span class="text-muted">Hoàn thành lúc:</span>
@@ -703,11 +733,13 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 <form method="post" action="@Url.Action("RejectStudent", "LenLop")" id="studentAssessmentReject" hidden>
                     @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
                     <input type="hidden" name="id" />
                     <button type="submit" class="btn btn-outline-danger">Hủy duyệt</button>
                 </form>
                 <form method="post" action="@Url.Action("ApproveStudent", "LenLop")" id="studentAssessmentApprove" hidden>
                     @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
                     <input type="hidden" name="id" />
                     <button type="submit" class="btn btn-success">Duyệt học sinh</button>
                 </form>
@@ -722,10 +754,7 @@
     
     function nextStep(stepNumber) {
         if (!Number.isInteger(stepNumber) || stepNumber < 1 || stepNumber > 5) return;
-        if (stepNumber === 2 && chuaTongKet > 0) {
-            alert("Lỗi: Hệ thống ghi nhận còn " + chuaTongKet + " học sinh chưa được tổng kết điểm. Vui lòng hoàn thành tổng kết cho toàn bộ học sinh trước khi xét duyệt điều kiện.");
-            return;
-        }
+
 
         if (stepNumber === 5 && !isLocked) {
             // Cannot go to step 5 directly if not locked (handled by POST request)
@@ -734,7 +763,7 @@
         
         document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
         document.getElementById('step' + stepNumber).classList.add('active');
-        localStorage.setItem('currentWizardStep', stepNumber);
+        localStorage.setItem('currentWizardStep:@ViewBag.ProcessingYearId', stepNumber);
         window.scrollTo(0, 0);
     }
 
@@ -742,7 +771,7 @@
         if (isLocked) {
             nextStep(5);
         } else {
-            let savedStep = localStorage.getItem('currentWizardStep');
+            let savedStep = localStorage.getItem('currentWizardStep:@ViewBag.ProcessingYearId');
             if (savedStep && savedStep !== '5') {
                 nextStep(parseInt(savedStep));
             }
@@ -887,6 +916,7 @@
         <div class="modal-content border-0 shadow">
             <form action="/HocVu/TaoNamHocTuDong" method="post">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
                 <!-- Hidden input for TrangThai, so it defaults to true -->
                 <input type="hidden" name="TrangThai" value="true" />
                 
@@ -966,6 +996,7 @@
         <div class="modal-content border-0 shadow">
             <form action="/LenLop/AutoAssignClass" method="post">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
                 <div class="modal-header border-bottom-0 pt-4 pb-2 px-4">
                     <h5 class="modal-title fw-bold fs-5" style="color: #1e3a8a !important;">
                         <i class="bi bi-diagram-3 me-2"></i> XẾP LỚP NĂM HỌC MỚI
@@ -1031,6 +1062,7 @@
         <div class="modal-content border-0 shadow">
             <form action="/LenLop/PrintResults" method="post" target="_blank">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
                 <div class="modal-header border-bottom-0 pt-4 pb-2 px-4">
                     <h5 class="modal-title fw-bold fs-5" style="color: #1e3a8a !important;">
                         <i class="bi bi-printer me-2"></i> IN DANH SÁCH KẾT QUẢ
@@ -1143,6 +1175,7 @@
         <div class="modal-content border-0 shadow">
             <form action="/LenLop/ExportExcel" method="post">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="yearId" value="@ViewBag.ProcessingYearId" />
                 <div class="modal-header border-bottom-0 pt-4 pb-2 px-4">
                     <h5 class="modal-title fw-bold fs-5" style="color: #166534 !important;">
                         <i class="bi bi-file-earmark-excel-fill me-2" style="color: #16a34a;"></i> XUẤT EXCEL

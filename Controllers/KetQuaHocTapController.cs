@@ -158,9 +158,7 @@ namespace eSchool.Controllers
             return View(vm);
         }
 
-        private bool AreGradesLocked() => _context.NhatKyHoatDongs.AsNoTracking()
-            .Where(n => n.HanhDong == "LenLop.ResultsLocked").OrderByDescending(n => n.IdNhatKy)
-            .Select(n => n.NoiDung).FirstOrDefault() == bool.TrueString;
+        private bool AreGradesLocked(int? yearId) => PromotionLockService.IsLocked(_context, yearId);
 
         private List<int> EditableSubjects(HocSinh student, HocKy semester)
         {
@@ -196,7 +194,7 @@ namespace eSchool.Controllers
             var allowed = EditableSubjects(student, semester);
             if (HttpContext.Session.GetInt32("RoleId") == 2 && allowed.Count == 0) return Forbid();
             var grades = _context.Diems.AsNoTracking().Where(d => d.IdHocSinh == idHocSinh && d.IdHocKy == idHocKy).ToList();
-            var locked = AreGradesLocked();
+            var locked = AreGradesLocked(semester.IdNamHoc);
             var subjects = _context.MonHocs.OrderBy(m => m.TenMon).ToList();
             if (HttpContext.Session.GetInt32("RoleId") == 2) subjects = subjects.Where(m => allowed.Contains(m.IdMonHoc)).ToList();
             return Ok(new
@@ -226,7 +224,7 @@ namespace eSchool.Controllers
                 req.DiemMonHocs.GroupBy(m => m.IdMonHoc).Any(g => g.Count() > 1))
                 return BadRequest(new { success = false, message = "Danh sách điểm không hợp lệ hoặc có môn bị trùng." });
             using var transaction = _context.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
-            if (AreGradesLocked()) return BadRequest(new { success = false, message = "Kết quả đã khóa. Không thể sửa điểm." });
+            if (AreGradesLocked(req.IdNamHoc)) return BadRequest(new { success = false, message = "Kết quả đã khóa. Không thể sửa điểm." });
             var student = _context.HocSinhs.Include(h => h.LopHoc).FirstOrDefault(h => h.IdHocSinh == req.IdHocSinh);
             var semester = _context.HocKys.Include(h => h.NamHoc).FirstOrDefault(h => h.IdHocKy == req.IdHocKy && h.IdNamHoc == req.IdNamHoc);
             if (student == null || !student.TrangThai || semester == null || !MatchesYear(student, semester))
@@ -365,11 +363,7 @@ namespace eSchool.Controllers
                     (p.HocKy == null || p.HocKy == "" || p.HocKy == "Cả năm" || p.HocKy == hocKy.TenHocKy)))
                     return Forbid();
             }
-            var locked = await _context.NhatKyHoatDongs.AsNoTracking()
-                .Where(n => n.HanhDong == "LenLop.ResultsLocked").OrderByDescending(n => n.IdNhatKy)
-                .Select(n => n.NoiDung).FirstOrDefaultAsync();
-            if (locked == bool.TrueString) return ImportError("Kết quả xét đã khóa. Vui lòng mở khóa trước khi nhập điểm.");
-
+            if (AreGradesLocked(hocKy.IdNamHoc)) return ImportError("Kết quả năm học đã khóa. Mở khóa trước khi nhập điểm.");
             List<DiemExcelRow> rows;
             var errors = new List<string>();
             try
@@ -402,7 +396,7 @@ namespace eSchool.Controllers
             await using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             try
             {
-                if (AreGradesLocked()) return ImportError("Kết quả đã khóa. Chưa lưu điểm.");
+                if (AreGradesLocked(hocKy.IdNamHoc)) return ImportError("Kết quả đã khóa. Chưa lưu điểm.");
                 var ids = rows.Select(r => r.StudentId).ToList();
                 var existing = await _context.Diems.Where(d => ids.Contains(d.IdHocSinh) &&
                     d.IdMonHoc == monHocId && d.IdHocKy == hocKyId).ToListAsync();
@@ -520,13 +514,15 @@ namespace eSchool.Controllers
         public IActionResult XoaDiem(int id)
         {
             using var transaction = _context.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
-            if (AreGradesLocked()) return Error(nameof(Diem), "Kết quả đã khóa. Không thể xóa điểm.");
+
             var diem = _context.Diems.Find(id);
             if (diem == null)
             {
                 return NotFound();
             }
 
+            var gradeYear = diem.IdNamHoc ?? _context.HocKys.Where(h => h.IdHocKy == diem.IdHocKy).Select(h => (int?)h.IdNamHoc).FirstOrDefault();
+            if (AreGradesLocked(gradeYear)) return Error(nameof(Diem), "Kết quả năm học đã khóa. Không thể xóa điểm.");
             var student = _context.HocSinhs.Find(diem.IdHocSinh);
             if (student != null) student.DaDuyet = false;
             _context.NhatKyHoatDongs.Add(new NhatKyHoatDong

@@ -15,6 +15,8 @@ using eSchool.Infrastructure;
 
 namespace eSchool.Controllers
 {
+    public sealed record FinalPromotionRow(int StudentId, string Code, string Name, string ClassName,
+        int? Grade, decimal? Average, string Decision);
     public class LopStat
     {
         public string Khoi { get; set; }
@@ -46,7 +48,6 @@ namespace eSchool.Controllers
     [RoleAuthorize(SystemRoleIds.SystemAdmin)]
     public class LenLopController : Controller
     {
-        private const string ResultsLockedSessionKey = "LenLop.ResultsLocked";
         private readonly AppDbContext _context;
 
         public LenLopController(AppDbContext context)
@@ -54,11 +55,46 @@ namespace eSchool.Controllers
             _context = context;
         }
 
+        private NamHoc? _processingYear;
+        private bool _yearResolved;
+        private NamHoc? ResolveProcessingYear()
+        {
+            if (_yearResolved) return _processingYear;
+            _yearResolved = true;
+            var raw = Request.HasFormContentType ? Request.Form["yearId"].ToString() : Request.Query["yearId"].ToString();
+            var years = _context.NamHocs.AsNoTracking().OrderByDescending(y => y.NgayBatDau).ToList();
+            _processingYear = string.IsNullOrEmpty(raw)
+                ? years.FirstOrDefault(y => y.TrangThai) ?? years.FirstOrDefault()
+                : int.TryParse(raw, out var id) ? years.FirstOrDefault(y => y.IdNamHoc == id) : null;
+            return _processingYear;
+        }
+        private Task<NamHoc?> GetProcessingYearAsync() => Task.FromResult(ResolveProcessingYear());
+        private async Task<IQueryable<HocSinh>> ProcessingStudentsAsync()
+        {
+            var year = await GetProcessingYearAsync();
+            if (year == null) return _context.HocSinhs.Where(h => false);
+            var name = eSchool.Services.AnnualScoreService.NormalizeYear(year.TenNamHoc);
+            return _context.HocSinhs.Where(h => !h.DaTotNghiep && h.LopHoc != null && h.LopHoc.NamHoc != null &&
+                h.LopHoc.NamHoc.Replace(" ", "") == name);
+        }
         public async Task<IActionResult> Index()
         {
-            var allHocSinh = await _context.HocSinhs.Include(h => h.LopHoc).ToListAsync();
-            var allLops = await _context.LopHocs.ToListAsync();
-            ViewBag.AcademicYears = await _context.NamHocs.AsNoTracking().OrderByDescending(y => y.NgayBatDau).ToListAsync();
+            var academicYears = await _context.NamHocs.AsNoTracking()
+                .OrderByDescending(y => y.NgayBatDau).ToListAsync();
+            var processingYear = await GetProcessingYearAsync();
+            if (processingYear == null && Request.Query.ContainsKey("yearId")) return BadRequest("Năm học không hợp lệ.");
+            var processingYearName = processingYear?.TenNamHoc;
+            var normalizedYear = eSchool.Services.AnnualScoreService.NormalizeYear(processingYearName);
+
+            var allHocSinh = await _context.HocSinhs.Include(h => h.LopHoc)
+                .Where(h => !h.DaTotNghiep && h.LopHoc != null && processingYear != null && h.LopHoc.NamHoc != null && h.LopHoc.NamHoc.Replace(" ", "") == normalizedYear)
+                .ToListAsync();
+            var allLops = await _context.LopHocs
+                .Where(l => processingYear != null && l.NamHoc != null && l.NamHoc.Replace(" ", "") == normalizedYear)
+                .ToListAsync();
+            ViewBag.AcademicYears = academicYears;
+            ViewBag.ProcessingYear = processingYearName;
+            ViewBag.ProcessingYearId = processingYear?.IdNamHoc;
             var assessments = await BuildPromotionAssessmentsAsync(allHocSinh);
 
             int totalHS = allHocSinh.Count;
@@ -83,6 +119,12 @@ namespace eSchool.Controllers
             ViewBag.ChoDuyet = choDuyet;
             ViewBag.TyLeDuyet = duDieuKien > 0 ? Math.Round((double)daDuyet / duDieuKien * 100, 2) : 0;
             ViewBag.IsLocked = IsResultsLocked();
+            var snapshotKey = $"LenLop.FinalResults:{processingYear?.IdNamHoc}";
+            var snapshot = await _context.NhatKyHoatDongs.AsNoTracking().Where(l => l.HanhDong == snapshotKey)
+                .OrderByDescending(l => l.IdNhatKy).FirstOrDefaultAsync();
+            ViewBag.FinalResults = ReadFinalResults(snapshot?.NoiDung);
+            ViewBag.FinalizedAt = snapshot?.ThoiGian;
+            ViewBag.GraduatedCount = await _context.HocSinhs.CountAsync(h => h.DaTotNghiep && h.NamHocTotNghiep == processingYearName);
 
             int chuaTongKet = allHocSinh.Count(h => h.TrangThai &&
                 (!assessments.TryGetValue(h.IdHocSinh, out var assessment) || !assessment.IsComplete));
@@ -141,10 +183,11 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveStudent(int id)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
-            var hs = await _context.HocSinhs.Include(h => h.LopHoc).FirstOrDefaultAsync(h => h.IdHocSinh == id);
+            var hs = await (await ProcessingStudentsAsync()).Include(h => h.LopHoc).FirstOrDefaultAsync(h => h.IdHocSinh == id);
             if (hs == null) return NotFound();
             if (hs != null)
             {
@@ -152,38 +195,42 @@ namespace eSchool.Controllers
                 if (!assessments.TryGetValue(hs.IdHocSinh, out var assessment) || !assessment.IsEligible)
                 {
                     TempData["Error"] = $"Học sinh {hs.MaHS} không đủ điều kiện để duyệt.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
                 }
 
                 hs.DaDuyet = true;
                 await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
                 TempData["Success"] = $"Đã duyệt học sinh {hs.MaHS}.";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectStudent(int id)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
-            var hs = await _context.HocSinhs.Include(h => h.LopHoc).FirstOrDefaultAsync(h => h.IdHocSinh == id);
+            var hs = await (await ProcessingStudentsAsync()).Include(h => h.LopHoc).FirstOrDefaultAsync(h => h.IdHocSinh == id);
             if (hs == null) return NotFound();
             if (hs != null)
             {
                 hs.DaDuyet = false;
                 await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
                 TempData["Success"] = $"Đã hủy duyệt học sinh {hs.MaHS}.";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkApprove(string ids)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
@@ -191,10 +238,10 @@ namespace eSchool.Controllers
             if (!idList.Any())
             {
                 TempData["Error"] = "Vui lòng chọn ít nhất một học sinh hợp lệ để duyệt.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
             }
             
-            var students = await _context.HocSinhs
+            var students = await (await ProcessingStudentsAsync())
                 .Include(h => h.LopHoc)
                 .Where(h => idList.Contains(h.IdHocSinh))
                 .ToListAsync();
@@ -206,16 +253,18 @@ namespace eSchool.Controllers
                 hs.DaDuyet = true;
             }
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["Success"] = eligibleStudents.Any()
                 ? $"Đã duyệt {eligibleStudents.Count} học sinh đủ điều kiện."
                 : "Không có học sinh đủ điều kiện trong danh sách đã chọn.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
         
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkReject(string ids)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
@@ -223,10 +272,10 @@ namespace eSchool.Controllers
             if (!idList.Any())
             {
                 TempData["Error"] = "Vui lòng chọn ít nhất một học sinh hợp lệ để từ chối.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
             }
             
-            var students = await _context.HocSinhs
+            var students = await (await ProcessingStudentsAsync())
                 .Where(h => idList.Contains(h.IdHocSinh) && h.TrangThai)
                 .ToListAsync();
             foreach (var hs in students)
@@ -234,19 +283,28 @@ namespace eSchool.Controllers
                 hs.DaDuyet = false;
             }
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["Success"] = $"Đã hủy duyệt {students.Count} học sinh.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
         
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BulkApproveAllEligible()
         {
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             if (IsResultsLocked())
                 return RedirectWithLockedResultsMessage();
 
-            var candidates = await _context.HocSinhs.Include(h => h.LopHoc)
-                .Where(h => h.TrangThai && !h.DaDuyet).ToListAsync();
+            var processingYear = await GetProcessingYearAsync();
+            if (processingYear == null)
+            {
+                TempData["Error"] = "Chưa có năm học để xét lên lớp.";
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
+            }
+            var candidates = await (await ProcessingStudentsAsync()).Include(h => h.LopHoc)
+                .Where(h => h.TrangThai && !h.DaDuyet && h.LopHoc != null &&
+                    h.LopHoc.NamHoc != null && h.LopHoc.NamHoc.Replace(" ", "") == processingYear.TenNamHoc.Replace(" ", "")).ToListAsync();
             var assessments = await BuildPromotionAssessmentsAsync(candidates);
             var students = candidates.Where(h => assessments[h.IdHocSinh].IsEligible).ToList();
             foreach (var hs in students)
@@ -254,61 +312,188 @@ namespace eSchool.Controllers
                 hs.DaDuyet = true;
             }
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["Success"] = $"Đã duyệt tất cả học sinh đủ điều kiện ({students.Count}).";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LockResults()
         {
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             if (IsResultsLocked()) return RedirectWithLockedResultsMessage();
-            var students = await _context.HocSinhs.Include(h => h.LopHoc).Where(h => h.TrangThai).ToListAsync();
+            var processingYear = await GetProcessingYearAsync();
+            if (processingYear == null)
+            {
+                TempData["Error"] = "Chưa có năm học để khóa kết quả.";
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
+            }
+            var students = await (await ProcessingStudentsAsync()).Include(h => h.LopHoc)
+                .Where(h => h.TrangThai && h.LopHoc != null &&
+                    h.LopHoc.NamHoc != null && h.LopHoc.NamHoc.Replace(" ", "") == processingYear.TenNamHoc.Replace(" ", "")).ToListAsync();
             var assessments = await BuildPromotionAssessmentsAsync(students);
             if (students.Count == 0 || assessments.Values.Any(a => !a.IsComplete))
             {
                 TempData["Error"] = "Chưa có học sinh hoặc còn thiếu dữ liệu tổng kết. Không thể khóa kết quả.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
             }
             if (students.Any(h => assessments[h.IdHocSinh].IsEligible && !h.DaDuyet))
             {
                 TempData["Error"] = "Còn học sinh đủ điều kiện chưa được duyệt.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
             }
             foreach (var student in students.Where(h => !assessments[h.IdHocSinh].IsEligible))
                 student.DaDuyet = false;
+            var finalRows = students.Select(h => new FinalPromotionRow(h.IdHocSinh, h.MaHS, h.HoTen,
+                h.LopHoc?.TenLop ?? "", eSchool.Services.AnnualScoreService.ParseGradeLevel(h.LopHoc?.Khoi),
+                assessments[h.IdHocSinh].AnnualAverage,
+                h.DaDuyet && assessments[h.IdHocSinh].IsEligible
+                    ? (eSchool.Services.AnnualScoreService.ParseGradeLevel(h.LopHoc?.Khoi) == 9
+                        ? "Đã duyệt điều kiện học tập tốt nghiệp" : "Đã duyệt lên lớp")
+                    : "Chưa đạt điều kiện học tập")).ToList();
+            _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
+            {
+                TenDangNhap = HttpContext.Session.GetString("Username") ?? "Admin",
+                HanhDong = $"LenLop.FinalResults:{processingYear.IdNamHoc}",
+                NoiDung = System.Text.Json.JsonSerializer.Serialize(finalRows)
+            });
             RecordLockState(true);
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["Success"] = "Đã khóa kết quả xét lên lớp / tốt nghiệp.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
 
-        private bool IsResultsLocked() => _context.NhatKyHoatDongs.AsNoTracking()
-            .Where(x => x.HanhDong == ResultsLockedSessionKey)
-            .OrderByDescending(x => x.IdNhatKy).Select(x => x.NoiDung).FirstOrDefault() == bool.TrueString;
-
-        private void RecordLockState(bool locked) => _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
+        private bool IsResultsLocked() => eSchool.Services.PromotionLockService.IsLocked(_context, ResolveProcessingYear()?.IdNamHoc);
+        private void RecordLockState(bool locked)
         {
-            TenDangNhap = User.Identity?.Name ?? "Admin",
-            HanhDong = ResultsLockedSessionKey,
-            NoiDung = locked.ToString()
-        });
-
+            var year = ResolveProcessingYear() ?? throw new InvalidOperationException("Năm học không hợp lệ.");
+            _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
+            {
+                TenDangNhap = HttpContext.Session.GetString("Username") ?? "Admin",
+                HanhDong = eSchool.Services.PromotionLockService.Key(year.IdNamHoc), NoiDung = locked.ToString()
+            });
+        }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UnlockResults()
         {
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            if (ResolveProcessingYear() == null) return BadRequest("Năm học không hợp lệ.");
+            var year = ResolveProcessingYear()!;
+            if (await _context.HocSinhs.AnyAsync(h => h.DaTotNghiep && h.NamHocTotNghiep == year.TenNamHoc))
+            {
+                TempData["Error"] = "Năm học đã xác nhận tốt nghiệp. Không thể mở khóa kết quả bằng thao tác thông thường.";
+                return RedirectToAction(nameof(Index), new { yearId = year.IdNamHoc });
+            }
             RecordLockState(false);
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             TempData["Success"] = "Đã mở khóa kết quả.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
         private IActionResult RedirectWithLockedResultsMessage()
         {
             TempData["Error"] = "Kết quả đã được khóa, không thể thay đổi.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmGraduation(bool confirmed)
+        {
+            var year = ResolveProcessingYear();
+            if (year == null) return BadRequest("Năm học không hợp lệ.");
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            IActionResult Fail(string message)
+            {
+                TempData["Error"] = message;
+                return RedirectToAction(nameof(Index), new { yearId = year.IdNamHoc });
+            }
+            if (!confirmed) return Fail("Cần xác nhận đã kiểm tra các điều kiện tốt nghiệp ngoài điểm học tập.");
+            if (!IsResultsLocked()) return Fail("Phải khóa kết quả trước khi xác nhận tốt nghiệp.");
+            var key = $"LenLop.FinalResults:{year.IdNamHoc}";
+            var log = await _context.NhatKyHoatDongs.AsNoTracking().Where(l => l.HanhDong == key)
+                .OrderByDescending(l => l.IdNhatKy).FirstOrDefaultAsync();
+            var approved = ReadFinalResults(log?.NoiDung).Where(r => r.Grade == 9 && r.Decision == "Đã duyệt điều kiện học tập tốt nghiệp").ToList();
+            if (approved.Count == 0) return Fail("Chưa có học sinh khối 9 đã duyệt trong danh sách chốt.");
+            var ids = approved.Select(r => r.StudentId).Distinct().ToList();
+            var students = await _context.HocSinhs.Include(h => h.LopHoc).Where(h => ids.Contains(h.IdHocSinh)).ToListAsync();
+            if (students.Count != ids.Count) return Fail("Danh sách học sinh đã thay đổi. Chưa xác nhận tốt nghiệp.");
+            if (students.Any(h => h.DaTotNghiep && h.NamHocTotNghiep != year.TenNamHoc))
+                return Fail("Có học sinh đã tốt nghiệp ở năm học khác.");
+            var pending = students.Where(h => !h.DaTotNghiep).ToList();
+            var assessments = await BuildPromotionAssessmentsAsync(pending);
+            if (pending.Any(h => !h.TrangThai || !h.DaDuyet || eSchool.Services.AnnualScoreService.ParseGradeLevel(h.LopHoc?.Khoi) != 9 ||
+                eSchool.Services.AnnualScoreService.NormalizeYear(h.LopHoc?.NamHoc) != eSchool.Services.AnnualScoreService.NormalizeYear(year.TenNamHoc) ||
+                !assessments[h.IdHocSinh].IsEligible || assessments[h.IdHocSinh].AnnualAverage != approved.First(r => r.StudentId == h.IdHocSinh).Average))
+                return Fail("Dữ liệu học sinh không còn khớp với kết quả đã chốt. Chưa xác nhận học sinh nào.");
+            var confirmedAt = DateTime.Now;
+            foreach (var student in pending)
+                eSchool.Services.GraduationService.MarkGraduated(student, year.TenNamHoc, confirmedAt);
+            if (pending.Count > 0) _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
+            {
+                TenDangNhap = HttpContext.Session.GetString("Username") ?? "Admin",
+                HanhDong = "Xác nhận tốt nghiệp",
+                NoiDung = $"Năm {year.TenNamHoc}, bản chốt {log!.IdNhatKy}; đã kiểm tra điều kiện ngoài học tập. Học sinh: {string.Join(", ", pending.Select(h => h.MaHS))}."
+            });
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            TempData["Success"] = pending.Count == 0 ? "Danh sách đã được xác nhận tốt nghiệp trước đó." : $"Đã xác nhận tốt nghiệp {pending.Count} học sinh. Hồ sơ và điểm được giữ nguyên.";
+            return RedirectToAction(nameof(Alumni), new { yearId = year.IdNamHoc });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Alumni(int? yearId, string? keyword)
+        {
+            var years = await _context.NamHocs.AsNoTracking().OrderByDescending(y => y.NgayBatDau).ToListAsync();
+            var year = years.FirstOrDefault(y => y.IdNamHoc == yearId);
+            if (yearId.HasValue && year == null) return BadRequest("Năm học không hợp lệ.");
+            var query = _context.HocSinhs.AsNoTracking().Include(h => h.LopHoc).Where(h => h.DaTotNghiep);
+            if (year != null) query = query.Where(h => h.NamHocTotNghiep == year.TenNamHoc);
+            if (!string.IsNullOrWhiteSpace(keyword)) query = query.Where(h => h.MaHS.Contains(keyword) || h.HoTen.Contains(keyword));
+            ViewBag.Years = years; ViewBag.YearId = yearId; ViewBag.Keyword = keyword;
+            return View(await query.OrderByDescending(h => h.NgayTotNghiep).ThenBy(h => h.HoTen).ToListAsync());
+        }
+        private static List<FinalPromotionRow> ReadFinalResults(string? json)
+        {
+            if (string.IsNullOrEmpty(json)) return new();
+            try { return System.Text.Json.JsonSerializer.Deserialize<List<FinalPromotionRow>>(json) ?? new(); }
+            catch (System.Text.Json.JsonException) { return new(); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportFinalResults()
+        {
+            var year = ResolveProcessingYear();
+            if (year == null) return BadRequest("Năm học không hợp lệ.");
+            var key = $"LenLop.FinalResults:{year.IdNamHoc}";
+            var log = await _context.NhatKyHoatDongs.AsNoTracking().Where(l => l.HanhDong == key)
+                .OrderByDescending(l => l.IdNhatKy).FirstOrDefaultAsync();
+            var results = ReadFinalResults(log?.NoiDung);
+            if (results.Count == 0) return NotFound("Năm học chưa có danh sách chốt.");
+            using var book = new XLWorkbook();
+            var sheet = book.AddWorksheet("KetQuaDaChot");
+            sheet.Cell(1, 1).Value = $"Kết quả chốt năm {year.TenNamHoc}, lúc {log!.ThoiGian:dd/MM/yyyy HH:mm}";
+            sheet.Cell(2, 1).Value = IsResultsLocked() ? "Kết quả đang khóa" : "Bản chốt trước khi mở khóa; cần chốt lại để có kết quả mới";
+            string[] headers = { "Mã HS", "Họ tên", "Lớp", "Khối", "ĐTB năm", "Kết quả" };
+            for (var i = 0; i < headers.Length; i++) sheet.Cell(4, i + 1).Value = headers[i];
+            var row = 5;
+            foreach (var result in results)
+            {
+                sheet.Cell(row, 1).Value = result.Code; sheet.Cell(row, 2).Value = result.Name;
+                sheet.Cell(row, 3).Value = result.ClassName;
+                if (result.Grade.HasValue) sheet.Cell(row, 4).Value = result.Grade.Value;
+                if (result.Average.HasValue) sheet.Cell(row, 5).Value = result.Average.Value;
+                sheet.Cell(row++, 6).Value = result.Decision;
+            }
+            sheet.Row(4).Style.Font.Bold = true;
+            sheet.Column(5).Style.NumberFormat.Format = "0.00";
+            sheet.Columns().AdjustToContents();
+            using var stream = new MemoryStream(); book.SaveAs(stream);
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"KetQuaDaChot_{year.IdNamHoc}.xlsx");
+        }
         private static List<int> ParseStudentIds(string? ids) =>
             string.IsNullOrWhiteSpace(ids)
                 ? new List<int>()
@@ -328,7 +513,7 @@ namespace eSchool.Controllers
                 IsEligible = r.Student.TrangThai && r.Eligible && r.Finalized,
                 Decision = !r.Student.TrangThai ? "Không xét" : !r.Complete ? "Chưa đủ dữ liệu" :
                     !r.Finalized ? "Chưa tổng kết / cần tổng kết lại" :
-                    r.Eligible ? (r.Student.LopHoc?.Khoi?.Trim() == "9" ? "Đạt điều kiện học tập tốt nghiệp" : "Đạt điều kiện học tập lên lớp") : "Chưa đủ điều kiện",
+                    r.Eligible ? (eSchool.Services.AnnualScoreService.ParseGradeLevel(r.Student.LopHoc?.Khoi) == 9 ? "Đạt điều kiện học tập tốt nghiệp" : "Đạt điều kiện học tập lên lớp") : "Chưa đủ điều kiện",
                 Reason = r.Reason + (r.Student.TrangThai && r.Complete && !r.Finalized
                     ? " Hãy tổng kết tại Điểm cả năm trước khi duyệt." : "")
             });
@@ -340,48 +525,61 @@ namespace eSchool.Controllers
             if (!IsResultsLocked())
             {
                 TempData["Error"] = "Vui lòng khóa kết quả trước khi xếp lớp.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
             }
             using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            if (!IsResultsLocked()) return RedirectWithLockedResultsMessage();
             var targetYear = await _context.NamHocs.SingleOrDefaultAsync(y => y.TenNamHoc == NamHoc);
             if (targetYear == null)
             {
                 TempData["Error"] = "Năm học đích không tồn tại.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
             }
+            var processingYear = await GetProcessingYearAsync();
             var years = await _context.NamHocs.AsNoTracking().ToListAsync();
             var sourceYear = years.Where(y => y.NgayBatDau < targetYear.NgayBatDau)
                 .OrderByDescending(y => y.NgayBatDau).FirstOrDefault();
-            if (sourceYear == null || sourceYear.NgayKetThuc >= targetYear.NgayBatDau)
+            if (sourceYear == null || sourceYear.IdNamHoc != processingYear?.IdNamHoc || sourceYear.NgayKetThuc >= targetYear.NgayBatDau)
             {
                 TempData["Error"] = "Không xác định được năm học liền trước hợp lệ.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
             }
             var students = await _context.HocSinhs.Include(h => h.LopHoc)
-                .Where(h => h.TrangThai && h.DaDuyet && h.LopHoc != null && h.LopHoc.NamHoc == sourceYear.TenNamHoc)
+                .Where(h => h.TrangThai && h.DaDuyet && h.LopHoc != null && h.LopHoc.NamHoc != null && h.LopHoc.NamHoc.Replace(" ", "") == sourceYear.TenNamHoc.Replace(" ", ""))
                 .OrderBy(h => h.MaHS).ToListAsync();
             if (!string.IsNullOrWhiteSpace(Khoi) && Khoi != "All")
                 students = students.Where(h => h.LopHoc!.Khoi == Khoi).ToList();
             var assessments = await BuildPromotionAssessmentsAsync(students);
             students = students.Where(h => assessments[h.IdHocSinh].IsEligible &&
-                int.TryParse(h.LopHoc!.Khoi?.Trim(), out var grade) && grade >= 6 && grade < 9).ToList();
-            var targets = await _context.LopHocs.Where(l => l.NamHoc == NamHoc).OrderBy(l => l.TenLop).ToListAsync();
-            var counts = await _context.DangKyLops.Where(d => d.LopHoc!.NamHoc == NamHoc)
-                .GroupBy(d => d.IdLop).Select(g => new { Id = g.Key, Count = g.Select(d => d.IdHocSinh).Distinct().Count() })
-                .ToDictionaryAsync(g => g.Id, g => g.Count);
-            var registered = await _context.DangKyLops.Where(d => d.LopHoc!.NamHoc == NamHoc)
-                .Select(d => d.IdHocSinh).ToListAsync();
-            var assigned = 0;
+                eSchool.Services.AnnualScoreService.ParseGradeLevel(h.LopHoc!.Khoi) is >= 6 and < 9).ToList();
+            var targets = await _context.LopHocs.Where(l => l.NamHoc != null && l.NamHoc.Replace(" ", "") == NamHoc.Replace(" ", "")).OrderBy(l => l.TenLop).ToListAsync();
+            var memberships = await _context.DangKyLops.Where(d => d.LopHoc!.NamHoc != null && d.LopHoc.NamHoc.Replace(" ", "") == NamHoc.Replace(" ", ""))
+                .Select(d => new { StudentId = d.IdHocSinh, ClassId = d.IdLop })
+                .Union(_context.HocSinhs.Where(h => h.IdLopHoc.HasValue && h.LopHoc!.NamHoc != null && h.LopHoc.NamHoc.Replace(" ", "") == NamHoc.Replace(" ", ""))
+                    .Select(h => new { StudentId = h.IdHocSinh, ClassId = h.IdLopHoc!.Value })).ToListAsync();
+            var counts = memberships.GroupBy(m => m.ClassId).ToDictionary(g => g.Key, g => g.Count());
+            var registered = memberships.Select(m => m.StudentId).ToHashSet();
+            foreach (var student in students)
+            {
+                var membershipsForStudent = memberships.Where(m => m.StudentId == student.IdHocSinh).ToList();
+                var requiredGrade = eSchool.Services.AnnualScoreService.ParseGradeLevel(student.LopHoc?.Khoi) + 1;
+                if (membershipsForStudent.Count > 1 || membershipsForStudent.Any(m =>
+                    eSchool.Services.AnnualScoreService.ParseGradeLevel(targets.FirstOrDefault(t => t.IdLop == m.ClassId)?.Khoi) != requiredGrade))
+                {
+                    TempData["Error"] = $"Học sinh {student.MaHS} đã đăng ký nhiều lớp hoặc sai khối ở năm đích. Chưa lưu xếp lớp.";
+                    return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
+                }
+            }            var assigned = 0;
             foreach (var student in students)
             {
                 if (registered.Contains(student.IdHocSinh)) continue;
-                var nextGrade = (int.Parse(student.LopHoc!.Khoi!.Trim()) + 1).ToString();
-                var target = targets.Where(l => l.Khoi?.Trim() == nextGrade)
+                var nextGrade = eSchool.Services.AnnualScoreService.ParseGradeLevel(student.LopHoc!.Khoi)!.Value + 1;
+                var target = targets.Where(l => eSchool.Services.AnnualScoreService.ParseGradeLevel(l.Khoi) == nextGrade)
                     .OrderBy(l => counts.GetValueOrDefault(l.IdLop)).ThenBy(l => l.TenLop).FirstOrDefault();
                 if (target == null)
                 {
                     TempData["Error"] = $"Chưa có lớp khối {nextGrade} trong năm học {NamHoc}. Chưa lưu xếp lớp.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
                 }
                 _context.DangKyLops.Add(new DangKyLop { IdHocSinh = student.IdHocSinh, IdLop = target.IdLop });
                 counts[target.IdLop] = counts.GetValueOrDefault(target.IdLop) + 1;
@@ -390,7 +588,7 @@ namespace eSchool.Controllers
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
             TempData["Success"] = $"Đã đăng ký lớp năm học mới cho {assigned} học sinh. Lớp hiện tại được giữ để bảo toàn kết quả năm đang xét.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -402,7 +600,7 @@ namespace eSchool.Controllers
             if (!string.IsNullOrEmpty(Lop)) query = query.Where(h => h.LopHoc != null && h.LopHoc.TenLop == Lop);
             var students = await query.OrderBy(h => h.LopHoc.TenLop).ThenBy(h => h.HoTen).ToListAsync();
 
-            if (MauIn == "Danh sách tốt nghiệp lớp 9") students = students.Where(h => h.LopHoc?.Khoi?.Trim() == "9").ToList();
+            if (MauIn == "Danh sách tốt nghiệp lớp 9") students = students.Where(h => eSchool.Services.AnnualScoreService.ParseGradeLevel(h.LopHoc?.Khoi) == 9).ToList();
             var assessments = await BuildPromotionAssessmentsAsync(students);
             if (LoaiKetQua == "approved") students = students.Where(h => h.DaDuyet && assessments[h.IdHocSinh].IsEligible).ToList();
             if (LoaiKetQua == "eligible") students = students.Where(h => assessments[h.IdHocSinh].IsEligible).ToList();

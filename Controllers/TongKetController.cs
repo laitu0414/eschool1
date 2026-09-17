@@ -22,10 +22,6 @@ public sealed class AnnualScorePage
 [RoleAuthorize(SystemRoleIds.SystemAdmin, 2)]
 public sealed class TongKetController(AppDbContext context) : Controller
 {
-    private bool Locked() => context.NhatKyHoatDongs.AsNoTracking()
-        .Where(l => l.HanhDong == "LenLop.ResultsLocked").OrderByDescending(l => l.IdNhatKy)
-        .Select(l => l.NoiDung).FirstOrDefault() == bool.TrueString;
-
     private async Task<AnnualScorePage?> LoadAsync(int? yearId, int? classId)
     {
         var years = await context.NamHocs.AsNoTracking().OrderByDescending(y => y.NgayBatDau).ToListAsync();
@@ -44,7 +40,7 @@ public sealed class TongKetController(AppDbContext context) : Controller
             classes = classes.Where(l => allowed.Contains(l.IdLop) || l.IdGiaoVienCN == teacher.IdGiaoVien).ToList();
         }
         if (classId.HasValue && classes.All(l => l.IdLop != classId)) return null;
-        var page = new AnnualScorePage { Years = years, Classes = classes, YearId = yearId, ClassId = classId, Locked = Locked() };
+        var page = new AnnualScorePage { Years = years, Classes = classes, YearId = yearId, ClassId = classId, Locked = PromotionLockService.IsLocked(context, yearId) };
         if (classId.HasValue)
         {
             var students = await context.HocSinhs.AsNoTracking().Include(h => h.LopHoc)

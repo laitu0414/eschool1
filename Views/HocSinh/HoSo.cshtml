@@ -20,7 +20,7 @@
             <p>@(Model.TenLop ?? "Chưa xếp lớp")</p>
         </div>
         <span class="student-profile-status @(Model.TrangThai ? "active" : "inactive")">
-            @(Model.TrangThai ? "Đang học" : "Nghỉ học")
+            @(Model.DaTotNghiep ? "Đã tốt nghiệp" : Model.TrangThai ? "Đang học" : "Nghỉ học")
         </span>
     </section>
 

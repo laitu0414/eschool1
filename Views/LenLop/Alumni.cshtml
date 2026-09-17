@@ -1,0 +1,25 @@
+@model List<HocSinh>
+@{
+    Layout = "~/Views/Shared/_ResultLayout.cshtml";
+    ViewData["Title"] = "Cựu học sinh / Đã tốt nghiệp";
+}
+<h3>Cựu học sinh / Đã tốt nghiệp</h3>
+<a asp-action="Index" asp-route-yearId="@ViewBag.YearId" class="btn btn-outline-primary mb-3">Quay lại xét lên lớp / tốt nghiệp</a>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4"><select name="yearId" class="form-select" aria-label="Năm tốt nghiệp">
+        <option value="">Tất cả năm tốt nghiệp</option>
+        @foreach (var year in (List<eSchool.Models.NamHoc>)ViewBag.Years) { <option value="@year.IdNamHoc" selected="@(year.IdNamHoc == (int?)ViewBag.YearId)">@year.TenNamHoc</option> }
+    </select></div>
+    <div class="col-md-5"><input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm mã hoặc tên học sinh" aria-label="Tìm học sinh" /></div>
+    <div class="col-md-3"><button class="btn btn-primary" type="submit">Tìm kiếm</button></div>
+</form>
+<p>Tìm thấy @Model.Count học sinh. Hồ sơ và lịch sử điểm được giữ lại.</p>
+<div class="table-responsive"><table class="table table-bordered">
+<thead><tr><th>Mã HS</th><th>Họ tên</th><th>Lớp cuối cấp</th><th>Năm tốt nghiệp</th><th>Ngày xác nhận</th><th>Trạng thái</th><th>Tra cứu</th></tr></thead>
+<tbody>
+@foreach (var student in Model)
+{
+<tr><td>@student.MaHS</td><td>@student.HoTen</td><td>@student.LopHoc?.TenLop</td><td>@student.NamHocTotNghiep</td><td>@student.NgayTotNghiep?.ToString("dd/MM/yyyy HH:mm")</td><td><span class="badge bg-success">Đã tốt nghiệp</span></td><td><a asp-controller="HocSinh" asp-action="Details" asp-route-id="@student.IdHocSinh">Hồ sơ</a> · <a asp-controller="KetQuaHocTap" asp-action="Diem" asp-route-lopId="@student.IdLopHoc">Tra cứu điểm lớp</a></td></tr>
+}
+@if (Model.Count == 0) { <tr><td colspan="7">Chưa có học sinh đã xác nhận tốt nghiệp.</td></tr> }
+</tbody></table></div>

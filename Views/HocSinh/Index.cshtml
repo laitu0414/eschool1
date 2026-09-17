@@ -11,7 +11,7 @@ Layout = isAdmin
 
     var danhSach = Model ?? new List<eSchool.ViewModels.HocSinhViewModel>();
     var dangHoc = danhSach.Count(x => x.TrangThai);
-    var nghiHoc = danhSach.Count(x => !x.TrangThai);
+    var nghiHoc = danhSach.Count(x => !x.TrangThai && !x.DaTotNghiep);
     var soLop = danhSach.Where(x => !string.IsNullOrWhiteSpace(x.TenLop)).Select(x => x.TenLop).Distinct().Count();
     var coTaiKhoan = danhSach.Count(x => !string.IsNullOrWhiteSpace(x.TenTaiKhoan));
     var lopHocs = ViewBag.LopHocs as IEnumerable<eSchool.Models.LopHoc> ?? Enumerable.Empty<eSchool.Models.LopHoc>();
@@ -222,7 +222,7 @@ Layout = isAdmin
                                                     data-email="@(item.Email ?? "Chưa cập nhật")"
                                                     data-address="@(item.DiaChi ?? "Chưa cập nhật")"
                                                     data-account="@(item.TenTaiKhoan ?? "Chưa liên kết")"
-                                                    data-status="@(item.TrangThai ? "Đang học" : "Nghỉ học")"
+                                                    data-status="@(item.DaTotNghiep ? "Đã tốt nghiệp" : item.TrangThai ? "Đang học" : "Nghỉ học")"
                                                     data-status-class="@(item.TrangThai ? "active" : "inactive")">
                                                 <div class="student-admin-profile">
                                                     <img src="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
@@ -252,7 +252,7 @@ Layout = isAdmin
                                             </span>
                                         </td>
                                         <td>
-                                            @if (item.TrangThai)
+                                            @if (item.DaTotNghiep) { <span class="badge bg-success">Đã tốt nghiệp</span> } else if (item.TrangThai)
                                             {
                                                 <span class="student-admin-status active">Đang học</span>
                                             }
@@ -411,7 +411,7 @@ Layout = isAdmin
                                                 data-email="@(item.Email ?? "Chưa cập nhật")"
                                                 data-address="@(item.DiaChi ?? "Chưa cập nhật")"
                                                 data-account="@(item.TenTaiKhoan ?? "Chưa liên kết")"
-                                                data-status="@(item.TrangThai ? "Đang học" : "Nghỉ học")"
+                                                data-status="@(item.DaTotNghiep ? "Đã tốt nghiệp" : item.TrangThai ? "Đang học" : "Nghỉ học")"
                                                 data-status-class="@(item.TrangThai ? "active" : "inactive")">
                                             <div class="student-profile-cell">
                                                 <img src="@(string.IsNullOrWhiteSpace(item.AnhDaiDien) ? Url.Content("~/image/default-avatar.svg") : item.AnhDaiDien)"
@@ -428,7 +428,7 @@ Layout = isAdmin
                                     <td>@(string.IsNullOrWhiteSpace(item.GioiTinh) ? "-" : item.GioiTinh)</td>
                                     <td><span class="student-class-pill">@(item.TenLop ?? "Chưa xếp lớp")</span></td>
                                     <td>
-                                        @if (item.TrangThai)
+                                        @if (item.DaTotNghiep) { <span class="badge bg-success">Đã tốt nghiệp</span> } else if (item.TrangThai)
                                         {
                                             <span class="student-status-pill active">Đang học</span>
                                         }
