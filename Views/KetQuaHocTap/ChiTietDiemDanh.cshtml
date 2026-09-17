@@ -36,8 +36,8 @@
                         <td>@item.MaHS</td>
                         <td><strong>@item.HoTen</strong></td>
                         <td>
-                            <span class="badge @(item.TrangThai == "Co mat" || item.TrangThai == "Có mặt" ? "text-bg-success" : "text-bg-danger")">
-                                @item.TrangThai
+                            <span class="badge @(eSchool.Services.AttendanceRules.IsPresent(item.TrangThai) ? "text-bg-success" : "text-bg-danger")">
+                                @(eSchool.Services.AttendanceRules.IsPresent(item.TrangThai) ? "Có mặt" : item.TrangThai == "Vang" ? "Vắng" : item.TrangThai)
                             </span>
                         </td>
                         <td>@(string.IsNullOrWhiteSpace(item.GhiChu) ? "-" : item.GhiChu)</td>

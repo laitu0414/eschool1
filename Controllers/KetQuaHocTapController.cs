@@ -594,6 +594,7 @@ namespace eSchool.Controllers
             var details = _context.DiemDanhs
                 .Include(x => x.HocSinh)
                 .Where(x => x.IdLop == lopId && x.NgayHoc.Date == ngayHoc.Date && x.IdTietHoc == idTietHoc)
+                .ToList().GroupBy(x => x.IdHocSinh).Select(g => g.OrderByDescending(x => x.IdDiemDanh).First())
                 .OrderBy(x => x.HocSinh!.HoTen)
                 .Select(x => new DiemDanhHocSinhChiTietViewModel
                 {
@@ -612,7 +613,7 @@ namespace eSchool.Controllers
         }
 
         [RoleAuthorize(2)]
-        public IActionResult GiaoVienDiemDanh(int? idPhanCong, DateTime? ngayHoc)
+        public IActionResult GiaoVienDiemDanh(int? idPhanCong, DateTime? ngayHoc, int? idTietHoc)
         {
             var giaoVien = GetCurrentGiaoVien();
             if (giaoVien == null)
@@ -628,6 +629,10 @@ namespace eSchool.Controllers
 
             var selectedAssignment = assignments.FirstOrDefault(x => x.IdPhanCong == idPhanCong);
             var ngay = ngayHoc?.Date ?? DateTime.Today;
+            var selectedPeriod = idTietHoc ?? selectedAssignment?.TietBatDau;
+            if (selectedAssignment != null && (!selectedPeriod.HasValue || selectedPeriod < selectedAssignment.TietBatDau || selectedPeriod >= selectedAssignment.TietBatDau + (selectedAssignment.SoTiet ?? 1)))
+                selectedPeriod = selectedAssignment.TietBatDau;
+            ViewBag.IdTietHoc = selectedPeriod;
 
             var vm = new GiaoVienDiemDanhPageViewModel
             {
@@ -640,16 +645,17 @@ namespace eSchool.Controllers
             if (selectedAssignment != null)
             {
                 var hocSinhs = _context.HocSinhs
-                    .Where(x => x.IdLopHoc == selectedAssignment.IdLop)
+                    .Where(x => x.IdLopHoc == selectedAssignment.IdLop && x.TrangThai && !x.DaTotNghiep)
                     .OrderBy(x => x.HoTen)
                     .ToList();
 
                 var attendanceMap = _context.DiemDanhs
                     .Where(x => x.IdLop == selectedAssignment.IdLop
                         && x.NgayHoc.Date == ngay
-                        && x.IdTietHoc == selectedAssignment.TietBatDau)
-                    .ToDictionary(x => x.IdHocSinh);
+                        && x.IdTietHoc == selectedPeriod)
+                    .ToList().GroupBy(x => x.IdHocSinh).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.IdDiemDanh).First());
 
+                ViewBag.AttendanceSaved = attendanceMap.Count > 0;
                 vm.HocSinhs = hocSinhs.Select(x =>
                 {
                     attendanceMap.TryGetValue(x.IdHocSinh, out var record);
@@ -658,7 +664,7 @@ namespace eSchool.Controllers
                         IdHocSinh = x.IdHocSinh,
                         MaHS = x.MaHS,
                         HoTen = x.HoTen,
-                        CoMat = record == null || string.Equals(record.TrangThai, "Co mat", StringComparison.OrdinalIgnoreCase) || string.Equals(record.TrangThai, "Có mặt", StringComparison.OrdinalIgnoreCase),
+                        CoMat = record == null || AttendanceRules.IsPresent(record.TrangThai),
                         GhiChu = record?.GhiChu
                     };
                 }).ToList();
@@ -685,17 +691,44 @@ namespace eSchool.Controllers
                 return NotFound();
             }
 
+            var selectedPeriod = vm.IdTietHoc ?? assignment.TietBatDau;
+            if (!ModelState.IsValid || !selectedPeriod.HasValue || !assignment.TietBatDau.HasValue
+                || selectedPeriod < assignment.TietBatDau || selectedPeriod >= assignment.TietBatDau + (assignment.SoTiet ?? 1)
+                || assignment.Thu != GetThuFromDate(vm.NgayHoc))
+            {
+                TempData["Error"] = "Ngày hoặc tiết không đúng phân công. Vui lòng chọn lại đúng thứ và tiết dạy.";
+                return RedirectToAction(nameof(GiaoVienDiemDanh), new { idPhanCong = vm.IdPhanCong, ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd"), idTietHoc = selectedPeriod });
+            }
             var validStudentIds = _context.HocSinhs
-                .Where(x => x.IdLopHoc == assignment.IdLop)
+                .Where(x => x.IdLopHoc == assignment.IdLop && x.TrangThai && !x.DaTotNghiep)
                 .Select(x => x.IdHocSinh)
                 .ToHashSet();
 
+            if (vm.HocSinhs == null || vm.HocSinhs.Count == 0
+                || vm.HocSinhs.Select(x => x.IdHocSinh).Distinct().Count() != vm.HocSinhs.Count
+                || !validStudentIds.SetEquals(vm.HocSinhs.Select(x => x.IdHocSinh))
+                || vm.HocSinhs.Any(x => x.GhiChu?.Trim().Length > 255))
+            {
+                TempData["Error"] = "Danh sách học sinh đã thay đổi, bị trùng hoặc ghi chú quá 255 ký tự. Hãy mở lại danh sách và kiểm tra trước khi lưu.";
+                return RedirectToAction(nameof(GiaoVienDiemDanh), new { idPhanCong = vm.IdPhanCong, ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd"), idTietHoc = selectedPeriod });
+            }
+            var schoolYear = _context.NamHocs.AsNoTracking().FirstOrDefault(x => x.TenNamHoc == assignment.NamHoc);
+            var holiday = _context.LichHocThayDois.Any(x => x.IsNghi && x.Ngay.Date == vm.NgayHoc.Date
+                && (!x.IdLop.HasValue || x.IdLop == assignment.IdLop)
+                && (!x.TietBatDau.HasValue || (selectedPeriod >= x.TietBatDau && selectedPeriod < x.TietBatDau + (x.SoTiet ?? 1))));
+            if (vm.NgayHoc.Date > DateTime.Today || schoolYear == null
+                || vm.NgayHoc.Date < schoolYear.NgayBatDau.Date || vm.NgayHoc.Date > schoolYear.NgayKetThuc.Date || holiday)
+            {
+                TempData["Error"] = "Không thể điểm danh ngày tương lai, ngoài năm học hoặc tiết đã được thông báo nghỉ.";
+                return RedirectToAction(nameof(GiaoVienDiemDanh), new { idPhanCong = vm.IdPhanCong, ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd"), idTietHoc = selectedPeriod });
+            }
+            using var transaction = _context.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
             var existing = _context.DiemDanhs
                 .Where(x => x.IdLop == assignment.IdLop
                     && x.NgayHoc.Date == vm.NgayHoc.Date
-                    && x.IdTietHoc == assignment.TietBatDau)
+                    && x.IdTietHoc == selectedPeriod)
                 .ToList()
-                .ToDictionary(x => x.IdHocSinh);
+                .GroupBy(x => x.IdHocSinh).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.IdDiemDanh).First());
 
             foreach (var item in vm.HocSinhs.Where(x => validStudentIds.Contains(x.IdHocSinh)))
             {
@@ -708,25 +741,44 @@ namespace eSchool.Controllers
                 record.IdHocSinh = item.IdHocSinh;
                 record.IdLop = assignment.IdLop;
                 record.NgayHoc = vm.NgayHoc.Date;
-                record.IdTietHoc = assignment.TietBatDau;
-                record.TrangThai = item.CoMat ? "Co mat" : "Vang";
+                record.IdTietHoc = selectedPeriod;
+                record.TrangThai = item.CoMat ? "Có mặt" : "Vắng";
                 record.GhiChu = string.IsNullOrWhiteSpace(item.GhiChu) ? null : item.GhiChu.Trim();
             }
 
-            _context.SaveChanges();
+            try
+            {
+                _context.SaveChanges();
+                transaction.Commit();
+            }
+            catch (DbUpdateException)
+            {
+                transaction.Rollback();
+                TempData["Error"] = "Chưa lưu được điểm danh. Vui lòng tải lại danh sách và thử lại.";
+                return RedirectToAction(nameof(GiaoVienDiemDanh), new { idPhanCong = vm.IdPhanCong, ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd"), idTietHoc = selectedPeriod });
+            }
             TempData["Success"] = "Đã lưu điểm danh cho lớp học.";
             return RedirectToAction(nameof(GiaoVienDiemDanh), new
             {
                 idPhanCong = vm.IdPhanCong,
+                idTietHoc = selectedPeriod,
                 ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd")
             });
         }
 
         [RoleAuthorize(3, 4)]
-        public IActionResult XemDiemDanh(int? idMonHoc)
+        public IActionResult XemDiemDanh(int? idMonHoc, DateTime? ngayHoc, int? idTietHoc, int? idHocSinh)
         {
             var hocSinh = GetCurrentHocSinh();
-            if (hocSinh == null)
+            if (HttpContext.Session.GetInt32("RoleId") == 4)
+            {
+                var accountId = HttpContext.Session.GetInt32("UserId");
+                var children = _context.HocSinhPhuHuynhs.Where(x => x.PhuHuynh!.IdTaiKhoan == accountId)
+                    .Select(x => x.HocSinh!).Distinct().OrderBy(x => x.HoTen).ToList();
+                hocSinh = idHocSinh.HasValue ? children.FirstOrDefault(x => x.IdHocSinh == idHocSinh) : children.FirstOrDefault();
+                ViewBag.Children = children.Select(x => new SelectListItem(x.HoTen + " - " + x.MaHS, x.IdHocSinh.ToString(), x.IdHocSinh == (hocSinh == null ? 0 : hocSinh.IdHocSinh))).ToList();
+            }
+            ViewBag.IdHocSinh = hocSinh?.IdHocSinh;            if (hocSinh == null)
             {
                 return NotFound("Tài khoản này chưa được liên kết với hồ sơ học sinh.");
             }
@@ -761,12 +813,12 @@ namespace eSchool.Controllers
                 .Select(x => new SelectListItem(x.MonHoc!.TenMon, x.IdMonHoc.ToString()))
                 .ToList();
 
-            if (!idMonHoc.HasValue && monHocs.Count > 0)
-            {
-                idMonHoc = int.Parse(monHocs[0].Value);
-            }
+            ViewBag.NgayHoc = ngayHoc?.ToString("yyyy-MM-dd");
+            ViewBag.IdTietHoc = idTietHoc;
 
-            var history = attendanceRecords
+            var history = AttendanceRules.Latest(attendanceRecords)
+                .Where(r => (!ngayHoc.HasValue || r.NgayHoc.Date == ngayHoc.Value.Date)
+                    && (!idTietHoc.HasValue || r.IdTietHoc == idTietHoc.Value))
                 .Select(record =>
                 {
                     var assignment = MatchAssignment(record, assignments);
@@ -1593,7 +1645,8 @@ namespace eSchool.Controllers
                 .AsNoTracking()
                 .ToList();
 
-            return records
+            var classIds = assignments.Select(x => x.IdLop).ToHashSet();
+            return AttendanceRules.Latest(records).Where(x => classIds.Contains(x.IdLop))
                 .GroupBy(x => new { x.IdLop, Ngay = x.NgayHoc.Date, x.IdTietHoc })
                 .Select(group =>
                 {
@@ -1609,8 +1662,8 @@ namespace eSchool.Controllers
                         TenMonHoc = assignment?.MonHoc?.TenMon ?? "Chua xac dinh",
                         TenGiaoVien = assignment?.GiaoVien?.HoTen ?? "Chua cap nhat",
                         TongHocSinh = group.Count(),
-                        SoHocSinhCoMat = group.Count(x => string.Equals(x.TrangThai, "Co mat", StringComparison.OrdinalIgnoreCase) || string.Equals(x.TrangThai, "Có mặt", StringComparison.OrdinalIgnoreCase)),
-                        SoHocSinhVang = group.Count(x => !string.Equals(x.TrangThai, "Co mat", StringComparison.OrdinalIgnoreCase) && !string.Equals(x.TrangThai, "Có mặt", StringComparison.OrdinalIgnoreCase))
+                        SoHocSinhCoMat = group.Count(x => AttendanceRules.IsPresent(x.TrangThai)),
+                        SoHocSinhVang = group.Count(x => !AttendanceRules.IsPresent(x.TrangThai))
                     };
                 })
                 .ToList();
@@ -1618,14 +1671,7 @@ namespace eSchool.Controllers
 
         private PhanCongGiangDay? MatchAssignment(DiemDanh record, List<PhanCongGiangDay> assignments)
         {
-            var thu = GetThuFromDate(record.NgayHoc);
-            return assignments.FirstOrDefault(x =>
-                x.IdLop == record.IdLop
-                && x.Thu == thu
-                && (!record.IdTietHoc.HasValue
-                    || (!x.TietBatDau.HasValue)
-                    || (record.IdTietHoc.Value >= x.TietBatDau.Value
-                        && record.IdTietHoc.Value <= x.TietBatDau.Value + (x.SoTiet ?? 1) - 1)));
+            return AttendanceRules.Match(record, assignments);
         }
 
         private static int GetThuFromDate(DateTime date)

@@ -111,6 +111,9 @@ namespace eSchool.Controllers
                 IdGiaoVienCN = vm.IdGiaoVienCN
             };
             
+            using var transaction = _context.Database.BeginTransaction();
+            try
+            {
             _context.LopHocs.Add(newLop);
             _context.SaveChanges();
 
@@ -125,6 +128,13 @@ namespace eSchool.Controllers
             }
 
             AutoGenerateSchedule(newLop);
+            transaction.Commit();
+            }
+            catch (InvalidOperationException ex)
+            {
+                transaction.Rollback();
+                return RedirectWithError(nameof(LopHoc), ex.Message);
+            }
 
             return RedirectWithSuccess(nameof(LopHoc), "Đã thêm lớp học và tự động xếp thời khóa biểu.");
         }
@@ -166,6 +176,8 @@ namespace eSchool.Controllers
             lop.NamHoc = vm.NamHoc;
             lop.IdGiaoVienCN = vm.IdGiaoVienCN;
             
+            try { SyncHomeroomAssignment(lop); }
+            catch (InvalidOperationException ex) { return RedirectWithError(nameof(LopHoc), ex.Message); }
             var existingPhong = _context.PhongHocs.FirstOrDefault(x => x.IdLop == lop.IdLop);
             if (existingPhong != null && existingPhong.IdPhongHoc != vm.IdPhongHoc)
             {
@@ -774,6 +786,9 @@ namespace eSchool.Controllers
                 );
             }
 
+            using var transaction = _context.Database.BeginTransaction();
+            try
+            {
             foreach (var lop in lops)
             {
                 bool daCoLich = _context.PhanCongGiangDays
@@ -786,6 +801,13 @@ namespace eSchool.Controllers
                     continue;
 
                 AutoGenerateSchedule(lop);
+            }
+            transaction.Commit();
+            }
+            catch (InvalidOperationException ex)
+            {
+                transaction.Rollback();
+                return RedirectWithError(nameof(ThoiKhoaBieu), ex.Message);
             }
 
             return RedirectWithSuccess(
@@ -963,6 +985,9 @@ namespace eSchool.Controllers
             if (!ModelState.IsValid)
                 return RedirectWithError(nameof(ThoiKhoaBieu), "Thông tin thời khóa biểu chưa hợp lệ.");
 
+            var homeroomTeacher = GetHomeroomTeacher(_context.LopHocs.Find(vm.IdLop));
+            if (homeroomTeacher?.IdMonHoc == vm.IdMonHoc && homeroomTeacher.IdGiaoVien != vm.IdGiaoVien)
+                return RedirectWithError(nameof(ThoiKhoaBieu), $"Môn này phải do giáo viên chủ nhiệm {homeroomTeacher.HoTen} phụ trách.");
             var tietCuoi = vm.TietBatDau + vm.SoTiet - 1;
             var trungLich = _context.PhanCongGiangDays.Any(x =>
                 (x.IdGiaoVien == vm.IdGiaoVien || x.IdLop == vm.IdLop) &&
@@ -1491,6 +1516,30 @@ namespace eSchool.Controllers
             return RedirectToAction(action);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DongBoGiaoVienChuNhiem(int lopId)
+        {
+            var lop = _context.LopHocs.Find(lopId);
+            if (lop == null) return NotFound();
+            if (!lop.IdGiaoVienCN.HasValue)
+                return RedirectWithError(nameof(PhanCongGiaoVien), "Lớp chưa có giáo viên chủ nhiệm.", new { lopId });
+            if (!_context.PhanCongGiangDays.Any(x => x.IdLop == lopId))
+                return RedirectWithError(nameof(PhanCongGiaoVien), "Lớp chưa có thời khóa biểu. Vui lòng tạo lịch trước.", new { lopId });
+            using var transaction = _context.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
+            try
+            {
+                SyncHomeroomAssignment(lop);
+                _context.SaveChanges();
+                transaction.Commit();
+                return RedirectWithSuccess(nameof(PhanCongGiaoVien), "Đã phân công giáo viên chủ nhiệm dạy môn chuyên môn tại lớp này.", new { lopId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                transaction.Rollback();
+                return RedirectWithError(nameof(PhanCongGiaoVien), ex.Message, new { lopId });
+            }
+        }
         public IActionResult PhanCongGiaoVien(int? lopId, string? keyword)
         {
             if (!lopId.HasValue)
@@ -1645,6 +1694,9 @@ namespace eSchool.Controllers
                 return BadRequest(new { success = false, message = $"Giáo viên {giaoVien.HoTen} không dạy môn học này!" });
             }
 
+            var homeroomTeacher = GetHomeroomTeacher(phanCongs[0].LopHoc);
+            if (homeroomTeacher?.IdMonHoc == req.MonHocId && homeroomTeacher.IdGiaoVien != req.GiaoVienId)
+                return BadRequest(new { success = false, message = $"Môn này phải do giáo viên chủ nhiệm {homeroomTeacher.HoTen} phụ trách." });
             var currentNamHoc = phanCongs.FirstOrDefault()?.NamHoc;
             if (!string.IsNullOrEmpty(currentNamHoc))
             {
@@ -1713,6 +1765,45 @@ namespace eSchool.Controllers
             public int GiaoVienId { get; set; }
         }
 
+        private GiaoVien? GetHomeroomTeacher(LopHoc? lop) =>
+            lop?.IdGiaoVienCN is int teacherId ? _context.GiaoViens.Find(teacherId) : null;
+
+        private void SyncHomeroomAssignment(LopHoc lop)
+        {
+            if (!lop.IdGiaoVienCN.HasValue) return;
+            var teacher = GetHomeroomTeacher(lop);
+            if (teacher?.IdMonHoc == null)
+                throw new InvalidOperationException("Vui lòng khai báo môn chuyên môn của giáo viên chủ nhiệm.");
+            var subject = _context.MonHocs.Find(teacher.IdMonHoc.Value);
+            var subjectName = subject?.TenMon ?? "chưa xác định";
+            var assignments = _context.PhanCongGiangDays
+                .Where(x => x.IdLop == lop.IdLop && x.NamHoc == lop.NamHoc && x.IdMonHoc == teacher.IdMonHoc).ToList();
+            if (assignments.Count == 0)
+                throw new InvalidOperationException($"Không thể đồng bộ: lớp {lop.TenLop} chưa có môn {subjectName} trong thời khóa biểu năm {lop.NamHoc}. Hãy bổ sung lịch môn này trước; hệ thống không tự thay bằng môn khác.");
+            // Repeating synchronization must not fail because of unchanged, existing assignments.
+            if (assignments.All(x => x.IdGiaoVien == teacher.IdGiaoVien)) return;
+            var others = _context.PhanCongGiangDays.Include(x => x.LopHoc)
+                .Where(x => x.IdGiaoVien == teacher.IdGiaoVien && x.NamHoc == lop.NamHoc
+                    && !(x.IdLop == lop.IdLop && x.IdMonHoc == teacher.IdMonHoc)).ToList();
+            var conflicts = assignments.Where(a => a.Thu.HasValue && a.TietBatDau.HasValue)
+                .SelectMany(a => others.Where(b => b.Thu == a.Thu && b.LopHoc?.BuoiHoc == lop.BuoiHoc
+                    && b.TietBatDau.HasValue && a.TietBatDau <= b.TietBatDau + (b.SoTiet ?? 1) - 1
+                    && b.TietBatDau <= a.TietBatDau + (a.SoTiet ?? 1) - 1)
+                    .Select(b => $"lớp {b.LopHoc?.TenLop}, thứ {a.Thu}, tiết {Math.Max(a.TietBatDau!.Value, b.TietBatDau!.Value)} ({lop.BuoiHoc})"))
+                .Distinct().ToList();
+            if (conflicts.Count > 0)
+                throw new InvalidOperationException($"GVCN {teacher.HoTen} chưa thể dạy {subjectName} tại lớp {lop.TenLop}: trùng lịch {string.Join("; ", conflicts)}. Hãy đổi các tiết trùng rồi đồng bộ lại. Phân công cũ được giữ nguyên.");
+            var total = others.Sum(x => x.SoTiet ?? 1) + assignments.Sum(x => x.SoTiet ?? 1);
+            if (total > 19)
+                throw new InvalidOperationException($"Sau đồng bộ, GVCN {teacher.HoTen} có {total} tiết/tuần, vượt giới hạn 19. Hãy giảm phân công ở lớp khác trước.");
+            foreach (var day in assignments.Where(x => x.Thu.HasValue).GroupBy(x => x.Thu))
+            {
+                var dailyTotal = day.Sum(x => x.SoTiet ?? 1) + others.Where(x => x.Thu == day.Key).Sum(x => x.SoTiet ?? 1);
+                if (dailyTotal > 5)
+                    throw new InvalidOperationException($"GVCN {teacher.HoTen} có {dailyTotal} tiết vào thứ {day.Key} sau đồng bộ, vượt giới hạn 5 tiết/ngày. Hãy điều chỉnh lịch trước.");
+            }
+            foreach (var assignment in assignments) assignment.IdGiaoVien = teacher.IdGiaoVien;
+        }
         private void AutoGenerateSchedule(LopHoc lop)
         {
             var subjectConfigs = new System.Collections.Generic.List<(string MaMon, string TenMon, int SoTiet)>
@@ -1743,6 +1834,17 @@ namespace eSchool.Controllers
 
             var allMonHocs = _context.MonHocs.ToList();
             var allGiaoViens = _context.GiaoViens.ToList();
+            var homeroomTeacher = GetHomeroomTeacher(lop);
+            if (lop.IdGiaoVienCN.HasValue && homeroomTeacher?.IdMonHoc == null)
+                throw new InvalidOperationException("Vui lòng khai báo môn chuyên môn của giáo viên chủ nhiệm.");
+            var homeroomSubject = allMonHocs.FirstOrDefault(m => m.IdMonHoc == homeroomTeacher?.IdMonHoc);
+            if (homeroomTeacher != null && (homeroomSubject == null || !subjectConfigs.Any(c =>
+                string.Equals(c.MaMon, homeroomSubject.MaMon, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(c.TenMon, homeroomSubject.TenMon, StringComparison.OrdinalIgnoreCase))))
+                throw new InvalidOperationException("Môn chuyên môn của giáo viên chủ nhiệm chưa có trong cấu hình xếp lịch.");
+            subjectConfigs = subjectConfigs.OrderByDescending(c => homeroomSubject != null
+                && (string.Equals(c.MaMon, homeroomSubject.MaMon, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(c.TenMon, homeroomSubject.TenMon, StringComparison.OrdinalIgnoreCase))).ToList();
             var scheduleItems = new System.Collections.Generic.List<PhanCongGiangDay>();
 
             var existingSchedules = _context.PhanCongGiangDays
@@ -1810,6 +1912,15 @@ namespace eSchool.Controllers
                                     if (selectedRoomId == null) roomOk = false;
                                 }
 
+                                if (homeroomTeacher?.IdMonHoc == monHoc.IdMonHoc)
+                                {
+                                    var busy = existingSchedules.Where(s => s.IdGiaoVien == homeroomTeacher.IdGiaoVien).ToList();
+                                    if (busy.Sum(s => s.SoTiet ?? 1) + req.SoTiet > 19
+                                        || busy.Where(s => s.Thu == thu).Sum(s => s.SoTiet ?? 1) + subjectSlots.Count(s => s.Thu == thu) + b > 5
+                                        || busy.Any(s => s.Thu == thu && s.LopHoc?.BuoiHoc == lop.BuoiHoc && s.TietBatDau.HasValue
+                                            && s.TietBatDau <= dayLoads[thu] + b && s.TietBatDau + (s.SoTiet ?? 1) - 1 >= dayLoads[thu] + 1))
+                                        roomOk = false;
+                                }
                                 if (roomOk)
                                 {
                                     possibleDays.Add((thu, selectedRoomId));
@@ -1848,7 +1959,8 @@ namespace eSchool.Controllers
                     }
                 }
 
-                var subjectTeachers = allGiaoViens.Where(g => g.IdMonHoc == monHoc.IdMonHoc).ToList();
+                var subjectTeachers = allGiaoViens.Where(g => g.IdMonHoc == monHoc.IdMonHoc
+                    && (homeroomTeacher?.IdMonHoc != monHoc.IdMonHoc || g.IdGiaoVien == homeroomTeacher.IdGiaoVien)).ToList();
                 int? assignedGiaoVienId = null;
 
                 var distinctDays = subjectSlots.Select(x => x.Thu).Distinct().ToList();
@@ -1889,6 +2001,10 @@ namespace eSchool.Controllers
                         break;
                     }
                 }
+
+                if (homeroomTeacher?.IdMonHoc == monHoc.IdMonHoc
+                    && (assignedGiaoVienId != homeroomTeacher.IdGiaoVien || subjectSlots.Count != req.SoTiet))
+                    throw new InvalidOperationException($"Không đủ lịch trống cho giáo viên chủ nhiệm {homeroomTeacher.HoTen} tại lớp {lop.TenLop}. Hãy điều chỉnh phân công.");
 
                 foreach (var slot in subjectSlots)
                 {
@@ -2273,10 +2389,20 @@ namespace eSchool.Controllers
                             if (newLop.IdGiaoVienCN.HasValue)
                                 autoAssignedCount++;
 
-                            _context.LopHocs.Add(newLop);
+                            using var transaction = _context.Database.BeginTransaction();
+            try
+            {
+            _context.LopHocs.Add(newLop);
                             _context.SaveChanges();
 
                             AutoGenerateSchedule(newLop);
+            transaction.Commit();
+            }
+            catch (InvalidOperationException ex)
+            {
+                transaction.Rollback();
+                return RedirectWithError(nameof(LopHoc), ex.Message);
+            }
                         }
                     }
                 }

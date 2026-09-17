@@ -1,79 +1,456 @@
 @model eSchool.Controllers.AnnualScorePage
+
 @{
     bool admin = Context.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin;
-    Layout = admin ? "~/Views/Shared/_ResultLayout.cshtml" : "~/Views/Shared/_TeacherLayout.cshtml";
+
+    Layout = admin
+        ? "~/Views/Shared/_ResultLayout.cshtml"
+        : "~/Views/Shared/_TeacherLayout.cshtml";
+
     ViewData["Title"] = "Điểm cả năm / Tổng kết";
-    string Score(decimal? value) => value?.ToString("0.00") ?? "—";
+
+    string Score(decimal? value) =>
+        value?.ToString("0.00") ?? "—";
+
+    string RankBadge(string? rank) => rank switch
+    {
+        "Giỏi" => "bg-success",
+        "Khá" => "bg-primary",
+        "Trung bình" => "bg-warning text-dark",
+        "Yếu" => "bg-danger",
+        _ => "bg-secondary"
+    };
 }
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Điểm cả năm / Tổng kết</h3>
-    <a asp-controller="KetQuaHocTap" asp-action="Diem" class="btn btn-outline-primary">Nhập điểm học kỳ</a>
+
+    <a asp-controller="KetQuaHocTap" asp-action="Diem" class="btn btn-outline-primary">
+        Nhập điểm học kỳ
+    </a>
 </div>
+
 <div class="alert alert-info">
-    Điểm năm từng môn = (HK1 + 2 × HK2) / 3. Chỉ tính ĐTB năm khi đủ điểm hợp lệ của tất cả môn.
-    Tổng kết ghi nhận kết quả hiện tại; sửa điểm hoặc phân công môn sẽ yêu cầu tổng kết lại.
-    Điều kiện học tập hiện tại: ĐTB năm từ 5,0 (khối 6–9). Chưa bao gồm rèn luyện/chuyên cần.
+    Điểm năm từng môn = (HK1 + 2 × HK2) / 3.
+    Chỉ tính ĐTB năm khi đủ điểm hợp lệ của tất cả môn.
+
+    <br />
+
+    Xếp loại hiện tại:
+    <strong>Giỏi ≥ 8,0</strong>,
+    <strong>Khá ≥ 6,5</strong>,
+    <strong>Trung bình ≥ 5,0</strong>,
+    <strong>Yếu &lt; 5,0</strong>.
+
+    <br />
+
+    Tổng kết ghi nhận kết quả hiện tại; sửa điểm hoặc phân công môn
+    sẽ yêu cầu tổng kết lại.
 </div>
+
 <form method="get" class="row g-3 mb-4">
-    <div class="col-md-4"><label for="annualYear" class="form-label">Năm học</label>
-        <select id="annualYear" name="yearId" class="form-select" onchange="this.form.querySelector('[name=classId]').value=''; this.form.submit()">
-            @foreach (var year in Model.Years) { <option value="@year.IdNamHoc" selected="@(year.IdNamHoc == Model.YearId)">@year.TenNamHoc</option> }
+
+    <div class="col-md-4">
+
+        <label for="annualYear" class="form-label">
+            Năm học
+        </label>
+
+        <select id="annualYear" name="yearId" class="form-select"
+                onchange="this.form.querySelector('[name=classId]').value=''; this.form.submit()">
+
+            @foreach (var year in Model.Years)
+            {
+                <option value="@year.IdNamHoc" selected="@(year.IdNamHoc == Model.YearId)">
+                    @year.TenNamHoc
+                </option>
+            }
+
         </select>
     </div>
-    <div class="col-md-4"><label for="annualClass" class="form-label">Lớp</label>
+
+    <div class="col-md-4">
+
+        <label for="annualClass" class="form-label">
+            Lớp
+        </label>
+
         <select id="annualClass" name="classId" class="form-select">
-            <option value="">Chọn lớp</option>
-            @foreach (var cls in Model.Classes) { <option value="@cls.IdLop" selected="@(cls.IdLop == Model.ClassId)">@cls.TenLop</option> }
+
+            <option value="">
+                Chọn lớp
+            </option>
+
+            @foreach (var cls in Model.Classes)
+            {
+                <option value="@cls.IdLop" selected="@(cls.IdLop == Model.ClassId)">
+                    @cls.TenLop
+                </option>
+            }
+
         </select>
     </div>
-    <div class="col-md-4 align-self-end"><button class="btn btn-primary" type="submit">Xem / kiểm tra tổng kết</button></div>
+
+    <div class="col-md-4 align-self-end">
+
+        <button class="btn btn-primary" type="submit">
+            Xem / kiểm tra tổng kết
+        </button>
+
+    </div>
+
 </form>
+
 @if (Model.ClassId.HasValue)
 {
+    <!-- THỐNG KÊ -->
     <div class="d-flex flex-wrap gap-3 mb-3">
-        <span>Học sinh: <strong>@Model.Students.Count</strong></span>
-        <span>Đủ điểm: <strong>@Model.Students.Count(s => s.Complete)</strong></span>
-        <span>Đã tổng kết: <strong>@Model.Students.Count(s => s.Finalized)</strong></span>
-        <span>Đạt điều kiện học tập: <strong>@Model.Students.Count(s => s.Eligible && s.Finalized)</strong></span>
+
+        <span>
+            Học sinh:
+            <strong>@Model.Students.Count</strong>
+        </span>
+
+        <span>
+            Đủ điểm:
+            <strong>
+                @Model.Students.Count(s => s.Complete)
+            </strong>
+        </span>
+
+        <span>
+            Đã tổng kết:
+            <strong>
+                @Model.Students.Count(s => s.Finalized)
+            </strong>
+        </span>
+
+        <span>
+            Đạt điều kiện học tập:
+            <strong>
+                @Model.Students.Count(
+                    s => s.Eligible && s.Finalized)
+            </strong>
+        </span>
+
     </div>
+
+    <!-- THỐNG KÊ XẾP LOẠI -->
     <div class="d-flex flex-wrap gap-2 mb-3">
-        <a asp-action="Export" asp-route-yearId="@Model.YearId" asp-route-classId="@Model.ClassId" class="btn btn-outline-success">Xuất Excel cả năm</a>
+
+        <span class="badge bg-success p-2">
+            Giỏi:
+            @Model.Students.Count(
+                s => s.Complete &&
+                     s.AcademicRank == "Giỏi")
+        </span>
+
+        <span class="badge bg-primary p-2">
+            Khá:
+            @Model.Students.Count(
+                s => s.Complete &&
+                     s.AcademicRank == "Khá")
+        </span>
+
+        <span class="badge bg-warning text-dark p-2">
+            Trung bình:
+            @Model.Students.Count(
+                s => s.Complete &&
+                     s.AcademicRank == "Trung bình")
+        </span>
+
+        <span class="badge bg-danger p-2">
+            Yếu:
+            @Model.Students.Count(
+                s => s.Complete &&
+                     s.AcademicRank == "Yếu")
+        </span>
+
+    </div>
+
+    <!-- BUTTON -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+
+        <a asp-action="Export" asp-route-yearId="@Model.YearId" asp-route-classId="@Model.ClassId"
+           class="btn btn-outline-success">
+
+            Xuất Excel cả năm
+
+        </a>
+
         @if (admin)
         {
             <form asp-action="FinalizeClass" method="post">
+
                 @Html.AntiForgeryToken()
+
                 <input type="hidden" name="yearId" value="@Model.YearId" />
+
                 <input type="hidden" name="classId" value="@Model.ClassId" />
+
                 <input type="hidden" name="version" value="@Model.Version" />
-                <button type="submit" class="btn btn-success" disabled="@(Model.Locked || Model.Students.Count == 0 || Model.Students.Any(s => !s.Complete))">Tổng kết lớp</button>
+
+                <button type="submit" class="btn btn-success" disabled="@(
+                        Model.Locked ||
+                        Model.Students.Count == 0 ||
+                        Model.Students.Any(s => !s.Complete)
+                                            )">
+
+                    Tổng kết lớp
+
+                </button>
+
             </form>
-            <a asp-controller="LenLop" asp-action="Index" asp-route-yearId="@Model.YearId" class="btn btn-primary">Xét lên lớp / tốt nghiệp</a>
+
+            <a asp-controller="LenLop" asp-action="Index" asp-route-yearId="@Model.YearId" class="btn btn-primary">
+
+                Xét lên lớp / tốt nghiệp
+
+            </a>
         }
+
     </div>
-    @if (Model.Locked) { <div class="alert alert-warning">Kết quả xét đang khóa. Chỉ được xem và xuất báo cáo.</div> }
-    <div class="table-responsive"><table class="table table-bordered align-middle">
-        <thead><tr><th>Học sinh</th><th>ĐTB năm</th><th>Tổng kết</th><th>Điều kiện học tập</th><th>Chi tiết HK1 / HK2 / Cả năm</th></tr></thead>
-        <tbody>
-        @foreach (var result in Model.Students)
-        {
-            <tr>
-                <td><strong>@result.Student.HoTen</strong><div class="small text-muted">@result.Student.MaHS</div></td>
-                <td>@Score(result.Average)</td>
-                <td>@(result.Finalized ? "Đã tổng kết" : result.Complete ? "Chưa tổng kết / cần tổng kết lại" : "Chưa đủ dữ liệu")<div class="small text-muted">@result.FinalizedAt?.ToString("dd/MM/yyyy HH:mm")</div></td>
-                <td>@result.Reason</td>
-                <td><details><summary>Xem @result.Subjects.Count môn</summary>
-                    <table class="table table-sm mt-2">
-                        <thead><tr><th>Môn</th><th>HK1</th><th>HK2</th><th>Năm</th><th>Ghi chú</th></tr></thead>
-                        <tbody>@foreach (var subject in result.Subjects)
-                        {
-                            <tr><td>@subject.Name</td><td>@Score(subject.Semester1)</td><td>@Score(subject.Semester2)</td><td>@Score(subject.Annual)</td><td class="text-danger">@subject.Error</td></tr>
-                        }</tbody>
-                    </table>
-                </details></td>
-            </tr>
-        }
-        @if (Model.Students.Count == 0) { <tr><td colspan="5" class="text-center">Lớp chưa có học sinh đang học.</td></tr> }
-        </tbody>
-    </table></div>
+
+    @if (Model.Locked)
+    {
+        <div class="alert alert-warning">
+            Kết quả xét đang khóa.
+            Chỉ được xem và xuất báo cáo.
+        </div>
+    }
+
+    <!-- DANH SÁCH HỌC SINH -->
+    <div class="table-responsive">
+
+        <table class="table table-bordered table-hover align-middle">
+
+            <thead class="table-light">
+
+                <tr>
+
+                    <th>Học sinh</th>
+
+                    <th class="text-center">
+                        ĐTB năm
+                    </th>
+
+                    <th class="text-center">
+                        Xếp loại
+                    </th>
+
+                    <th>
+                        Tổng kết
+                    </th>
+
+                    <th>
+                        Điều kiện học tập
+                    </th>
+
+                    <th>
+                        Chi tiết HK1 / HK2 / Cả năm
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @foreach (var result in Model.Students)
+                {
+                    <tr>
+
+                        <!-- HỌC SINH -->
+                        <td>
+
+                            <strong>
+                                @result.Student.HoTen
+                            </strong>
+
+                            <div class="small text-muted">
+                                @result.Student.MaHS
+                            </div>
+
+                        </td>
+
+                        <!-- ĐTB NĂM -->
+                        <td class="text-center">
+
+                            <strong>
+                                @Score(result.Average)
+                            </strong>
+
+                        </td>
+
+                        <!-- XẾP LOẠI -->
+                        <td class="text-center">
+
+                            @if (result.Complete &&
+                                 !string.IsNullOrWhiteSpace(result.AcademicRank))
+                            {
+                                <span class="badge @RankBadge(result.AcademicRank) px-3 py-2">
+                                    @result.AcademicRank
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">
+                                    —
+                                </span>
+                            }
+                        </td>
+                        <!-- TỔNG KẾT -->
+                        <td>
+                            @if (result.Finalized)
+                            {
+                                <span class="badge bg-success">
+                                    Đã tổng kết
+                                </span>
+                            }
+                            else if (result.Complete)
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    Chưa tổng kết
+                                </span>
+
+                                <div class="small text-muted mt-1">
+                                    Cần tổng kết lại
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    Chưa đủ dữ liệu
+                                </span>
+                            }
+                            @if (result.FinalizedAt.HasValue)
+                            {
+                                <div class="small text-muted mt-1">
+
+                                    @result.FinalizedAt
+                                    .Value
+                                    .ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            }
+                        </td>
+
+                        <!-- ĐIỀU KIỆN -->
+                        <td>
+
+                            @result.Reason
+
+                        </td>
+
+                        <!-- CHI TIẾT -->
+                        <td>
+
+                            <details>
+
+                                <summary style="cursor:pointer;">
+                                    Xem @result.Subjects.Count môn
+                                </summary>
+
+                                <table class="table table-sm table-bordered mt-2 mb-0">
+
+                                    <thead class="table-light">
+
+                                        <tr>
+
+                                            <th>
+                                                Môn
+                                            </th>
+
+                                            <th class="text-center">
+                                                HK1
+                                            </th>
+
+                                            <th class="text-center">
+                                                HK2
+                                            </th>
+
+                                            <th class="text-center">
+                                                Cả năm
+                                            </th>
+
+                                            <th>
+                                                Ghi chú
+                                            </th>
+
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody>
+
+                                        @foreach (var subject in result.Subjects)
+                                        {
+                                            <tr>
+
+                                                <td>
+                                                    @subject.Name
+                                                </td>
+
+                                                <td class="text-center">
+                                                    @Score(subject.Semester1)
+                                                </td>
+
+                                                <td class="text-center">
+                                                    @Score(subject.Semester2)
+                                                </td>
+
+                                                <td class="text-center">
+
+                                                    <strong>
+                                                        @Score(subject.Annual)
+                                                    </strong>
+
+                                                </td>
+
+                                                <td class="text-danger">
+
+                                                    @subject.Error
+
+                                                </td>
+
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </details>
+
+                        </td>
+
+                    </tr>
+                }
+
+                @if (Model.Students.Count == 0)
+                {
+                    <tr>
+
+                        <td colspan="6" class="text-center text-muted py-4">
+
+                            Lớp chưa có học sinh đang học.
+
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
 }
-else { <div class="alert alert-light border">Chọn năm học và lớp để xem điểm, kiểm tra dữ liệu và tổng kết.</div> }
+else
+{
+    <div class="alert alert-light border">
+
+        Chọn năm học và lớp để xem điểm,
+        kiểm tra dữ liệu và tổng kết.
+
+    </div>
+}

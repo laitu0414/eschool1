@@ -683,6 +683,7 @@ namespace eSchool.Controllers
             {
                 using var stream = new MemoryStream();
                 await file.CopyToAsync(stream);
+                stream.Position = 0;
                 using var workbook = new XLWorkbook(stream);
                 var worksheet = workbook.Worksheet(1);
                 var rows = worksheet.RangeUsed()?.RowsUsed()?.Skip(1); // Skip header
@@ -699,6 +700,7 @@ namespace eSchool.Controllers
                                        firstHeader.Contains("Ma", StringComparison.OrdinalIgnoreCase);
                 var columnOffset = isLegacyTemplate ? 1 : 0;
 
+                using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
                 foreach (var row in rows)
                 {
                     var maHS = GenerateStudentCode();
@@ -710,17 +712,15 @@ namespace eSchool.Controllers
                         continue; // Bắt buộc phải có mã và họ tên
                     }
 
-                    DateTime ngaySinh = DateTime.Today;
-                    var ngaySinhStr = row.Cell(2 + columnOffset).GetString().Trim();
-                    if (DateTime.TryParseExact(ngaySinhStr, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var parsedDate))
-                    {
-                        ngaySinh = parsedDate;
-                    }
-                    else if (row.Cell(3).TryGetValue<DateTime>(out var cellDate))
-                    {
-                        ngaySinh = cellDate;
-                    }
-
+                    var dateCell = row.Cell(2 + columnOffset);
+                    DateTime ngaySinh;
+                    if (dateCell.DataType == XLDataType.DateTime)
+                        ngaySinh = dateCell.GetDateTime().Date;
+                    else if (!DateTime.TryParseExact(dateCell.GetString().Trim(), new[] { "d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd" },
+                        System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out ngaySinh))
+                        throw new InvalidOperationException($"Dòng {row.RowNumber()}: ngày sinh không hợp lệ, hãy nhập dd/MM/yyyy.");
+                    if (ngaySinh.Date > DateTime.Today || ngaySinh.Year < 1900)
+                        throw new InvalidOperationException($"Dòng {row.RowNumber()}: ngày sinh không hợp lệ.");
                     var tenLop = row.Cell(7 + columnOffset).GetString().Trim();
                     int? idLopHoc = null;
                     if (!string.IsNullOrWhiteSpace(tenLop))
@@ -734,14 +734,26 @@ namespace eSchool.Controllers
 
                     var sdt = row.Cell(4 + columnOffset).GetString().Trim();
                     if (string.IsNullOrWhiteSpace(sdt) ||
-                        !System.Text.RegularExpressions.Regex.IsMatch(sdt, @"^0[0-9]{9}$") ||
-                        _context.TaiKhoans.Any(t => t.Username == sdt && t.IdChucVu == 3))
+                        !System.Text.RegularExpressions.Regex.IsMatch(sdt, @"^0[0-9]{9}$"))
                     {
                         skipCount++;
                         continue;
                     }
 
-                    var taiKhoan = new TaiKhoan
+                    var email = row.Cell(5 + columnOffset).GetString().Trim();
+                    var taiKhoan = await _context.TaiKhoans.SingleOrDefaultAsync(t => t.Username == sdt && t.IdChucVu == 3);
+                    var existingAccountId = taiKhoan?.IdTaiKhoan;
+                    if (await _context.HocSinhs.AnyAsync(h => h.SDT == sdt || (existingAccountId.HasValue && h.IdTaiKhoan == existingAccountId)))
+                    {
+                        skipCount++;
+                        continue;
+                    }
+                    if (taiKhoan != null && (!taiKhoan.TrangThai
+                        || !string.Equals(taiKhoan.Email?.Trim() ?? "", email, StringComparison.OrdinalIgnoreCase)))
+                        throw new InvalidOperationException($"Dòng {row.RowNumber()}: tài khoản {sdt} bị khóa hoặc email không khớp. Cần kiểm tra tài khoản trước khi gắn hồ sơ học sinh.");
+                    if (taiKhoan == null)
+                    {
+                    taiKhoan = new TaiKhoan
                     {
                         Username = sdt,
                         Password = BCrypt.Net.BCrypt.HashPassword("123456"),
@@ -752,6 +764,7 @@ namespace eSchool.Controllers
                     };
                     _context.TaiKhoans.Add(taiKhoan);
                     await _context.SaveChangesAsync();
+                    }
 
                     var hs = new HocSinhViewModel
                     {
@@ -771,11 +784,13 @@ namespace eSchool.Controllers
                     successCount++;
                 }
 
+                await transaction.CommitAsync();
                 TempData["Success"] = $"Đã nhập thành công {successCount} học sinh. Bỏ qua {skipCount} dòng (lỗi hoặc trùng lặp).";
             }
             catch (Exception ex)
             {
-                TempData["Error"] = $"Lỗi khi đọc file Excel: {ex.Message}";
+                _logger.LogError(ex, "Nhập học sinh Excel thất bại; đã hoàn tác dữ liệu của lần nhập.");
+                TempData["Error"] = ex is InvalidOperationException ? $"Chưa lưu học sinh nào. {ex.Message}" : "Nhập Excel thất bại. Chưa lưu học sinh hay tài khoản mới; vui lòng kiểm tra nhật ký lỗi.";
             }
 
             return RedirectToAction(nameof(Index));

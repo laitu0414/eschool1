@@ -130,6 +130,7 @@ namespace eSchool.ViewModels
 
     public class GiaoVienLuuDiemDanhViewModel
     {
+        public int? IdTietHoc { get; set; }
         [Range(1, int.MaxValue)]
         public int IdPhanCong { get; set; }
 

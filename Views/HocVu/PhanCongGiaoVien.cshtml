@@ -46,6 +46,14 @@
     }
 </style>
 
+@if (Model.LopHoc.IdGiaoVienCN.HasValue)
+{
+    <form asp-action="DongBoGiaoVienChuNhiem" method="post" class="mb-3">
+        <input type="hidden" name="lopId" value="@Model.LopHoc.IdLop" />
+        <button type="submit" class="btn btn-primary">Đồng bộ môn dạy của GVCN</button>
+        <small class="text-muted ms-2">Gán môn chuyên môn cho giáo viên chủ nhiệm; kiểm tra trùng lịch trước khi lưu.</small>
+    </form>
+}
 <div class="row g-4 mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-3">

@@ -12,12 +12,20 @@
                 @foreach (var item in Model.PhanCongs)
                 {
                     <option value="@item.IdPhanCong" selected="@(Model.IdPhanCong == item.IdPhanCong ? "selected" : null)">
-                        @item.TenLop - @item.TenMonHoc - Tiết @(item.TietBatDau ?? 0)
+                        @item.TenLop - @item.TenMonHoc - Thứ @item.Thu - Tiết @(item.TietBatDau ?? 0) - @item.NamHoc
                     </option>
                 }
             </select>
             <input name="ngayHoc" type="date" value="@Model.NgayHoc.ToString("yyyy-MM-dd")" class="form-control" />
-            <button class="btn btn-primary">Mở danh sách</button>
+            @if (Model.PhanCongDangChon?.TietBatDau is int start)
+            {
+                <select name="idTietHoc" class="form-select" aria-label="Tiết học">
+                    @for (var period = start; period < start + (Model.PhanCongDangChon.SoTiet ?? 1); period++)
+                    {
+                        <option value="@period" selected="@(ViewBag.IdTietHoc == period)">Tiết @period</option>
+                    }
+                </select>
+            }            <button class="btn btn-primary">Mở danh sách</button>
         </form>
     </div>
 
@@ -42,9 +50,11 @@ else
 {
     <form asp-action="LuuDiemDanhGiaoVien" method="post" class="page-card teacher-attendance-form">
         @Html.AntiForgeryToken()
+        <input type="hidden" name="IdTietHoc" value="@ViewBag.IdTietHoc" />
         <input type="hidden" name="IdPhanCong" value="@Model.PhanCongDangChon.IdPhanCong" />
         <input type="hidden" name="NgayHoc" value="@Model.NgayHoc.ToString("yyyy-MM-dd")" />
 
+        <p class="text-muted">Tiết @ViewBag.IdTietHoc — @(ViewBag.AttendanceSaved == true ? "Đã có dữ liệu điểm danh. Bấm Lưu để cập nhật." : "Chưa lưu điểm danh. Các ô Có mặt đang được chọn sẵn.")</p>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
@@ -77,17 +87,17 @@ else
                                 </td>
                                 <td><strong>@Model.HocSinhs[i].HoTen</strong></td>
                                 <td>
-                                    <input type="hidden" name="HocSinhs[@i].CoMat" value="false" />
                                     <div class="form-check form-switch teacher-attendance-switch">
                                         <input class="form-check-input"
                                                type="checkbox"
                                                name="HocSinhs[@i].CoMat"
                                                value="true"
                                                @(Model.HocSinhs[i].CoMat ? "checked" : null) />
+                                        <input type="hidden" name="HocSinhs[@i].CoMat" value="false" />
                                     </div>
                                 </td>
                                 <td>
-                                    <input name="HocSinhs[@i].GhiChu" value="@Model.HocSinhs[i].GhiChu" class="form-control" placeholder="Ghi chú nếu cần" />
+                                    <input name="HocSinhs[@i].GhiChu" value="@Model.HocSinhs[i].GhiChu" class="form-control" maxlength="255" placeholder="Ghi chú nếu cần" />
                                 </td>
                             </tr>
                         }
