@@ -1,4 +1,4 @@
-﻿using eSchool.Infrastructure;
+using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.ViewModels;
 using Microsoft.AspNetCore.Mvc;
