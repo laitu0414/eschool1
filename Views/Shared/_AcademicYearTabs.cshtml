@@ -1,0 +1,4 @@
+<nav class="nav nav-pills gap-2 mb-3" aria-label="Năm học và học kỳ">
+    <a asp-controller="HocVu" asp-action="NamHoc" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "NamHoc" ? "active" : "")">Năm học</a>
+    <a asp-controller="HocVu" asp-action="HocKy" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "HocKy" ? "active" : "")">Học kỳ</a>
+</nav>

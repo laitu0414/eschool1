@@ -1,0 +1,61 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    string? backController = null;
+    string? backAction = null;
+    string? label = null;
+    var routes = new Dictionary<string, string>();
+    switch ((controller, action))
+    {
+        case ("HocVu", "ThietBi"):
+            (backController, backAction, label) = ("HocVu", "PhongHoc", "Quay lại phòng học");
+            break;
+        case ("HocVu", "ChuyenLich"):
+            (backController, backAction, label) = ("HocVu", "ThoiKhoaBieu", "Quay lại thời khóa biểu");
+            foreach (var key in new[] { "namHoc", "lopId", "tuan" })
+                if (!string.IsNullOrWhiteSpace(Context.Request.Query[key])) routes[key] = Context.Request.Query[key].ToString();
+            break;
+        case ("HocVu", "PhanCongGiaoVien") when Context.Request.Query.ContainsKey("lopId"):
+            (backController, backAction, label) = ("HocVu", "PhanCongGiaoVien", "Quay lại danh sách lớp");
+            break;
+        case ("GiaoVien", "HoSo"):
+        case ("GiaoVien", "ThoiKhoaBieu"):
+            (backController, backAction, label) = ("GiaoVien", "Index", "Quay lại danh sách giáo viên");
+            break;
+        case ("HocSinh", "ThoiKhoaBieu"):
+        case ("HocSinh", "KyLuat"):
+            (backController, backAction, label) = ("HocSinh", "Index", "Quay lại danh sách học sinh");
+            break;
+        case ("ChuyenLop", "Index"):
+            (backController, backAction, label) = ("HocVu", "LopHoc", "Quay lại lớp học");
+            break;
+        case ("ChuyenLop", "Create"):
+        case ("ChuyenLop", "StudentList"):
+            (backController, backAction, label) = ("ChuyenLop", "Index", "Quay lại danh sách chuyển lớp");
+            break;
+        case ("LenLop", "ImportStudents"):
+            (backController, backAction, label) = ("LenLop", "Index", "Quay lại xét lên lớp");
+            break;
+        case ("KetQuaHocTap", "DanhSachMienGiam"):
+            (backController, backAction, label) = ("KetQuaHocTap", "HocPhi", "Quay lại học phí");
+            break;
+        case ("KetQuaHocTap", "PhieuDiem"):
+        case ("KetQuaHocTap", "XemDiem"):
+            (backController, backAction, label) = ("KetQuaHocTap", "Diem", "Quay lại quản lý điểm");
+            break;
+        case ("KetQuaHocTap", "HocPhi"):
+            (backController, backAction, label) = ("HocSinh", "Index", "Quay lại danh sách học sinh");
+            break;
+        case ("KetQuaHocTap", "XemHocPhi"):
+            (backController, backAction, label) = ("KetQuaHocTap", "HocPhi", "Quay lại học phí");
+            break;
+    }
+}
+@if (backController != null)
+{
+    <nav class="management-back-row" aria-label="Quay lại trang trước">
+        <a asp-controller="@backController" asp-action="@backAction" asp-all-route-data="@routes" class="btn btn-outline-secondary management-back">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i><span>@label</span>
+        </a>
+    </nav>
+}

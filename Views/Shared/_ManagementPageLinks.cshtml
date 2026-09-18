@@ -1,0 +1,27 @@
+@{
+    var c = ViewContext.RouteData.Values["controller"]?.ToString();
+    var a = ViewContext.RouteData.Values["action"]?.ToString();
+}
+@if (c == "HocVu" && a == "LopHoc")
+{
+    <div class="d-flex flex-wrap gap-2 mb-3"><a asp-controller="ChuyenLop" asp-action="Index" class="btn btn-outline-secondary btn-sm">Chuyển lớp</a></div>
+}
+else if (c == "HocVu" && a == "ThoiKhoaBieu")
+{
+    <div class="d-flex flex-wrap gap-2 mb-3"><a asp-controller="HocVu" asp-action="ChuyenLich" class="btn btn-outline-secondary btn-sm">Chuyển lịch học</a></div>
+}
+else if (c == "KetQuaHocTap" && a == "Diem")
+{
+    <div class="d-flex flex-wrap gap-2 mb-3"><a asp-controller="KetQuaHocTap" asp-action="PhieuDiem" class="btn btn-outline-secondary btn-sm">In phiếu điểm</a></div>
+}
+else if (c == "HocSinh" && a == "Index")
+{
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a asp-controller="HocSinh" asp-action="KyLuat" class="btn btn-outline-secondary btn-sm">Kỷ luật học sinh</a>
+        <a asp-controller="KetQuaHocTap" asp-action="HocPhi" class="btn btn-outline-secondary btn-sm">Học phí</a>
+    </div>
+}
+else if (c == "LenLop" && a == "Index")
+{
+    <div class="d-flex flex-wrap gap-2 mb-3"><a asp-controller="LenLop" asp-action="Alumni" class="btn btn-outline-secondary btn-sm">Danh sách đã tốt nghiệp</a></div>
+}

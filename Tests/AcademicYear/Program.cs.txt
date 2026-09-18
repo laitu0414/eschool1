@@ -1,0 +1,52 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Razor.Compilation;
+using Microsoft.Extensions.DependencyInjection;
+using eSchool.Controllers;
+using eSchool.Infrastructure;
+using eSchool.Models;
+
+var today = new DateTime(2026, 9, 18);
+var checks = 0;
+void Check(bool condition, string name)
+{
+    if (!condition) throw new Exception(name);
+    checks++;
+}
+NamHoc Year(DateTime start, DateTime end, bool enabled = true) =>
+    new() { NgayBatDau = start, NgayKetThuc = end, TrangThai = enabled };
+
+var ended = Year(today.AddYears(-1), today.AddDays(-1));
+Check(!AcademicYearPolicy.CanModify(ended, today), "Expired year must be locked even when enabled");
+Check(AcademicYearPolicy.Status(ended, today) == "Đã kết thúc", "Expired status");
+var active = Year(today.AddDays(-10), today.AddMonths(8));
+Check(AcademicYearPolicy.CanModify(active, today), "Current year editable");
+Check(AcademicYearPolicy.Status(active, today) == "Đang diễn ra", "Current status");
+var future = Year(today.AddMonths(1), today.AddYears(1));
+Check(AcademicYearPolicy.CanModify(future, today), "Allow preparation for future year");
+Check(AcademicYearPolicy.Status(future, today) == "Sắp bắt đầu", "Future status");
+active.TrangThai = false;
+Check(!AcademicYearPolicy.CanModify(active, today), "Manual lock");
+Check(AcademicYearPolicy.Status(active, today) == "Đã khóa", "Locked status");
+Check(!AcademicYearPolicy.CanModify(null, today), "Unknown year");
+Check(!AcademicYearPolicy.CanModify(Year(today.AddDays(1), today), today), "Invalid date range");
+Check(AcademicYearPolicy.CanModify(Year(today.AddMonths(-9), today), today.AddHours(23)), "End date remains editable through final day");
+Check(!AcademicYearPolicy.CanModify(Year(today.AddMonths(-9), today), today.AddDays(1)), "Locks on following day");
+Console.WriteLine($"{checks} academic year checks passed.");
+// Exercise the runtime Razor compiler used by the application, not just the C# build.
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    ApplicationName = typeof(HocVuController).Assembly.GetName().Name,
+    ContentRootPath = Directory.GetCurrentDirectory(),
+    EnvironmentName = "Development"
+});
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+await using var app = builder.Build();
+var compiler = app.Services.GetRequiredService<IViewCompilerProvider>().GetCompiler();
+foreach (var path in new[] { "/Views/HocVu/NamHoc.cshtml", "/Views/HocVu/_NamHocForm.cshtml",
+    "/Views/HocVu/LopHoc.cshtml", "/Views/HocVu/_LopForm.cshtml", "/Views/HocVu/PhanCongGiaoVien.cshtml", "/Views/Shared/_ManagementNavigation.cshtml", "/Views/Shared/_ManagementPageLinks.cshtml", "/Views/Shared/_AcademicYearTabs.cshtml", "/Views/Shared/_AdminLayout.cshtml", "/Views/Shared/_AcademicLayout.cshtml", "/Views/Shared/_ResultLayout.cshtml", "/Views/Shared/_ManagementBackLink.cshtml", "/Views/LenLop/Index.cshtml", "/Views/ChuyenLop/Index.cshtml" })
+{
+    var descriptor = await compiler.CompileAsync(path);
+    Check(descriptor.Type != null, $"Runtime compilation: {path}");
+}
+Console.WriteLine("14 runtime Razor compilation checks passed.");

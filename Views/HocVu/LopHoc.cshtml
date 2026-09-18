@@ -3,16 +3,18 @@
 @{
     Layout = "~/Views/Shared/_AcademicLayout.cshtml";
     ViewData["Title"] = "Quản lý lớp";
+    var editableYears = ViewBag.EditableYears as HashSet<string> ?? new HashSet<string>();
     var siSoMap = ViewBag.SiSoMap as IReadOnlyDictionary<int, int> ?? new Dictionary<int, int>();
 }
 
+<div class="alert alert-info">Năm học đã kết thúc hoặc đã khóa chỉ được xem dữ liệu.</div>
 <div class="page-card">
     <div class="page-tools">
         <form method="get">
             <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm theo tên lớp hoặc khối..." />
             <button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Tìm</button>
         </form>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClass">
+        <button class="btn btn-primary" disabled="@(!editableYears.Any())" data-bs-toggle="modal" data-bs-target="#createClass">
             <i class="bi bi-plus-lg"></i> Thêm lớp
         </button>
     </div>
@@ -40,11 +42,18 @@
                             <a asp-action="PhanCongGiaoVien" asp-route-lopId="@item.IdLop" class="btn btn-sm btn-outline-success" title="Phân công Giáo viên">
                                 <i class="bi bi-person-lines-fill"></i> Phân công GV
                             </a>
+                            @if (item.NamHoc != null && editableYears.Contains(item.NamHoc))
+                            {
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editClass-@item.IdLop"><i class="bi bi-pencil"></i></button>
                             <form asp-action="XoaLop" asp-route-id="@item.IdLop" method="post" class="d-inline" onsubmit="return confirm('Xóa lớp này?');">
                                 @Html.AntiForgeryToken()
                                 <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                             </form>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Chỉ xem</span>
+                            }
                         </td>
                     </tr>
                 }
@@ -64,7 +73,7 @@
     </div></div>
 </div>
 
-@foreach (var item in Model)
+@foreach (var item in Model.Where(x => x.NamHoc != null && editableYears.Contains(x.NamHoc)))
 {
     var phongHocMap = ViewBag.PhongHocMap as Dictionary<int, int>;
     int? mappedPhongId = phongHocMap != null && phongHocMap.ContainsKey(item.IdLop) ? phongHocMap[item.IdLop] : null;
@@ -79,7 +88,7 @@
                     @await Html.PartialAsync("_LopForm", new eSchool.ViewModels.LopHocFormViewModel
                     {
                         IdLop = item.IdLop, MaLop = item.MaLop, TenLop = item.TenLop,
-                        Khoi = item.Khoi, NamHoc = item.NamHoc, IdGiaoVienCN = item.IdGiaoVienCN,
+                        Khoi = item.Khoi, BuoiHoc = item.BuoiHoc, NamHoc = item.NamHoc, IdGiaoVienCN = item.IdGiaoVienCN,
                         IdPhongHoc = mappedPhongId
                     })
                 </div>

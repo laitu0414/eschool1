@@ -71,12 +71,38 @@ namespace eschool
 
                     try
                     {
-                        dbContext.Database.ExecuteSqlRaw(
-                            $"SET IDENTITY_INSERT ChucVus ON; INSERT INTO ChucVus (IdChucVu, TenChucVu) VALUES ({role.Key}, N'{role.Value.Replace("'", "''")}'); SET IDENTITY_INSERT ChucVus OFF;");
+                        dbContext.ChucVus.Add(new ChucVu
+                        {
+                            IdChucVu = role.Key,
+                            TenChucVu = role.Value
+                        });
+                        dbContext.SaveChanges();
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error seeding role {role.Key}: {ex.Message}");
+                    }
+                }
+
+                if (!dbContext.TaiKhoans.Any(t => t.IdChucVu == SystemRoleIds.SystemAdmin))
+                {
+                    try
+                    {
+                        dbContext.TaiKhoans.Add(new TaiKhoan
+                        {
+                            Username = "admin",
+                            Password = BCrypt.Net.BCrypt.HashPassword("123456"),
+                            Email = "admin@eschool.local",
+                            IdChucVu = SystemRoleIds.SystemAdmin,
+                            TrangThai = true,
+                            BatBuocDoiMatKhau = true
+                        });
+                        dbContext.SaveChanges();
+                        Console.WriteLine("Default admin account created: admin / 123456");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error seeding default admin: {ex.Message}");
                     }
                 }
             }
@@ -100,6 +126,24 @@ namespace eschool
             app.UseRouting();
 
             app.UseSession();
+            app.Use(async (context, next) =>
+            {
+                var userId = context.Session.GetInt32("UserId");
+                if (userId.HasValue)
+                {
+                    var db = context.RequestServices.GetRequiredService<AppDbContext>();
+                    var account = await db.TaiKhoans.AsNoTracking().FirstOrDefaultAsync(x => x.IdTaiKhoan == userId);
+                    if (account == null || !account.TrangThai ||
+                        account.IdChucVu != context.Session.GetInt32("RoleId"))
+                    {
+                        context.Session.Clear();
+                        context.Response.Redirect("/Account/Login");
+                        return;
+                    }
+                    context.Session.SetInt32("MustChangePassword", account.BatBuocDoiMatKhau ? 1 : 0);
+                }
+                await next();
+            });
 
             app.UseAuthorization();
 

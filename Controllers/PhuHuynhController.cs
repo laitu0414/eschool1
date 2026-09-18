@@ -44,6 +44,8 @@ namespace eSchool.Controllers
         {
             ViewBag.Keyword = keyword;
             var hs = GetCurrentHocSinh();
+            if (!IsAdministrator() && hs == null)
+                return NotFound("Tài khoản chưa được liên kết với học sinh.");
             if (hs == null)
             {
                 var parents = _service.GetAll(keyword);
@@ -72,6 +74,8 @@ namespace eSchool.Controllers
             }
 
             var hs = GetCurrentHocSinh();
+            if (!IsAdministrator() && hs == null)
+                return NotFound("Tài khoản chưa được liên kết với học sinh.");
             if (hs == null)
                 return NotFound("Tài khoản này chưa được liên kết với học sinh.");
 
@@ -197,6 +201,8 @@ namespace eSchool.Controllers
         public IActionResult Edit(int id)
         {
             var hs = GetCurrentHocSinh();
+            if (!IsAdministrator() && hs == null)
+                return NotFound("Tài khoản chưa được liên kết với học sinh.");
             if (hs != null)
             {
                 var isMyParent = _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh && x.IdPhuHuynh == id);
@@ -212,6 +218,8 @@ namespace eSchool.Controllers
         public IActionResult Edit(PhuHuynhViewModel vm)
         {
             var hs = GetCurrentHocSinh();
+            if (!IsAdministrator() && hs == null)
+                return NotFound("Tài khoản chưa được liên kết với học sinh.");
             if (hs != null)
             {
                 var isMyParent = _context.HocSinhPhuHuynhs.Any(x => x.IdHocSinh == hs.IdHocSinh && x.IdPhuHuynh == vm.IdPhuHuynh);

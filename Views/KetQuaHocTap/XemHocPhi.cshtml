@@ -163,16 +163,10 @@
                             </div>
                         </div>
 
-                        <form asp-action="DongHocPhi" asp-route-id="@item.IdHocPhi" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="phuongThuc" value="VNPAY" />
-                            <button type="submit" class="btn w-100 mb-3 py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(90deg, #1976d2 0%, #7b1fa2 100%); border: none; border-radius: 8px;">
-                                <i class="bi bi-credit-card me-2"></i>Thanh toán Online (VNPAY)
-                            </button>
-                        </form>
+                        <div class="alert alert-info mb-3">Vui lòng liên hệ nhà trường để thanh toán. Khoản thu sẽ được cập nhật sau khi nhà trường xác nhận.</div>
 
                         <div class="alert mb-0" style="background-color: #f5f8fc; border: none; color: #5c728e; border-radius: 8px;">
-                            <i class="bi bi-info-circle me-1 text-primary"></i> <strong>Thanh toán Online:</strong> Bạn sẽ được chuyển đến trang VNPAY để chọn ngân hàng và hoàn tất thanh toán.
+                            <i class="bi bi-info-circle me-1 text-primary"></i> <strong>Thanh toán trực tuyến:</strong> Chưa được cấu hình.
                         </div>
                     </div>
                 </div>

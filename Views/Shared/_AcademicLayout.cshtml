@@ -1,14 +1,3 @@
-@{
-    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-
-    string MenuClass(string controller, string action) =>
-        string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase) &&
-        string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase)
-        ? "menu-item active"
-        : "menu-item";
-}
-
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -20,49 +9,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/academic.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/footer.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/management-navigation.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/management-theme.css" rel="stylesheet" asp-append-version="true" />
 </head>
 
-<body>
+<body class="management-workspace">
     <div class="academic-app">
         <aside class="sidebar">
             <div class="brand">
                 <span class="brand-icon"><i class="bi bi-journal-bookmark-fill"></i></span>
-                <span><strong>eSchool</strong><small>Quản lý học vụ</small></span>
+                <span><strong>eSchool</strong><small>Quản trị nhà trường</small></span>
             </div>
-
-            <div class="menu-title">HỌC VỤ</div>
-            <nav class="sidebar-menu">
-                <a asp-controller="HocVu" asp-action="LopHoc" class="@MenuClass("HocVu", "LopHoc")">
-                    <i class="bi bi-building"></i><span>Quản lý lớp</span>
-                </a>
-                <a asp-controller="HocVu" asp-action="PhongHoc" class="@MenuClass("HocVu", "PhongHoc")">
-                    <i class="bi bi-door-open-fill"></i><span>Quản lý phòng học</span>
-                </a>
-                <a asp-controller="HocVu" asp-action="MonHoc" class="@MenuClass("HocVu", "MonHoc")">
-                    <i class="bi bi-book-fill"></i><span>Quản lý môn học</span>
-                </a>
-                <a asp-controller="HocVu" asp-action="ThoiKhoaBieu" class="@MenuClass("HocVu", "ThoiKhoaBieu")">
-                    <i class="bi bi-calendar-week-fill"></i><span>Thời khóa biểu</span>
-                </a>
-                <a asp-controller="HocVu" asp-action="ChuyenLich" class="@MenuClass("HocVu", "ChuyenLich")">
-                    <i class="bi bi-calendar2-range-fill"></i><span>Chuyển lịch</span>
-                </a>
-                <a asp-controller="HocVu" asp-action="NamHoc" class="@MenuClass("HocVu", "NamHoc")">
-                    <i class="bi bi-calendar-range"></i><span>Năm học</span>
-                </a>
-                <a asp-controller="HocVu" asp-action="HocKy" class="@MenuClass("HocVu", "HocKy")">
-                    <i class="bi bi-calendar2-check"></i><span>Học kỳ</span>
-                </a>
-                <a asp-controller="HocVu" asp-action="PhanCongGiaoVien" class="@MenuClass("HocVu", "PhanCongGiaoVien")">
-                    <i class="bi bi-person-lines-fill"></i><span>Phân công giảng dạy</span>
-                </a>
-                <a asp-controller="ChuyenLop" asp-action="Index" class="@MenuClass("ChuyenLop", "Index")">
-                    <i class="bi bi-arrow-left-right"></i><span>Chuyển lớp</span>
-                </a>
-                <a asp-controller="LenLop" asp-action="Index" class="@MenuClass("LenLop", "Index")">
-                    <i class="bi bi-mortarboard-fill"></i><span>Xét Lên Lớp / Tốt Nghiệp</span>
-                </a>
-            </nav>
+            @await Html.PartialAsync("_ManagementNavigation")
 
             <div class="sidebar-bottom">
                 <a asp-controller="Admin" asp-action="Index" class="menu-item">
@@ -99,6 +57,8 @@
                 {
                     <div class="alert alert-danger">@TempData["Error"]</div>
                 }
+                @await Html.PartialAsync("_ManagementBackLink")
+                @await Html.PartialAsync("_ManagementPageLinks")
                 @RenderBody()
             </section>
             @await Html.PartialAsync("_SiteFooter")

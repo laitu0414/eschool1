@@ -79,120 +79,6 @@ namespace eSchool.ViewModels
         public List<DiemMonHocViewModel> DiemMonHocs { get; set; } = new();
     }
 
-    public class DiemDanhFormViewModel
-    {
-        [Range(1, int.MaxValue)] public int IdHocSinh { get; set; }
-        [Range(1, int.MaxValue)] public int IdLop { get; set; }
-        public DateTime NgayHoc { get; set; } = DateTime.Today;
-        [Range(1, 15)] public int? IdTietHoc { get; set; }
-        [Required] public string TrangThai { get; set; } = "Có mặt";
-        public string? GhiChu { get; set; }
-    }
-
-    public class DiemDanhPageViewModel
-    {
-        public List<DiemDanh> DanhSach { get; set; } = new();
-        public List<SelectListItem> HocSinhs { get; set; } = new();
-        public List<SelectListItem> LopHocs { get; set; } = new();
-    }
-
-    public class GiaoVienDiemDanhPageViewModel
-    {
-        public int? IdPhanCong { get; set; }
-        public DateTime NgayHoc { get; set; } = DateTime.Today;
-        public List<GiaoVienDiemDanhPhanCongViewModel> PhanCongs { get; set; } = new();
-        public GiaoVienDiemDanhPhanCongViewModel? PhanCongDangChon { get; set; }
-        public List<GiaoVienDiemDanhHocSinhViewModel> HocSinhs { get; set; } = new();
-    }
-
-    public class GiaoVienDiemDanhPhanCongViewModel
-    {
-        public int IdPhanCong { get; set; }
-        public int IdLop { get; set; }
-        public int IdMonHoc { get; set; }
-        public string TenLop { get; set; } = string.Empty;
-        public string TenMonHoc { get; set; } = string.Empty;
-        public string? NamHoc { get; set; }
-        public string? HocKy { get; set; }
-        public int? Thu { get; set; }
-        public int? TietBatDau { get; set; }
-        public int? SoTiet { get; set; }
-    }
-
-    public class GiaoVienDiemDanhHocSinhViewModel
-    {
-        public int IdHocSinh { get; set; }
-        public string MaHS { get; set; } = string.Empty;
-        public string HoTen { get; set; } = string.Empty;
-        public bool CoMat { get; set; } = true;
-        public string? GhiChu { get; set; }
-    }
-
-    public class GiaoVienLuuDiemDanhViewModel
-    {
-        public int? IdTietHoc { get; set; }
-        [Range(1, int.MaxValue)]
-        public int IdPhanCong { get; set; }
-
-        public DateTime NgayHoc { get; set; } = DateTime.Today;
-
-        public List<GiaoVienDiemDanhHocSinhViewModel> HocSinhs { get; set; } = new();
-    }
-
-    public class AdminDiemDanhPageViewModel
-    {
-        public List<SelectListItem> LopHocs { get; set; } = new();
-        public List<SelectListItem> NamHocs { get; set; } = new();
-        public List<DiemDanhBuoiHocViewModel> DanhSachBuoiHoc { get; set; } = new();
-    }
-
-    public class ChiTietDiemDanhPageViewModel
-    {
-        public DiemDanhBuoiHocViewModel BuoiHoc { get; set; } = new();
-        public List<DiemDanhHocSinhChiTietViewModel> ChiTietHocSinhs { get; set; } = new();
-    }
-
-    public class DiemDanhBuoiHocViewModel
-    {
-        public int IdLop { get; set; }
-        public string TenLop { get; set; } = string.Empty;
-        public DateTime NgayHoc { get; set; }
-        public int? IdTietHoc { get; set; }
-        public int? IdMonHoc { get; set; }
-        public string TenMonHoc { get; set; } = string.Empty;
-        public string TenGiaoVien { get; set; } = string.Empty;
-        public int TongHocSinh { get; set; }
-        public int SoHocSinhCoMat { get; set; }
-        public int SoHocSinhVang { get; set; }
-    }
-
-    public class DiemDanhHocSinhChiTietViewModel
-    {
-        public string MaHS { get; set; } = string.Empty;
-        public string HoTen { get; set; } = string.Empty;
-        public string TrangThai { get; set; } = string.Empty;
-        public string? GhiChu { get; set; }
-    }
-
-    public class HocSinhDiemDanhPageViewModel
-    {
-        public List<SelectListItem> MonHocs { get; set; } = new();
-        public int? IdMonHoc { get; set; }
-        public string TenMonHocDangChon { get; set; } = string.Empty;
-        public List<HocSinhDiemDanhChiTietViewModel> LichSuDiemDanh { get; set; } = new();
-    }
-
-    public class HocSinhDiemDanhChiTietViewModel
-    {
-        public DateTime NgayHoc { get; set; }
-        public string TenMonHoc { get; set; } = string.Empty;
-        public string TenGiaoVien { get; set; } = string.Empty;
-        public string TenLop { get; set; } = string.Empty;
-        public int? IdTietHoc { get; set; }
-        public string TrangThai { get; set; } = string.Empty;
-        public string? GhiChu { get; set; }
-    }
-
     public class HocPhiFormViewModel
     {
         [Range(1, int.MaxValue)] public int IdHocSinh { get; set; }
@@ -242,6 +128,7 @@ namespace eSchool.ViewModels
     {
         public List<PhieuDiem> DanhSach { get; set; } = new();
         public List<SelectListItem> HocSinhs { get; set; } = new();
+        public List<SelectListItem> LopHocs { get; set; } = new();
         public List<SelectListItem> NamHocs { get; set; } = new();
         public List<SelectListItem> HocKys { get; set; } = new();
     }

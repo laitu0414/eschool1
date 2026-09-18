@@ -1,9 +1,3 @@
-@{
-    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-    string MenuClass(string action) => string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase)
-        ? "menu-item active"
-        : "menu-item";
-}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -14,33 +8,20 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/result.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/footer.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/management-navigation.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/management-theme.css" rel="stylesheet" asp-append-version="true" />
 </head>
-<body>
+<body class="management-workspace">
     <aside class="sidebar">
         <div class="brand">
             <span class="brand-icon"><i class="bi bi-clipboard2-data-fill"></i></span>
             <span>
                 <strong>eSchool</strong>
-                <small>K&#7871;t qu&#7843; h&#7885;c t&#7853;p</small>
+                <small>Quản trị nhà trường</small>
             </span>
         </div>
 
-        <div class="menu-title">H&#7884;C SINH</div>
-
-        <nav class="sidebar-menu"><a asp-controller="LenLop" asp-action="Alumni" class="menu-item"><i class="bi bi-mortarboard"></i><span>Cựu học sinh</span></a><a asp-controller="TongKet" asp-action="Index" class="menu-item"><i class="bi bi-calendar-check"></i><span>Điểm cả năm / Tổng kết</span></a>
-            <a asp-controller="KetQuaHocTap" asp-action="Diem" class="@MenuClass("Diem")">
-                <i class="bi bi-bar-chart-fill"></i><span>Qu&#7843;n l&#253; &#273;i&#7875;m</span>
-            </a>
-            <a asp-controller="KetQuaHocTap" asp-action="DiemDanh" class="@MenuClass("DiemDanh")">
-                <i class="bi bi-person-check-fill"></i><span>&#272;i&#7875;m danh</span>
-            </a>
-            <a asp-controller="KetQuaHocTap" asp-action="HocPhi" class="@MenuClass("HocPhi")">
-                <i class="bi bi-cash-coin"></i><span>H&#7885;c ph&#237;</span>
-            </a>
-            <a asp-controller="KetQuaHocTap" asp-action="PhieuDiem" class="@MenuClass("PhieuDiem")">
-                <i class="bi bi-printer-fill"></i><span>In phi&#7871;u &#273;i&#7875;m</span>
-            </a>
-        </nav>
+        @await Html.PartialAsync("_ManagementNavigation")
 
         <div class="sidebar-bottom">
             <a asp-controller="Admin" asp-action="Index" class="menu-item">
@@ -75,7 +56,9 @@
             {
                 <div class="alert alert-danger">@TempData["Error"]</div>
             }
-            @RenderBody()
+            @await Html.PartialAsync("_ManagementBackLink")
+                @await Html.PartialAsync("_ManagementPageLinks")
+                @RenderBody()
         </section>
         @await Html.PartialAsync("_SiteFooter")
     </main>

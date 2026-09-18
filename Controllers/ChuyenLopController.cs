@@ -103,6 +103,14 @@ namespace eSchool.Controllers
             if (!_context.LopHocs.Any(x => x.IdLop == vm.IdLopMoi))
                 ModelState.AddModelError(nameof(vm.IdLopMoi), "Lớp mới không tồn tại");
 
+            if (!CanTransfer(hocSinh.LopHoc, _context.LopHocs.Find(vm.IdLopMoi)))
+                ModelState.AddModelError(nameof(vm.IdLopMoi), "Chỉ được chuyển lớp trong cùng năm học chưa kết thúc và chưa khóa.");
+
+            var transferYear = _context.NamHocs.FirstOrDefault(x => x.TenNamHoc == hocSinh.LopHoc!.NamHoc);
+            if (!hocSinh.TrangThai || hocSinh.DaTotNghiep || vm.NgayChuyen.Date > DateTime.Today ||
+                transferYear == null || vm.NgayChuyen.Date < transferYear.NgayBatDau.Date ||
+                vm.NgayChuyen.Date > transferYear.NgayKetThuc.Date)
+                ModelState.AddModelError(nameof(vm.NgayChuyen), "Chỉ chuyển học sinh đang học; ngày chuyển phải thuộc năm học và không ở tương lai.");
             if (vm.IdLopCu == vm.IdLopMoi)
                 ModelState.AddModelError(nameof(vm.IdLopMoi), "Lớp mới không được trùng lớp hiện tại");
 
@@ -133,6 +141,13 @@ namespace eSchool.Controllers
             return RedirectToAction("Index", new { lopId = vm.IdLopCu });
         }
 
+        private bool CanTransfer(LopHoc? source, LopHoc? target)
+        {
+            if (source == null || target == null || source.NamHoc != target.NamHoc || eSchool.Services.AnnualScoreService.ParseGradeLevel(source.Khoi) != eSchool.Services.AnnualScoreService.ParseGradeLevel(target.Khoi))
+                return false;
+            var year = _context.NamHocs.AsNoTracking().FirstOrDefault(x => x.TenNamHoc == source.NamHoc);
+            return AcademicYearPolicy.CanModify(year, DateTime.Today);
+        }
         private ChuyenLopViewModel CreateViewModel(HocSinh hocSinh)
         {
             return new ChuyenLopViewModel
@@ -244,8 +259,8 @@ namespace eSchool.Controllers
                         continue;
                     }
 
-                    var lopMoi = lopHocs.FirstOrDefault(l => l.TenLop.Equals(tenLopMoi, StringComparison.OrdinalIgnoreCase));
-                    if (lopMoi == null || lopMoi.IdLop == hocSinh.IdLopHoc)
+                    var lopMoi = lopHocs.FirstOrDefault(l => l.NamHoc == hocSinh.LopHoc?.NamHoc && l.TenLop.Equals(tenLopMoi, StringComparison.OrdinalIgnoreCase));
+                    if (lopMoi == null || lopMoi.IdLop == hocSinh.IdLopHoc || !CanTransfer(hocSinh.LopHoc, lopMoi))
                     {
                         skipCount++;
                         continue;
@@ -262,6 +277,14 @@ namespace eSchool.Controllers
                         ngayChuyen = cellDate;
                     }
 
+                    var transferYear = _context.NamHocs.FirstOrDefault(x => x.TenNamHoc == hocSinh.LopHoc!.NamHoc);
+                    if (!hocSinh.TrangThai || hocSinh.DaTotNghiep || ngayChuyen.Date > DateTime.Today ||
+                        transferYear == null || ngayChuyen.Date < transferYear.NgayBatDau.Date ||
+                        ngayChuyen.Date > transferYear.NgayKetThuc.Date)
+                    {
+                        skipCount++;
+                        continue;
+                    }
                     var chuyenLop = new ChuyenLop
                     {
                         IdHocSinh = hocSinh.IdHocSinh,

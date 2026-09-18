@@ -17,6 +17,29 @@ namespace eSchool.Controllers
             _context = context;
         }
 
+        private bool CanModifyAcademicYear(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            return AcademicYearPolicy.CanModify(
+                _context.NamHocs.AsNoTracking().FirstOrDefault(x => x.TenNamHoc == name.Trim()), DateTime.Today);
+        }
+
+        private bool CanModifyClass(int id) => CanModifyAcademicYear(
+            _context.LopHocs.AsNoTracking().Where(x => x.IdLop == id).Select(x => x.NamHoc).FirstOrDefault());
+
+        private bool CanModifyScheduleDate(DateTime date, int? classId)
+        {
+            var years = _context.NamHocs.AsNoTracking()
+                .Where(x => x.NgayBatDau.Date <= date.Date && x.NgayKetThuc.Date >= date.Date)
+                .ToList();
+            if (classId.HasValue)
+            {
+                var yearName = _context.LopHocs.AsNoTracking()
+                    .Where(x => x.IdLop == classId.Value).Select(x => x.NamHoc).FirstOrDefault();
+                return years.Any(x => x.TenNamHoc == yearName && AcademicYearPolicy.CanModify(x, DateTime.Today));
+            }
+            return years.Count > 0 && years.All(x => AcademicYearPolicy.CanModify(x, DateTime.Today));
+        }
         public IActionResult LopHoc(string? keyword)
         {
             var query = _context.LopHocs
@@ -33,6 +56,11 @@ namespace eSchool.Controllers
             }
 
             ViewBag.Keyword = keyword;
+            var editableYears = _context.NamHocs.AsNoTracking().ToList()
+                .Where(x => AcademicYearPolicy.CanModify(x, DateTime.Today))
+                .Select(x => x.TenNamHoc).ToHashSet();
+            ViewBag.EditableYears = editableYears;
+            ViewBag.EditableNamHocs = GetNamHocSelectList().Where(x => editableYears.Contains(x.Value)).ToList();
             ViewBag.GiaoViens = GetGiaoVienSelectList();
             ViewBag.NamHocs = GetNamHocSelectList();
             ViewBag.PhongHocs = _context.PhongHocs.Select(x => new SelectListItem(x.TenPhong, x.IdPhongHoc.ToString())).ToList();
@@ -78,6 +106,9 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult TaoLop(LopHocFormViewModel vm)
         {
+            if (!CanModifyAcademicYear(vm.NamHoc))
+                return RedirectWithError(nameof(LopHoc), AcademicYearPolicy.ReadOnlyMessage);
+
             NormalizeLop(vm);
             vm.MaLop = GenerateClassCode();
             ModelState.Clear();
@@ -143,8 +174,13 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult SuaLop(LopHocFormViewModel vm)
         {
+            if (!CanModifyAcademicYear(vm.NamHoc))
+                return RedirectWithError(nameof(LopHoc), AcademicYearPolicy.ReadOnlyMessage);
+
             var lop = _context.LopHocs.Find(vm.IdLop);
             if (lop == null) return NotFound();
+            if (!CanModifyAcademicYear(lop.NamHoc))
+                return RedirectWithError(nameof(LopHoc), AcademicYearPolicy.ReadOnlyMessage);
 
             NormalizeLop(vm);
             vm.MaLop = lop.MaLop;
@@ -202,6 +238,8 @@ namespace eSchool.Controllers
         {
             var lop = _context.LopHocs.Find(id);
             if (lop == null) return NotFound();
+            if (!CanModifyAcademicYear(lop.NamHoc))
+                return RedirectWithError(nameof(LopHoc), AcademicYearPolicy.ReadOnlyMessage);
 
             var dangSuDung = _context.HocSinhs.Any(x => x.IdLopHoc == id)
                 || _context.PhanCongGiangDays.Any(x => x.IdLop == id)
@@ -589,6 +627,7 @@ namespace eSchool.Controllers
 
                 foreach (var lopId in affectedClasses)
                 {
+                    if (!CanModifyClass(lopId)) continue;
                     if (diff < 0)
                     {
                         var periodsToRemove = _context.PhanCongGiangDays
@@ -765,6 +804,9 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult TaoThoiKhoaBieuTuDong(string namHoc)
         {
+            if (!CanModifyAcademicYear(namHoc))
+                return RedirectWithError(nameof(ThoiKhoaBieu), AcademicYearPolicy.ReadOnlyMessage);
+
             if (string.IsNullOrWhiteSpace(namHoc))
             {
                 return RedirectWithError(
@@ -820,6 +862,9 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult XepLaiTKBToanTruong(string namHoc)
         {
+            if (!CanModifyAcademicYear(namHoc))
+                return RedirectWithError(nameof(ThoiKhoaBieu), AcademicYearPolicy.ReadOnlyMessage);
+
             namHoc = namHoc?.Trim() ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(namHoc))
@@ -885,6 +930,8 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ToggleNgayNghi(DateTime ngay, int? lopId)
         {
+            if (!CanModifyScheduleDate(ngay, lopId))
+                return RedirectWithError(nameof(ThoiKhoaBieu), AcademicYearPolicy.ReadOnlyMessage);
             var existing = _context.LichHocThayDois.FirstOrDefault(x => x.Ngay.Date == ngay.Date && x.IdLop == lopId);
             if (existing != null)
             {
@@ -908,6 +955,9 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ThemLichNghiNangCao(string doiTuong, string? khoi, int? lopId, string kieuNghi, string? buoi, DateTime ngayNghi, List<int>? tiets, string lyDo, string? ghiChu)
         {
+            if (!CanModifyScheduleDate(ngayNghi, doiTuong == "Lop" ? lopId : null)
+                || (doiTuong == "Lop" && !lopId.HasValue))
+                return RedirectWithError(nameof(ThoiKhoaBieu), AcademicYearPolicy.ReadOnlyMessage);
             var lops = new List<int?>();
 
             if (doiTuong == "ToanTruong")
@@ -916,7 +966,12 @@ namespace eSchool.Controllers
             }
             else if (doiTuong == "Khoi" && !string.IsNullOrEmpty(khoi))
             {
-                var lopHocs = _context.LopHocs.Where(x => x.Khoi == khoi).Select(x => x.IdLop).ToList();
+                var yearNames = _context.NamHocs.AsNoTracking()
+                    .Where(x => x.TrangThai && x.NgayBatDau.Date <= ngayNghi.Date
+                        && x.NgayKetThuc.Date >= ngayNghi.Date && x.NgayKetThuc.Date >= DateTime.Today)
+                    .Select(x => x.TenNamHoc).ToList();
+                var lopHocs = _context.LopHocs.Where(x => x.Khoi == khoi && yearNames.Contains(x.NamHoc!))
+                    .Select(x => x.IdLop).ToList();
                 foreach (var l in lopHocs) lops.Add(l);
             }
             else if (doiTuong == "Lop" && lopId.HasValue)
@@ -982,6 +1037,10 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult TaoLich(ThoiKhoaBieuHocVuViewModel vm)
         {
+            var targetClass = _context.LopHocs.AsNoTracking().FirstOrDefault(x => x.IdLop == vm.IdLop);
+            if (targetClass == null || targetClass.NamHoc != vm.NamHoc || !CanModifyAcademicYear(targetClass.NamHoc))
+                return RedirectWithError(nameof(ThoiKhoaBieu), AcademicYearPolicy.ReadOnlyMessage);
+
             if (!ModelState.IsValid)
                 return RedirectWithError(nameof(ThoiKhoaBieu), "Thông tin thời khóa biểu chưa hợp lệ.");
 
@@ -1041,6 +1100,8 @@ namespace eSchool.Controllers
         {
             var lich = _context.PhanCongGiangDays.Find(id);
             if (lich == null) return NotFound();
+            if (!CanModifyAcademicYear(lich.NamHoc) || !CanModifyClass(lich.IdLop))
+                return RedirectWithError(nameof(ThoiKhoaBieu), AcademicYearPolicy.ReadOnlyMessage);
 
             _context.PhanCongGiangDays.Remove(lich);
             _context.SaveChanges();
@@ -1049,10 +1110,15 @@ namespace eSchool.Controllers
 
         public IActionResult NamHoc()
         {
-            return View(_context.NamHocs
+            var years = _context.NamHocs
                 .Include(x => x.HocKys)
                 .OrderByDescending(x => x.NgayBatDau)
-                .ToList());
+                .ToList();
+            var today = DateTime.Today;
+            ViewBag.YearStatuses = years.ToDictionary(x => x.IdNamHoc, x => AcademicYearPolicy.Status(x, today));
+            ViewBag.EditableYearIds = years.Where(x => AcademicYearPolicy.CanModify(x, today))
+                .Select(x => x.IdNamHoc).ToHashSet();
+            return View(years);
         }
 
         [HttpPost]
@@ -1113,6 +1179,8 @@ namespace eSchool.Controllers
         {
             var namHoc = _context.NamHocs.Find(model.IdNamHoc);
             if (namHoc == null) return NotFound();
+            if (namHoc.NgayKetThuc.Date < DateTime.Today)
+                return RedirectWithError(nameof(NamHoc), AcademicYearPolicy.ReadOnlyMessage);
 
             if (!ModelState.IsValid || model.NgayKetThuc <= model.NgayBatDau)
                 return RedirectWithError(nameof(NamHoc), "Thông tin năm học chưa hợp lệ.");
@@ -1120,7 +1188,15 @@ namespace eSchool.Controllers
             if (_context.NamHocs.Any(x => x.TenNamHoc == model.TenNamHoc && x.IdNamHoc != model.IdNamHoc))
                 return RedirectWithError(nameof(NamHoc), "Năm học đã tồn tại.");
 
-            namHoc.TenNamHoc = model.TenNamHoc.Trim();
+            var newName = model.TenNamHoc.Trim();
+            if (newName != namHoc.TenNamHoc &&
+                (_context.LopHocs.Any(x => x.NamHoc == namHoc.TenNamHoc) ||
+                 _context.PhanCongGiangDays.Any(x => x.NamHoc == namHoc.TenNamHoc)))
+                return RedirectWithError(nameof(NamHoc), "Không thể đổi tên năm học đã có lớp hoặc lịch học.");
+            if (_context.HocKys.Any(x => x.IdNamHoc == namHoc.IdNamHoc &&
+                (x.NgayBatDau < model.NgayBatDau || x.NgayKetThuc > model.NgayKetThuc)))
+                return RedirectWithError(nameof(NamHoc), "Thời gian năm học phải bao gồm các học kỳ hiện có.");
+            namHoc.TenNamHoc = newName;
             namHoc.NgayBatDau = model.NgayBatDau;
             namHoc.NgayKetThuc = model.NgayKetThuc;
             namHoc.TrangThai = model.TrangThai;
@@ -1134,6 +1210,8 @@ namespace eSchool.Controllers
         {
             var namHoc = _context.NamHocs.Include(x => x.HocKys).FirstOrDefault(x => x.IdNamHoc == id);
             if (namHoc == null) return NotFound();
+            if (namHoc.NgayKetThuc.Date < DateTime.Today)
+                return RedirectWithError(nameof(NamHoc), AcademicYearPolicy.ReadOnlyMessage);
 
             var dangSuDung = namHoc.HocKys?.Any() == true
                 || _context.LopHocs.Any(x => x.NamHoc == namHoc.TenNamHoc)
@@ -1151,125 +1229,9 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult TongKetNamHoc(int idNamHoc)
         {
-            var namHoc = _context.NamHocs.Find(idNamHoc);
-            if (namHoc == null) return NotFound();
-
-            var hocSinhs = _context.HocSinhs
-                .Include(x => x.LopHoc)
-                .Where(x => x.TrangThai == true && x.IdLopHoc != null)
-                .ToList();
-
-            var diems = _context.Diems
-                .Where(x => x.IdNamHoc == idNamHoc && x.DiemTB.HasValue)
-                .ToList();
-
-            int passCount = 0;
-            int failCount = 0;
-            int gradCount = 0;
-
-            foreach (var hs in hocSinhs)
-            {
-                var hsDiems = diems.Where(x => x.IdHocSinh == hs.IdHocSinh).ToList();
-                
-                var diemsHK1 = hsDiems.Where(x => x.HocKy == "Học kỳ 1" || x.HocKyInfo?.TenHocKy == "Học kỳ 1").ToList();
-                var diemsHK2 = hsDiems.Where(x => x.HocKy == "Học kỳ 2" || x.HocKyInfo?.TenHocKy == "Học kỳ 2").ToList();
-
-                decimal avg1 = diemsHK1.Any() ? diemsHK1.Average(x => x.DiemTB.Value) : 0;
-                decimal avg2 = diemsHK2.Any() ? diemsHK2.Average(x => x.DiemTB.Value) : 0;
-
-                decimal avg = 0;
-                if (diemsHK1.Any() && diemsHK2.Any())
-                {
-                    // If both semesters have grades, calculate (HK1 + HK2 * 2) / 3
-                    avg = (avg1 + avg2 * 2) / 3;
-                }
-                else if (diemsHK1.Any())
-                {
-                    avg = avg1;
-                }
-                else if (diemsHK2.Any())
-                {
-                    avg = avg2;
-                }
-                else
-                {
-                    // Fallback to simple average if no semester info matches
-                    avg = hsDiems.Any() ? hsDiems.Average(x => x.DiemTB.Value) : 0;
-                }
-                
-                if (avg >= 5.0m)
-                {
-                    var currentTenLop = hs.LopHoc?.TenLop ?? "";
-                    var match = System.Text.RegularExpressions.Regex.Match(currentTenLop, @"^(\d+)(.*)$");
-                    if (match.Success)
-                    {
-                        int currentGrade = int.Parse(match.Groups[1].Value);
-                        int nextGrade = currentGrade + 1;
-
-                        if (nextGrade > 12)
-                        {
-                            _context.ChuyenLops.Add(new ChuyenLop
-                            {
-                                IdHocSinh = hs.IdHocSinh,
-                                IdLopCu = hs.IdLopHoc.Value,
-                                IdLopMoi = hs.IdLopHoc.Value,
-                                NgayChuyen = DateTime.Now,
-                                LyDo = "Tốt nghiệp",
-                                GhiChu = $"Học sinh {hs.HoTen} tốt nghiệp ra trường (ĐTB: {Math.Round(avg, 2)})"
-                            });
-                            hs.TrangThai = false;
-                            gradCount++;
-                        }
-                        else
-                        {
-                            var nextTenLop = $"{nextGrade}{match.Groups[2].Value}";
-                            var nextLop = _context.LopHocs.FirstOrDefault(x => x.TenLop.ToLower() == nextTenLop.ToLower());
-                            if (nextLop == null)
-                            {
-                                nextLop = new LopHoc
-                                {
-                                    MaLop = nextTenLop,
-                                    TenLop = nextTenLop,
-                                    Khoi = nextGrade.ToString(),
-                                    NamHoc = namHoc.TenNamHoc
-                                };
-                                _context.LopHocs.Add(nextLop);
-                                _context.SaveChanges();
-                            }
-
-                            _context.ChuyenLops.Add(new ChuyenLop
-                            {
-                                IdHocSinh = hs.IdHocSinh,
-                                IdLopCu = hs.IdLopHoc.Value,
-                                IdLopMoi = nextLop.IdLop,
-                                NgayChuyen = DateTime.Now,
-                                LyDo = "Lên lớp",
-                                GhiChu = $"Học sinh {hs.HoTen} lên lớp {nextTenLop} (ĐTB: {Math.Round(avg, 2)})"
-                            });
-                            hs.IdLopHoc = nextLop.IdLop;
-                            passCount++;
-                        }
-                    }
-                }
-                else
-                {
-                    _context.ChuyenLops.Add(new ChuyenLop
-                    {
-                        IdHocSinh = hs.IdHocSinh,
-                        IdLopCu = hs.IdLopHoc.Value,
-                        IdLopMoi = hs.IdLopHoc.Value,
-                        NgayChuyen = DateTime.Now,
-                        LyDo = "Ở lại lớp",
-                        GhiChu = $"Học sinh {hs.HoTen} ở lại lớp {hs.LopHoc?.TenLop} (ĐTB: {Math.Round(avg, 2)})"
-                    });
-                    failCount++;
-                }
-            }
-            
-            _context.SaveChanges();
-            return RedirectWithSuccess(nameof(NamHoc), $"Tổng kết năm học hoàn tất. Lên lớp: {passCount}, Ở lại lớp: {failCount}, Tốt nghiệp: {gradCount}.");
+            if (!_context.NamHocs.Any(x => x.IdNamHoc == idNamHoc)) return NotFound();
+            return RedirectToAction("Index", "TongKet", new { yearId = idNamHoc });
         }
-
         public IActionResult HocKy()
         {
             var vm = new HocKyPageViewModel
@@ -1312,6 +1274,8 @@ namespace eSchool.Controllers
         {
             var hocKy = _context.HocKys.Find(model.IdHocKy);
             if (hocKy == null) return NotFound();
+            if (!AcademicYearPolicy.CanModify(_context.NamHocs.Find(hocKy.IdNamHoc), DateTime.Today))
+                return RedirectWithError(nameof(HocKy), AcademicYearPolicy.ReadOnlyMessage);
 
             if (!ValidateHocKy(model, out var error))
                 return RedirectWithError(nameof(HocKy), error);
@@ -1339,6 +1303,8 @@ namespace eSchool.Controllers
         {
             var hocKy = _context.HocKys.Include(x => x.NamHoc).FirstOrDefault(x => x.IdHocKy == id);
             if (hocKy == null) return NotFound();
+            if (!AcademicYearPolicy.CanModify(_context.NamHocs.Find(hocKy.IdNamHoc), DateTime.Today))
+                return RedirectWithError(nameof(HocKy), AcademicYearPolicy.ReadOnlyMessage);
 
             if (_context.PhanCongGiangDays.Any(x =>
                 x.HocKy == hocKy.TenHocKy &&
@@ -1362,6 +1328,12 @@ namespace eSchool.Controllers
             if (namHoc == null)
             {
                 error = "Năm học không tồn tại.";
+                return false;
+            }
+
+            if (!AcademicYearPolicy.CanModify(namHoc, DateTime.Today))
+            {
+                error = AcademicYearPolicy.ReadOnlyMessage;
                 return false;
             }
 
@@ -1522,6 +1494,9 @@ namespace eSchool.Controllers
         {
             var lop = _context.LopHocs.Find(lopId);
             if (lop == null) return NotFound();
+            if (!CanModifyAcademicYear(lop.NamHoc))
+                return RedirectWithError(nameof(LopHoc), AcademicYearPolicy.ReadOnlyMessage);
+
             if (!lop.IdGiaoVienCN.HasValue)
                 return RedirectWithError(nameof(PhanCongGiaoVien), "Lớp chưa có giáo viên chủ nhiệm.", new { lopId });
             if (!_context.PhanCongGiangDays.Any(x => x.IdLop == lopId))
@@ -1564,6 +1539,7 @@ namespace eSchool.Controllers
 
             var lop = _context.LopHocs.Find(lopId.Value);
             if (lop == null) return NotFound();
+            ViewBag.CanModify = CanModifyAcademicYear(lop.NamHoc);
 
             var phanCongs = _context.PhanCongGiangDays
                 .Include(x => x.MonHoc)
@@ -1672,6 +1648,7 @@ namespace eSchool.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult CapNhatPhanCongGiaoVien([FromBody] CapNhatPhanCongRequest req)
         {
             if (req == null || req.LopId <= 0 || req.MonHocId <= 0 || req.GiaoVienId <= 0)
@@ -1684,6 +1661,9 @@ namespace eSchool.Controllers
 
             if (!phanCongs.Any())
                 return NotFound(new { success = false, message = "Không tìm thấy môn học trong lịch của lớp." });
+
+            if (!CanModifyClass(req.LopId) || phanCongs.Any(x => !CanModifyAcademicYear(x.NamHoc)))
+                return BadRequest(new { success = false, message = AcademicYearPolicy.ReadOnlyMessage });
 
             var giaoVien = _context.GiaoViens.Find(req.GiaoVienId);
             if (giaoVien == null) 
@@ -1770,6 +1750,9 @@ namespace eSchool.Controllers
 
         private void SyncHomeroomAssignment(LopHoc lop)
         {
+            if (!CanModifyAcademicYear(lop.NamHoc))
+                throw new InvalidOperationException(AcademicYearPolicy.ReadOnlyMessage);
+
             if (!lop.IdGiaoVienCN.HasValue) return;
             var teacher = GetHomeroomTeacher(lop);
             if (teacher?.IdMonHoc == null)
@@ -1806,6 +1789,9 @@ namespace eSchool.Controllers
         }
         private void AutoGenerateSchedule(LopHoc lop)
         {
+            if (!CanModifyAcademicYear(lop.NamHoc))
+                throw new InvalidOperationException(AcademicYearPolicy.ReadOnlyMessage);
+
             var subjectConfigs = new System.Collections.Generic.List<(string MaMon, string TenMon, int SoTiet)>
             {
                 ("TOAN", "Toán", 4),
@@ -2114,6 +2100,13 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult XuLyChuyenLich(string NamHoc, int LopId, DateTime CurDate, int CurPeriod, DateTime TarDate, int TarPeriod, string LyDo)
         {
+            var targetClass = _context.LopHocs.AsNoTracking().FirstOrDefault(x => x.IdLop == LopId);
+            var year = _context.NamHocs.AsNoTracking().FirstOrDefault(x => x.TenNamHoc == NamHoc);
+            if (targetClass == null || targetClass.NamHoc != NamHoc || !AcademicYearPolicy.CanModify(year, DateTime.Today)
+                || CurDate.Date < year!.NgayBatDau.Date || CurDate.Date > year.NgayKetThuc.Date
+                || TarDate.Date < year.NgayBatDau.Date || TarDate.Date > year.NgayKetThuc.Date)
+                return RedirectWithError(nameof(ChuyenLich), AcademicYearPolicy.ReadOnlyMessage);
+
             int oldThu = (int)CurDate.DayOfWeek + 1 == 1 ? 8 : (int)CurDate.DayOfWeek + 1;
             int newThu = (int)TarDate.DayOfWeek + 1 == 1 ? 8 : (int)TarDate.DayOfWeek + 1;
 
@@ -2307,6 +2300,9 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult TaoNamHocTuDong(NamHoc model)
         {
+            if (!AcademicYearPolicy.CanModify(model, DateTime.Today))
+                return RedirectWithError(nameof(NamHoc), AcademicYearPolicy.ReadOnlyMessage);
+
             if (!ModelState.IsValid || model.NgayKetThuc <= model.NgayBatDau)
             {
                 TempData["Error"] = "Thông tin năm học chưa hợp lệ.";
