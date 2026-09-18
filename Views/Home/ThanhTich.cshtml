@@ -1,0 +1,196 @@
+@model IEnumerable<eSchool.Models.TinTucSuKien>
+@{
+    ViewData["Title"] = "Thành tích nổi bật - THCS eSchool";
+}
+
+<style>
+    .tuyensinh-card {
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        overflow: hidden;
+    }
+    .tuyensinh-breadcrumb-bar {
+        background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+        color: #ffffff;
+        padding: 12px 24px;
+        font-size: 13.5px;
+        font-weight: 500;
+    }
+    .tuyensinh-breadcrumb-bar a {
+        color: #fed7aa;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .tuyensinh-breadcrumb-bar a:hover {
+        color: #ffffff;
+    }
+    .tuyensinh-header-box {
+        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+        border: 1px solid #fed7aa;
+        border-radius: 12px;
+        padding: 20px 24px;
+    }
+    .school-logo-img {
+        width: 75px;
+        height: 75px;
+        object-fit: contain;
+        background: #ffffff;
+        border-radius: 50%;
+        padding: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .news-card-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #ffffff;
+        transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        text-decoration: none !important;
+        color: inherit;
+    }
+    .news-card-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #fdba74;
+    }
+    .news-card-thumb {
+        height: 190px;
+        overflow: hidden;
+        position: relative;
+        background: #f1f5f9;
+    }
+    .news-card-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .news-card-item:hover .news-card-thumb img {
+        transform: scale(1.05);
+    }
+    .news-card-body {
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    .news-card-date {
+        font-size: 12.5px;
+        color: #64748b;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .news-card-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 8px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .news-card-snippet {
+        font-size: 13.5px;
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 14px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex-grow: 1;
+    }
+    .news-card-footer {
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+        font-size: 13px;
+        font-weight: 600;
+        color: #ea580c;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+</style>
+
+<div class="container my-4 my-md-5">
+    <div class="tuyensinh-card">
+        <!-- Breadcrumb Bar -->
+        <div class="tuyensinh-breadcrumb-bar d-flex align-items-center">
+            <i class="bi bi-house-door-fill me-2"></i>
+            <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+            <i class="bi bi-chevron-right mx-2 text-white-50" style="font-size: 11px;"></i>
+            <span class="text-white fw-semibold">Thành tích nổi bật</span>
+        </div>
+
+        <div class="p-4 p-md-5">
+            <!-- School Brand Header with Logo -->
+            <div class="tuyensinh-header-box mb-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="~/images/logo.png" alt="Logo THCS eSchool" class="school-logo-img" />
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1" style="color: #c2410c !important;">TRƯỜNG TRUNG HỌC CƠ SỞ ESCHOOL</h4>
+                            <p class="text-secondary small mb-0"><i class="bi bi-trophy-fill text-warning me-1"></i> Bảng vàng thành tích học sinh & nhà trường</p>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-semibold">
+                            <i class="bi bi-award-fill me-1"></i> Tổng số: @(Model?.Count() ?? 0) thành tích
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Announcements Grid -->
+            @if (Model != null && Model.Any())
+            {
+                <div class="row g-4">
+                    @foreach (var item in Model)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <a href="@(string.IsNullOrWhiteSpace(item.DuongDan) ? "#" : item.DuongDan)" 
+                               target="@(string.IsNullOrWhiteSpace(item.DuongDan) || item.DuongDan.StartsWith("#") ? "_self" : "_blank")" 
+                               class="news-card-item">
+                                <div class="news-card-thumb">
+                                    <img src="@(string.IsNullOrEmpty(item.AnhMinhHoa) ? "/images/hero-banner.png" : item.AnhMinhHoa)" 
+                                         alt="@item.TieuDe" 
+                                         onerror="this.src='https://via.placeholder.com/400x250?text=THCS+eSchool'" />
+                                </div>
+                                <div class="news-card-body">
+                                    <div class="news-card-date">
+                                        <i class="bi bi-calendar3 text-warning"></i>
+                                        <span>@item.NgayTao.ToString("dd/MM/yyyy")</span>
+                                        <span class="ms-auto badge bg-light text-secondary border">Thành tích</span>
+                                    </div>
+                                    <h5 class="news-card-title">@item.TieuDe</h5>
+                                    <p class="news-card-snippet">@item.MoTa</p>
+                                    <div class="news-card-footer">
+                                        <span>Xem chi tiết</span>
+                                        <i class="bi bi-arrow-right"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 my-4 bg-light rounded-4 border">
+                    <i class="bi bi-trophy fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="fw-bold text-secondary">Chưa có bài viết thành tích nào</h5>
+                    <p class="text-muted small mb-0">Các bài viết vinh danh thành tích học sinh giỏi, giải thưởng cấp quốc gia và quốc tế sẽ hiển thị tại đây.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

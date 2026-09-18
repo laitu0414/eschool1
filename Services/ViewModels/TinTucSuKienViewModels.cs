@@ -17,7 +17,6 @@ namespace eSchool.ViewModels
 
         [Required(ErrorMessage = "Vui long nhap duong dan")]
         [StringLength(500)]
-        [Url(ErrorMessage = "Duong dan khong hop le")]
         public string DuongDan { get; set; } = string.Empty;
 
         public string? AnhMinhHoa { get; set; }

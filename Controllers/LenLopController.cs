@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -327,6 +327,7 @@ namespace eSchool.Controllers
         public async Task<IActionResult> LockResults()
         {
             if (IsResultsLocked()) return RedirectWithLockedResultsMessage();
+            using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var students = await _context.HocSinhs.Include(h => h.LopHoc).Where(h => h.TrangThai).ToListAsync();
             var assessments = await BuildPromotionAssessmentsAsync(students);
             if (students.Count == 0 || assessments.Values.Any(a => !a.IsComplete))
@@ -348,11 +349,17 @@ namespace eSchool.Controllers
             return RedirectToAction(nameof(Index), new { yearId = ResolveProcessingYear()?.IdNamHoc });
         }
 
-        private bool IsResultsLocked() => _context.NhatKyHoatDongs.AsNoTracking()
-            .Where(x => x.HanhDong == ResultsLockedSessionKey)
-            .OrderByDescending(x => x.IdNhatKy).Select(x => x.NoiDung).FirstOrDefault() == bool.TrueString;
+        private bool IsResultsLocked()
+        {
+            var year = ResolveProcessingYear();
+            if (year == null) return false;
+            var key = eSchool.Services.PromotionLockService.Key(year.IdNamHoc);
+            return _context.NhatKyHoatDongs.AsNoTracking()
+                .Where(x => x.HanhDong == key)
+                .OrderByDescending(x => x.IdNhatKy).Select(x => x.NoiDung).FirstOrDefault() == bool.TrueString;
+        }
 
-        private void RecordLockState(bool locked) => _context.NhatKyHoatDongs.Add(new NhatKyHoatDong
+        private void RecordLockState(bool locked)
         {
             var year = ResolveProcessingYear() ?? throw new InvalidOperationException("Năm học không hợp lệ.");
             _context.NhatKyHoatDongs.Add(new NhatKyHoatDong

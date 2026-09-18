@@ -143,7 +143,7 @@ namespace eSchool.Controllers
                 ModelState.AddModelError(nameof(vm.AnhTaiLen), "Vui long chon anh minh hoa.");
             }
 
-            if (!Uri.TryCreate(vm.DuongDan, UriKind.Absolute, out _))
+            if (!Uri.TryCreate(vm.DuongDan, UriKind.RelativeOrAbsolute, out _))
             {
                 ModelState.AddModelError(nameof(vm.DuongDan), "Duong dan khong hop le.");
             }

@@ -79,6 +79,51 @@ namespace eschool.Controllers
             return View();
         }
 
+        public IActionResult TuyenSinh()
+        {
+            var data = _context.TinTucSuKiens
+                .Where(x => x.TrangThai && x.LoaiTin == LoaiTinTuc.TuyenSinh)
+                .OrderByDescending(x => x.NgayTao)
+                .AsNoTracking()
+                .ToList();
+            return View(data);
+        }
+
+        public IActionResult ChiTietTuyenSinh()
+        {
+            return View();
+        }
+
+        public IActionResult ThanhTich()
+        {
+            var data = _context.TinTucSuKiens
+                .Where(x => x.TrangThai && x.LoaiTin == LoaiTinTuc.ThanhTich)
+                .OrderByDescending(x => x.NgayTao)
+                .AsNoTracking()
+                .ToList();
+            return View(data);
+        }
+
+        public IActionResult ChiTietThanhTich()
+        {
+            return View();
+        }
+
+        public IActionResult ChuongTrinhDaoTao()
+        {
+            var data = _context.TinTucSuKiens
+                .Where(x => x.TrangThai && x.LoaiTin == LoaiTinTuc.ChuongTrinhDaoTao)
+                .OrderByDescending(x => x.NgayTao)
+                .AsNoTracking()
+                .ToList();
+            return View(data);
+        }
+
+        public IActionResult ChiTietDaoTao()
+        {
+            return View();
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

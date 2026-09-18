@@ -805,13 +805,13 @@
                         <h4 class="dashboard-card-title" style="color: #1a56db;">
                             <i class="bi bi-person-plus-fill" style="color: #1a56db;"></i> Tuyển Sinh
                         </h4>
-                        <a href="javascript:void(0)" class="dashboard-card-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
+                        <a asp-controller="Home" asp-action="TuyenSinh" class="dashboard-card-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
                     </div>
                     <div class="dashboard-card-body">
                         <div class="news-compact-list h-100">
                             @if (tuyenSinhList.Any())
                             {
-                                @foreach (var item in tuyenSinhList.Take(4))
+                                @foreach (var item in tuyenSinhList.Take(3))
                                 {
                                     <a href="@(string.IsNullOrWhiteSpace(item.DuongDan) ? "#" : item.DuongDan)" target="@(string.IsNullOrWhiteSpace(item.DuongDan) || item.DuongDan.StartsWith("#") ? "_self" : "_blank")" class="news-compact-item">
                                         <div class="news-compact-thumb">
@@ -845,13 +845,13 @@
                         <h4 class="dashboard-card-title" style="color: #ea580c;">
                             <i class="bi bi-trophy-fill" style="color: #ea580c;"></i> Thành Tích Nổi Bật
                         </h4>
-                        <a href="javascript:void(0)" class="dashboard-card-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
+                        <a asp-controller="Home" asp-action="ThanhTich" class="dashboard-card-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
                     </div>
                     <div class="dashboard-card-body">
                         <div class="news-compact-list h-100">
                             @if (thanhTichList.Any())
                             {
-                                @foreach (var item in thanhTichList.Take(4))
+                                @foreach (var item in thanhTichList.Take(3))
                                 {
                                     <a href="@(string.IsNullOrWhiteSpace(item.DuongDan) ? "#" : item.DuongDan)" target="@(string.IsNullOrWhiteSpace(item.DuongDan) || item.DuongDan.StartsWith("#") ? "_self" : "_blank")" class="news-compact-item">
                                         <div class="news-compact-thumb">
@@ -885,13 +885,13 @@
                         <h4 class="dashboard-card-title" style="color: #0284c7;">
                             <i class="bi bi-book-half" style="color: #0284c7;"></i> Chương Trình Đào Tạo
                         </h4>
-                        <a href="javascript:void(0)" class="dashboard-card-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
+                        <a asp-controller="Home" asp-action="ChuongTrinhDaoTao" class="dashboard-card-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
                     </div>
                     <div class="dashboard-card-body">
                         <div class="news-compact-list h-100">
                             @if (daoTaoList.Any())
                             {
-                                @foreach (var item in daoTaoList.Take(4))
+                                @foreach (var item in daoTaoList.Take(3))
                                 {
                                     <a href="@(string.IsNullOrWhiteSpace(item.DuongDan) ? "#" : item.DuongDan)" target="@(string.IsNullOrWhiteSpace(item.DuongDan) || item.DuongDan.StartsWith("#") ? "_self" : "_blank")" class="news-compact-item">
                                         <div class="news-compact-thumb">
