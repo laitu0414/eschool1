@@ -1,0 +1,63 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    bool Active(string c, string a)
+    {
+        if (c == "HocVu" && a == "NamHoc") return controller == c && (action == "NamHoc" || action == "HocKy");
+        if (c == "HocVu" && a == "PhongHoc") return controller == c && (action == "PhongHoc" || action == "ThietBi");
+        if (c == "HocVu" && a == "LopHoc") return controller == "ChuyenLop" || (controller == c && (action == "LopHoc" || action == "DanhSachHocSinhLop"));
+        if (c == "HocVu" && a == "ThoiKhoaBieu") return controller == c && (action == a || action == "ChuyenLich");
+        if (c == "KetQuaHocTap") return controller == c && new[] { "Diem", "XemDiem", "PhieuDiem", "NhatKySuaDiem" }.Contains(action);
+        if (c == "HocSinh") return controller == c || (controller == "KetQuaHocTap" && new[] { "HocPhi", "XemHocPhi", "DanhSachMienGiam" }.Contains(action));
+        if (c == "GiaoVien" && a == "Index") return controller == c && action != "ChuNhiem";
+        if (c == "LenLop") return controller == c;
+        if (a == "Index") return controller == c;
+        return controller == c && action == a;
+    }
+}
+<nav class="management-navigation" aria-label="Chức năng quản trị">
+    <a class="management-link @(controller == "Admin" ? "is-active" : "")" asp-controller="Admin" asp-action="Index">
+        <i class="bi bi-house-door" aria-hidden="true"></i><span>Tổng quan</span>
+    </a>
+    <details class="management-group" open="@(Active("HocSinh", "Index") || Active("GiaoVien", "Index") || Active("PhuHuynh", "Index") || Active("TaiKhoan", "Index"))">
+        <summary><i class="bi bi-people" aria-hidden="true"></i><span>Quản lý người dùng</span><i class="bi bi-chevron-down management-chevron" aria-hidden="true"></i></summary>
+        <div class="management-items">
+            <a class="management-link @(Active("HocSinh", "Index") ? "is-active" : "")" asp-controller="HocSinh" asp-action="Index" aria-current="@(Active("HocSinh", "Index") ? "page" : null)"><i class="bi bi-mortarboard" aria-hidden="true"></i><span>Học sinh</span></a>
+            <a class="management-link @(Active("GiaoVien", "Index") ? "is-active" : "")" asp-controller="GiaoVien" asp-action="Index" aria-current="@(Active("GiaoVien", "Index") ? "page" : null)"><i class="bi bi-person-workspace" aria-hidden="true"></i><span>Giáo viên</span></a>
+            <a class="management-link @(Active("PhuHuynh", "Index") ? "is-active" : "")" asp-controller="PhuHuynh" asp-action="Index" aria-current="@(Active("PhuHuynh", "Index") ? "page" : null)"><i class="bi bi-person-hearts" aria-hidden="true"></i><span>Phụ huynh</span></a>
+            <a class="management-link @(Active("TaiKhoan", "Index") ? "is-active" : "")" asp-controller="TaiKhoan" asp-action="Index" aria-current="@(Active("TaiKhoan", "Index") ? "page" : null)"><i class="bi bi-person-badge" aria-hidden="true"></i><span>Tài khoản</span></a>
+        </div>
+    </details>
+    <details class="management-group" open="@(Active("HocVu", "NamHoc") || Active("HocVu", "LopHoc") || Active("GiaoVien", "ChuNhiem") || Active("HocVu", "MonHoc") || Active("HocVu", "PhanCongGiaoVien") || Active("HocVu", "ThoiKhoaBieu") || Active("HocVu", "PhongHoc"))">
+        <summary><i class="bi bi-journal-bookmark" aria-hidden="true"></i><span>Quản lý học vụ</span><i class="bi bi-chevron-down management-chevron" aria-hidden="true"></i></summary>
+        <div class="management-items">
+            <a class="management-link @(Active("HocVu", "NamHoc") ? "is-active" : "")" asp-controller="HocVu" asp-action="NamHoc" aria-current="@(Active("HocVu", "NamHoc") ? "page" : null)"><i class="bi bi-calendar-range" aria-hidden="true"></i><span>Năm học &amp; học kỳ</span></a>
+            <a class="management-link @(Active("HocVu", "LopHoc") ? "is-active" : "")" asp-controller="HocVu" asp-action="LopHoc" aria-current="@(Active("HocVu", "LopHoc") ? "page" : null)"><i class="bi bi-building" aria-hidden="true"></i><span>Lớp học</span></a>
+            <a class="management-link @(Active("GiaoVien", "ChuNhiem") ? "is-active" : "")" asp-controller="GiaoVien" asp-action="ChuNhiem" aria-current="@(Active("GiaoVien", "ChuNhiem") ? "page" : null)"><i class="bi bi-person-check" aria-hidden="true"></i><span>Chủ nhiệm lớp</span></a>
+            <a class="management-link @(Active("HocVu", "MonHoc") ? "is-active" : "")" asp-controller="HocVu" asp-action="MonHoc" aria-current="@(Active("HocVu", "MonHoc") ? "page" : null)"><i class="bi bi-book" aria-hidden="true"></i><span>Môn học</span></a>
+            <a class="management-link @(Active("HocVu", "ThoiKhoaBieu") ? "is-active" : "")" asp-controller="HocVu" asp-action="ThoiKhoaBieu" aria-current="@(Active("HocVu", "ThoiKhoaBieu") ? "page" : null)"><i class="bi bi-calendar-week" aria-hidden="true"></i><span>Thời khóa biểu</span></a>
+            <a class="management-link @(Active("HocVu", "PhongHoc") ? "is-active" : "")" asp-controller="HocVu" asp-action="PhongHoc" aria-current="@(Active("HocVu", "PhongHoc") ? "page" : null)"><i class="bi bi-door-open" aria-hidden="true"></i><span>Phòng học / thiết bị</span></a>
+        </div>
+    </details>
+    <details class="management-group" open="@(Active("KetQuaHocTap", "Diem") || Active("TongKet", "Index") || Active("LenLop", "Index"))">
+        <summary><i class="bi bi-clipboard-data" aria-hidden="true"></i><span>Kết quả học tập</span><i class="bi bi-chevron-down management-chevron" aria-hidden="true"></i></summary>
+        <div class="management-items">
+            <a class="management-link @(Active("KetQuaHocTap", "Diem") ? "is-active" : "")" asp-controller="KetQuaHocTap" asp-action="Diem" aria-current="@(Active("KetQuaHocTap", "Diem") ? "page" : null)"><i class="bi bi-pencil-square" aria-hidden="true"></i><span>Nhập điểm</span></a>
+            <a class="management-link @(Active("TongKet", "Index") ? "is-active" : "")" asp-controller="TongKet" asp-action="Index" aria-current="@(Active("TongKet", "Index") ? "page" : null)"><i class="bi bi-bar-chart" aria-hidden="true"></i><span>Tổng kết</span></a>
+            <a class="management-link @(Active("LenLop", "Index") ? "is-active" : "")" asp-controller="LenLop" asp-action="Index" aria-current="@(Active("LenLop", "Index") ? "page" : null)"><i class="bi bi-mortarboard" aria-hidden="true"></i><span>Xét lên lớp / tốt nghiệp</span></a>
+        </div>
+    </details>
+    <details class="management-group" open="@(Active("ThongBao", "Index") || Active("TinTucSuKien", "Index"))">
+        <summary><i class="bi bi-megaphone" aria-hidden="true"></i><span>Truyền thông</span><i class="bi bi-chevron-down management-chevron" aria-hidden="true"></i></summary>
+        <div class="management-items">
+            <a class="management-link @(Active("ThongBao", "Index") ? "is-active" : "")" asp-controller="ThongBao" asp-action="Index" aria-current="@(Active("ThongBao", "Index") ? "page" : null)"><i class="bi bi-bell" aria-hidden="true"></i><span>Thông báo</span></a>
+            <a class="management-link @(Active("TinTucSuKien", "Index") ? "is-active" : "")" asp-controller="TinTucSuKien" asp-action="Index" aria-current="@(Active("TinTucSuKien", "Index") ? "page" : null)"><i class="bi bi-newspaper" aria-hidden="true"></i><span>Tin tức / sự kiện</span></a>
+        </div>
+    </details>
+    <details class="management-group" open="@(Active("NhatKy", "Index"))">
+        <summary><i class="bi bi-gear" aria-hidden="true"></i><span>Hệ thống</span><i class="bi bi-chevron-down management-chevron" aria-hidden="true"></i></summary>
+        <div class="management-items">
+            <a class="management-link @(Active("NhatKy", "Index") ? "is-active" : "")" asp-controller="NhatKy" asp-action="Index" aria-current="@(Active("NhatKy", "Index") ? "page" : null)"><i class="bi bi-clock-history" aria-hidden="true"></i><span>Nhật ký hoạt động</span></a>
+        </div>
+    </details>
+</nav>

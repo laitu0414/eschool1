@@ -24,11 +24,8 @@ namespace eschool
                     new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtectionKeys")))
                 .SetApplicationName("eSchool");
 
-            var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
-                ?? "Data Source=.\\SQLEXPRESS;Initial Catalog=eschool;Integrated Security=True;TrustServerCertificate=True";
-
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(defaultConnection));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<IEmailSender, EmailSender>();
@@ -57,52 +54,56 @@ namespace eschool
             using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
 
-                try
+                var defaultRoles = new Dictionary<int, string>
                 {
-                    dbContext.Database.Migrate();
-                    EnsureCompatibilityColumns(dbContext);
+                    [SystemRoleIds.SystemAdmin] = "System Admin",
+                    [2] = "Giáo viên",
+                    [3] = "Học sinh",
+                    [4] = "Phụ huynh"
+                };
 
-                    var defaultRoles = new Dictionary<int, string>
+                foreach (var role in defaultRoles)
+                {
+                    if (dbContext.ChucVus.Any(c => c.IdChucVu == role.Key))
+                        continue;
+
+                    try
                     {
-                        [SystemRoleIds.SystemAdmin] = "System Admin",
-                        [2] = "Giáo viên",
-                        [3] = "Học sinh",
-                        [4] = "Phụ huynh"
-                    };
-
-                    foreach (var role in defaultRoles)
-                    {
-                        if (dbContext.ChucVus.Any(c => c.IdChucVu == role.Key))
-                            continue;
-
-                        try
+                        dbContext.ChucVus.Add(new ChucVu
                         {
-                            dbContext.Database.ExecuteSqlRaw(
-                                $"SET IDENTITY_INSERT ChucVus ON; INSERT INTO ChucVus (IdChucVu, TenChucVu) VALUES ({role.Key}, N'{role.Value.Replace("'", "''")}'); SET IDENTITY_INSERT ChucVus OFF;");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error seeding role {role.Key}: {ex.Message}");
-                        }
+                            IdChucVu = role.Key,
+                            TenChucVu = role.Value
+                        });
+                        dbContext.SaveChanges();
                     }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error seeding role {role.Key}: {ex.Message}");
+                    }
+                }
 
-                    if (!dbContext.TaiKhoans.Any(t => t.IdChucVu == SystemRoleIds.SystemAdmin))
+                if (!dbContext.TaiKhoans.Any(t => t.IdChucVu == SystemRoleIds.SystemAdmin))
+                {
+                    try
                     {
                         dbContext.TaiKhoans.Add(new TaiKhoan
                         {
                             Username = "admin",
-                            Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                            Password = BCrypt.Net.BCrypt.HashPassword("123456"),
+                            Email = "admin@eschool.local",
                             IdChucVu = SystemRoleIds.SystemAdmin,
                             TrangThai = true,
-                            BatBuocDoiMatKhau = false
+                            BatBuocDoiMatKhau = true
                         });
                         dbContext.SaveChanges();
+                        Console.WriteLine("Default admin account created: admin / 123456");
                     }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Database is unavailable. App will continue without automatic migration/seeding: {ex.Message}");
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error seeding default admin: {ex.Message}");
+                    }
                 }
             }
 
@@ -125,6 +126,24 @@ namespace eschool
             app.UseRouting();
 
             app.UseSession();
+            app.Use(async (context, next) =>
+            {
+                var userId = context.Session.GetInt32("UserId");
+                if (userId.HasValue)
+                {
+                    var db = context.RequestServices.GetRequiredService<AppDbContext>();
+                    var account = await db.TaiKhoans.AsNoTracking().FirstOrDefaultAsync(x => x.IdTaiKhoan == userId);
+                    if (account == null || !account.TrangThai ||
+                        account.IdChucVu != context.Session.GetInt32("RoleId"))
+                    {
+                        context.Session.Clear();
+                        context.Response.Redirect("/Account/Login");
+                        return;
+                    }
+                    context.Session.SetInt32("MustChangePassword", account.BatBuocDoiMatKhau ? 1 : 0);
+                }
+                await next();
+            });
 
             app.UseAuthorization();
 
@@ -133,23 +152,6 @@ namespace eschool
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
-        }
-
-        private static void EnsureCompatibilityColumns(AppDbContext dbContext)
-        {
-            dbContext.Database.ExecuteSqlRaw("""
-                IF OBJECT_ID(N'dbo.HocSinhs', N'U') IS NOT NULL
-                   AND COL_LENGTH(N'dbo.HocSinhs', N'AnhDaiDien') IS NULL
-                BEGIN
-                    ALTER TABLE [dbo].[HocSinhs] ADD [AnhDaiDien] nvarchar(max) NULL;
-                END;
-
-                IF OBJECT_ID(N'dbo.GiaoViens', N'U') IS NOT NULL
-                   AND COL_LENGTH(N'dbo.GiaoViens', N'AnhDaiDien') IS NULL
-                BEGIN
-                    ALTER TABLE [dbo].[GiaoViens] ADD [AnhDaiDien] nvarchar(255) NULL;
-                END;
-                """);
         }
     }
 }

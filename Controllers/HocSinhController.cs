@@ -237,7 +237,7 @@ namespace eSchool.Controllers
 
         public IActionResult HoSo(int id)
         {
-            if (HttpContext.Session.GetInt32("RoleId") == 3)
+            if (HttpContext.Session.GetInt32("RoleId") is 3 or 4)
             {
                 var currentHocSinhId = GetCurrentHocSinhId();
                 if (!currentHocSinhId.HasValue)
@@ -465,6 +465,17 @@ namespace eSchool.Controllers
             if (vm.IdLopHoc.HasValue && !_context.LopHocs.Any(x => x.IdLop == vm.IdLopHoc.Value))
                 ModelState.AddModelError(nameof(vm.IdLopHoc), "Lớp học không tồn tại");
 
+            var originalClassId = _context.HocSinhs.AsNoTracking().Where(x => x.IdHocSinh == vm.IdHocSinh)
+                .Select(x => x.IdLopHoc).FirstOrDefault();
+            if (originalClassId != vm.IdLopHoc)
+            {
+                foreach (var classId in new[] { originalClassId, vm.IdLopHoc }.Where(x => x.HasValue))
+                {
+                    var classYear = _context.LopHocs.Where(x => x.IdLop == classId).Select(x => x.NamHoc).FirstOrDefault();
+                    if (!AcademicYearPolicy.CanModify(_context.NamHocs.FirstOrDefault(x => x.TenNamHoc == classYear), DateTime.Today))
+                        ModelState.AddModelError(nameof(vm.IdLopHoc), AcademicYearPolicy.ReadOnlyMessage);
+                }
+            }
             if (vm.IdTaiKhoan.HasValue)
             {
                 var isStudentAccount = _context.TaiKhoans.Any(x =>

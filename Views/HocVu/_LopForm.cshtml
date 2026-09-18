@@ -28,7 +28,7 @@
     </div>
     <div class="col-md-4">
         <label class="form-label">Năm học</label>
-        <select asp-for="NamHoc" asp-items="ViewBag.NamHocs" class="form-select">
+        <select asp-for="NamHoc" asp-items="ViewBag.EditableNamHocs" required class="form-select">
             <option value="">-- Chọn năm học --</option>
         </select>
         <span asp-validation-for="NamHoc" class="text-danger"></span>

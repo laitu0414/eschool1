@@ -9,7 +9,7 @@ namespace eSchool.Infrastructure
         {
             var roleId = context.HttpContext.Session.GetInt32("RoleId");
 
-            if (roleId != SystemRoleIds.SystemAdmin)
+            if (!context.HttpContext.Session.GetInt32("UserId").HasValue || roleId != SystemRoleIds.SystemAdmin)
             {
                 context.Result = new RedirectToActionResult("Login", "Account", null);
                 return;

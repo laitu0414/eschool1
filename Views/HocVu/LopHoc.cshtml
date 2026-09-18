@@ -3,128 +3,33 @@
 @{
     Layout = "~/Views/Shared/_AcademicLayout.cshtml";
     ViewData["Title"] = "Quản lý lớp";
+    var editableYears = ViewBag.EditableYears as HashSet<string> ?? new HashSet<string>();
     var siSoMap = ViewBag.SiSoMap as IReadOnlyDictionary<int, int> ?? new Dictionary<int, int>();
 }
 
-<div class="student-admin-card">
-    <div class="student-admin-card-head">
-        <div>
-            <h3>Danh sách lớp</h3>
-            <p>@(Model?.Count ?? 0) lớp đang có trong hệ thống</p>
-        </div>
-    </div>
-
-    <div class="page-tools d-flex justify-content-between align-items-center mb-4">
-        <form method="get" class="student-admin-filter m-0 shadow-none border-0 bg-transparent p-0 flex-grow-1 d-flex gap-2">
-            <div class="student-admin-search flex-grow-1">
-                <i class="bi bi-search"></i>
-                <input name="keyword" value="@ViewBag.Keyword" placeholder="Tìm theo tên lớp hoặc khối..." />
-            </div>
-            @await Html.PartialAsync("_ExportDropdown")
-            <div class="dropdown filter-dropdown">
-                <button type="button" class="btn btn-outline-secondary h-100 px-3" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                    <i class="bi bi-funnel"></i>
-                </button>
-                <div class="dropdown-menu shadow">
-                    <h6 class="fw-bold mb-3 px-1">Bộ lọc</h6>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small text-muted mb-1">Khối</label>
-                        <select name="khoi" class="form-select form-select-sm">
-                            <option value="">-- Tất cả khối --</option>
-                            @if (ViewBag.Khois != null)
-                            {
-                                foreach (string k in ViewBag.Khois)
-                                {
-                                    <option value="@k" selected="@(ViewBag.SelectedKhoi == k ? "selected" : null)">@k</option>
-                                }
-                            }
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small text-muted mb-1">Năm học</label>
-                        <select name="namHoc" class="form-select form-select-sm">
-                            <option value="">-- Tất cả năm học --</option>
-                            @if (ViewBag.NamHocs != null)
-                            {
-                                foreach (var nh in (IEnumerable<SelectListItem>)ViewBag.NamHocs)
-                                {
-                                    <option value="@nh.Text" selected="@(ViewBag.SelectedNamHoc == nh.Text ? "selected" : null)">@nh.Text</option>
-                                }
-                            }
-                        </select>
-                    </div>
-
-                    <div class="d-flex justify-content-between gap-2 mt-4">
-                        <a asp-action="LopHoc" class="btn btn-light btn-sm flex-grow-1">Đặt lại</a>
-                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Áp dụng</button>
-                    </div>
-                </div>
-            </div>
+<div class="alert alert-info">Năm học đã kết thúc hoặc đã khóa chỉ được xem dữ liệu.</div>
+<div class="page-card">
+    <div class="page-tools">
+        <form method="get">
+            <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm theo tên lớp hoặc khối..." />
+            <button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Tìm</button>
         </form>
-        <div class="d-flex gap-2 ms-auto">
-            <button class="btn btn-success text-nowrap" type="button" data-bs-toggle="modal" data-bs-target="#importLopHocModal">
-                <i class="bi bi-file-earmark-excel"></i> Nhập từ Excel
-            </button>
-            <button class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#createClass">
-                <i class="bi bi-plus-lg"></i> Thêm lớp
-            </button>
-        </div>
+        <button class="btn btn-primary" disabled="@(!editableYears.Any())" data-bs-toggle="modal" data-bs-target="#createClass">
+            <i class="bi bi-plus-lg"></i> Thêm lớp
+        </button>
     </div>
 
-    <!-- Modal Import Excel -->
-    <div class="modal fade" id="importLopHocModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content student-admin-card p-0">
-                <form asp-action="ImportLopHocExcel" method="post" enctype="multipart/form-data">
-                    @Html.AntiForgeryToken()
-                    <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title">Nhập lớp học từ Excel</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="mb-3 text-muted">Vui lòng tải file mẫu để xem định dạng chuẩn trước khi nhập dữ liệu.</p>
-                        <a asp-action="DownloadLopHocTemplate" class="btn btn-outline-success mb-4">
-                            <i class="bi bi-download me-1"></i> Tải file mẫu
-                        </a>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Chọn file Excel (.xlsx) <span class="text-danger">*</span></label>
-                            <input type="file" name="file" class="form-control" accept=".xlsx" required />
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-upload me-1"></i> Nhập dữ liệu
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="app-table-wrapper">
-        <table class="table table-hover align-middle mb-0 app-table">
-            <thead class="app-table-header">
-                <tr>
-                    <th>Tên lớp</th>
-                    <th>Khối</th>
-                    <th>Năm học</th>
-                    <th>Sĩ số</th>
-                    <th>Chủ nhiệm</th>
-                    <th class="text-end">Thao tác</th>
-                </tr>
-            </thead>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>Tên lớp</th><th>Khối</th><th>Năm học</th><th>Sĩ số</th><th>Chủ nhiệm</th><th class="text-end">Thao tác</th></tr></thead>
             <tbody>
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="7" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
                 }
                 @foreach (var item in Model)
                 {
-                    <tr data-id="@item.IdLop">
+                    <tr>
                         <td><strong>@item.TenLop</strong></td>
                         <td>@item.Khoi</td>
                         <td>@item.NamHoc</td>
@@ -137,11 +42,18 @@
                             <a asp-action="PhanCongGiaoVien" asp-route-lopId="@item.IdLop" class="btn btn-sm btn-outline-success" title="Phân công Giáo viên">
                                 <i class="bi bi-person-lines-fill"></i> Phân công GV
                             </a>
+                            @if (item.NamHoc != null && editableYears.Contains(item.NamHoc))
+                            {
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editClass-@item.IdLop"><i class="bi bi-pencil"></i></button>
                             <form asp-action="XoaLop" asp-route-id="@item.IdLop" method="post" class="d-inline" onsubmit="return confirm('Xóa lớp này?');">
                                 @Html.AntiForgeryToken()
                                 <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                             </form>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Chỉ xem</span>
+                            }
                         </td>
                     </tr>
                 }
@@ -161,7 +73,7 @@
     </div></div>
 </div>
 
-@foreach (var item in Model)
+@foreach (var item in Model.Where(x => x.NamHoc != null && editableYears.Contains(x.NamHoc)))
 {
     var phongHocMap = ViewBag.PhongHocMap as Dictionary<int, int>;
     int? mappedPhongId = phongHocMap != null && phongHocMap.ContainsKey(item.IdLop) ? phongHocMap[item.IdLop] : null;
@@ -176,7 +88,7 @@
                     @await Html.PartialAsync("_LopForm", new eSchool.ViewModels.LopHocFormViewModel
                     {
                         IdLop = item.IdLop, MaLop = item.MaLop, TenLop = item.TenLop,
-                        Khoi = item.Khoi, NamHoc = item.NamHoc, IdGiaoVienCN = item.IdGiaoVienCN,
+                        Khoi = item.Khoi, BuoiHoc = item.BuoiHoc, NamHoc = item.NamHoc, IdGiaoVienCN = item.IdGiaoVienCN,
                         IdPhongHoc = mappedPhongId
                     })
                 </div>
@@ -185,4 +97,3 @@
         </div></div>
     </div>
 }
-

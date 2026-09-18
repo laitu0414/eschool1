@@ -5,6 +5,7 @@
         ? "~/Views/Shared/_AdminLayout.cshtml"
         : "~/Views/Shared/_TeacherLayout.cshtml";
     ViewData["Title"] = "Chủ nhiệm lớp";
+    var editableYears = ViewBag.EditableYears as HashSet<string> ?? new();
 }
 
 <div class="page-card">
@@ -65,7 +66,7 @@
                             <form asp-action="GanChuNhiem" method="post" class="d-flex gap-2">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="idLop" value="@lop.IdLop" />
-                                <select name="idGiaoVien" class="form-select">
+                                <select name="idGiaoVien" class="form-select" disabled="@(!editableYears.Contains(lop.NamHoc ?? ""))">
                                     <option value="">-- Chưa phân công --</option>
                                     @foreach (var giaoVien in Model.GiaoViens)
                                     {
@@ -75,7 +76,7 @@
                                         </option>
                                     }
                                 </select>
-                                <button class="btn btn-primary">Lưu</button>
+                                <button class="btn btn-primary" disabled="@(!editableYears.Contains(lop.NamHoc ?? ""))">Lưu</button>
                             </form>
                         </td>
                     </tr>

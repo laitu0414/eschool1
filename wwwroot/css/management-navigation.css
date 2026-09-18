@@ -1,0 +1,33 @@
+/* Shared navigation across administration, academics and results. */
+.sidebar { overflow-y: auto; }
+.management-navigation { display: grid; gap: 6px; padding: 4px 0 20px; }
+.management-group { border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 5px; }
+.management-group summary, .sidebar .management-link {
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px;
+    border-radius: 10px; color: #fff; text-decoration: none; font-size: 14px;
+    line-height: 1.45; cursor: pointer;
+}
+.management-group summary { list-style: none; font-weight: 600; }
+.management-group summary::-webkit-details-marker { display: none; }
+.management-group summary > span, .management-link > span { flex: 1; }
+.management-group i, .management-link i { flex: 0 0 18px; }
+.management-chevron { margin-left: auto; font-size: 11px; transition: transform .15s; }
+.management-group[open] .management-chevron { transform: rotate(180deg); }
+.management-items { display: grid; gap: 3px; padding: 3px 0 7px 14px; }
+.sidebar .management-link { font-weight: 400; }
+.sidebar .management-link.is-active { background: #fff; color: #24366b; font-weight: 650; }
+.management-group summary:hover, .sidebar .management-link:not(.is-active):hover { background: rgba(255,255,255,.13); }
+.management-navigation :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 900px) {
+    .app:has(.management-navigation) { flex-direction: column; }
+    .sidebar:has(.management-navigation) ~ .main { width: 100%; }
+    .sidebar:has(.management-navigation) { position: relative; width: 100%; height: auto; max-height: none; padding: 14px 18px; }
+    .sidebar:has(.management-navigation) ~ .main { margin-left: 0; }
+    .management-navigation { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+    .management-navigation > .management-link { grid-column: 1 / -1; }
+    .management-navigation span { display: inline; }
+    .sidebar:has(.management-navigation) .brand { padding-bottom: 12px; }
+}
+@media (max-width: 480px) {
+    .management-navigation { grid-template-columns: 1fr; }
+}

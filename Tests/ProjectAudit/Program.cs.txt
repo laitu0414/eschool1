@@ -1,0 +1,48 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Razor.Compilation;
+using Microsoft.Extensions.DependencyInjection;
+using eSchool.Controllers;
+using System.Reflection;
+using System.Text.RegularExpressions;
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions {
+    ApplicationName = typeof(HocVuController).Assembly.GetName().Name,
+    ContentRootPath = Directory.GetCurrentDirectory(), EnvironmentName = "Development"
+});
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+await using var app = builder.Build();
+var compiler = app.Services.GetRequiredService<IViewCompilerProvider>().GetCompiler();
+var errors = new List<string>();
+var controllers = typeof(HocVuController).Assembly.GetTypes()
+    .Where(t => t.IsSubclassOf(typeof(Controller))).ToDictionary(t => t.Name.Replace("Controller", ""));
+var count = 0;
+foreach (var file in Directory.EnumerateFiles("Views", "*.cshtml", SearchOption.AllDirectories)) {
+    if (Path.GetFileName(file) is "_ViewImports.cshtml" or "_ViewStart.cshtml") continue;
+    try { var descriptor = await compiler.CompileAsync("/" + file.Replace(Path.DirectorySeparatorChar, '/'));
+        if (descriptor.Type == null) errors.Add($"Missing compiled view: {file}");
+        count++;
+    } catch (Exception ex) { errors.Add($"Razor {file}: {ex.Message}"); }
+    var source = File.ReadAllText(file);
+    foreach (Match tag in Regex.Matches(source, @"<(?:a|form)\b[^>]*>", RegexOptions.Singleline)) {
+        var action = Regex.Match(tag.Value, @"asp-action=""([A-Za-z][A-Za-z0-9_]*)""");
+        if (!action.Success) continue;
+        var ctrl = Regex.Match(tag.Value, @"asp-controller=""([A-Za-z][A-Za-z0-9_]*)""");
+        var controller = ctrl.Success ? ctrl.Groups[1].Value : new DirectoryInfo(Path.GetDirectoryName(file)!).Name;
+        if (controller == "Shared") continue;
+        if (!controllers.TryGetValue(controller, out var type) ||
+            !type.GetMethods().Any(m => m.Name == action.Groups[1].Value))
+            errors.Add($"Broken link {file}: {controller}/{action.Groups[1].Value}");
+    }
+}
+foreach (var controller in controllers.Values) {
+    foreach (var method in controller.GetMethods(BindingFlags.Public|BindingFlags.Instance|BindingFlags.DeclaredOnly)) {
+        if (method.IsDefined(typeof(HttpPostAttribute)) && !method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) &&
+            !controller.IsDefined(typeof(AutoValidateAntiforgeryTokenAttribute)))
+            errors.Add($"POST without CSRF: {controller.Name}.{method.Name}");
+    }
+}
+Console.WriteLine($"Compiled {count} Razor views; scanned {controllers.Count} controllers.");
+foreach (var error in errors) Console.WriteLine(error);
+Console.WriteLine($"Audit findings: {errors.Count}");
+Environment.ExitCode = errors.Count == 0 ? 0 : 1;

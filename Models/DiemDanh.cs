@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace eSchool.Models
 {
+    // Historical data mapping only; attendance pages and actions have been retired.
     public class DiemDanh
     {
         [Key]

@@ -535,322 +535,6 @@ namespace eSchool.Controllers
         }
 
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
-        public IActionResult DiemDanh(string? namHocId, int? lopId, DateTime? ngay)
-        {
-            var assignments = GetAllAttendanceAssignments();
-
-            if (!string.IsNullOrWhiteSpace(namHocId) && int.TryParse(namHocId, out int nHocId))
-            {
-                var tenNamHoc = _context.NamHocs.Find(nHocId)?.TenNamHoc;
-                if (!string.IsNullOrEmpty(tenNamHoc))
-                {
-                    assignments = assignments.Where(x => x.NamHoc == tenNamHoc).ToList();
-                }
-            }
-
-            var sessions = BuildAttendanceSessionSummaries(assignments);
-
-            if (ngay.HasValue)
-            {
-                sessions = sessions.Where(x => x.NgayHoc.Date == ngay.Value.Date).ToList();
-            }
-
-            if (lopId.HasValue)
-            {
-                sessions = sessions.Where(x => x.IdLop == lopId.Value).ToList();
-            }
-
-            var vm = new AdminDiemDanhPageViewModel
-            {
-                LopHocs = GetLopSelectList(),
-                NamHocs = GetNamHocSelectList(),
-                DanhSachBuoiHoc = sessions
-                    .OrderByDescending(x => x.NgayHoc)
-                    .ThenBy(x => x.TenLop)
-                    .ThenBy(x => x.IdTietHoc)
-                    .ToList()
-            };
-
-            ViewBag.Ngay = ngay?.ToString("yyyy-MM-dd");
-            ViewBag.LopId = lopId;
-            ViewBag.NamHocId = namHocId;
-            return View(vm);
-        }
-
-        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
-        public IActionResult ChiTietDiemDanh(int lopId, DateTime ngayHoc, int? idTietHoc)
-        {
-            var assignments = GetAllAttendanceAssignments();
-            var session = BuildAttendanceSessionSummaries(assignments)
-                .FirstOrDefault(x => x.IdLop == lopId && x.NgayHoc.Date == ngayHoc.Date && x.IdTietHoc == idTietHoc);
-
-            if (session == null)
-            {
-                return NotFound();
-            }
-
-            var details = _context.DiemDanhs
-                .Include(x => x.HocSinh)
-                .Where(x => x.IdLop == lopId && x.NgayHoc.Date == ngayHoc.Date && x.IdTietHoc == idTietHoc)
-                .ToList().GroupBy(x => x.IdHocSinh).Select(g => g.OrderByDescending(x => x.IdDiemDanh).First())
-                .OrderBy(x => x.HocSinh!.HoTen)
-                .Select(x => new DiemDanhHocSinhChiTietViewModel
-                {
-                    MaHS = x.HocSinh!.MaHS,
-                    HoTen = x.HocSinh!.HoTen,
-                    TrangThai = x.TrangThai,
-                    GhiChu = x.GhiChu
-                })
-                .ToList();
-
-            return View(new ChiTietDiemDanhPageViewModel
-            {
-                BuoiHoc = session,
-                ChiTietHocSinhs = details
-            });
-        }
-
-        [RoleAuthorize(2)]
-        public IActionResult GiaoVienDiemDanh(int? idPhanCong, DateTime? ngayHoc, int? idTietHoc)
-        {
-            var giaoVien = GetCurrentGiaoVien();
-            if (giaoVien == null)
-            {
-                return NotFound("Tai khoan nay chua duoc lien ket voi ho so giao vien.");
-            }
-
-            var assignments = GetTeacherAttendanceAssignments(giaoVien.IdGiaoVien);
-            if (!idPhanCong.HasValue)
-            {
-                idPhanCong = assignments.FirstOrDefault()?.IdPhanCong;
-            }
-
-            var selectedAssignment = assignments.FirstOrDefault(x => x.IdPhanCong == idPhanCong);
-            var ngay = ngayHoc?.Date ?? DateTime.Today;
-            var selectedPeriod = idTietHoc ?? selectedAssignment?.TietBatDau;
-            if (selectedAssignment != null && (!selectedPeriod.HasValue || selectedPeriod < selectedAssignment.TietBatDau || selectedPeriod >= selectedAssignment.TietBatDau + (selectedAssignment.SoTiet ?? 1)))
-                selectedPeriod = selectedAssignment.TietBatDau;
-            ViewBag.IdTietHoc = selectedPeriod;
-
-            var vm = new GiaoVienDiemDanhPageViewModel
-            {
-                IdPhanCong = idPhanCong,
-                NgayHoc = ngay,
-                PhanCongs = assignments,
-                PhanCongDangChon = selectedAssignment
-            };
-
-            if (selectedAssignment != null)
-            {
-                var hocSinhs = _context.HocSinhs
-                    .Where(x => x.IdLopHoc == selectedAssignment.IdLop && x.TrangThai && !x.DaTotNghiep)
-                    .OrderBy(x => x.HoTen)
-                    .ToList();
-
-                var attendanceMap = _context.DiemDanhs
-                    .Where(x => x.IdLop == selectedAssignment.IdLop
-                        && x.NgayHoc.Date == ngay
-                        && x.IdTietHoc == selectedPeriod)
-                    .ToList().GroupBy(x => x.IdHocSinh).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.IdDiemDanh).First());
-
-                ViewBag.AttendanceSaved = attendanceMap.Count > 0;
-                vm.HocSinhs = hocSinhs.Select(x =>
-                {
-                    attendanceMap.TryGetValue(x.IdHocSinh, out var record);
-                    return new GiaoVienDiemDanhHocSinhViewModel
-                    {
-                        IdHocSinh = x.IdHocSinh,
-                        MaHS = x.MaHS,
-                        HoTen = x.HoTen,
-                        CoMat = record == null || AttendanceRules.IsPresent(record.TrangThai),
-                        GhiChu = record?.GhiChu
-                    };
-                }).ToList();
-            }
-
-            return View(vm);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [RoleAuthorize(2)]
-        public IActionResult LuuDiemDanhGiaoVien(GiaoVienLuuDiemDanhViewModel vm)
-        {
-            var giaoVien = GetCurrentGiaoVien();
-            if (giaoVien == null)
-            {
-                return NotFound("Tai khoan nay chua duoc lien ket voi ho so giao vien.");
-            }
-
-            var assignment = _context.PhanCongGiangDays
-                .FirstOrDefault(x => x.IdPhanCong == vm.IdPhanCong && x.IdGiaoVien == giaoVien.IdGiaoVien);
-            if (assignment == null)
-            {
-                return NotFound();
-            }
-
-            var selectedPeriod = vm.IdTietHoc ?? assignment.TietBatDau;
-            if (!ModelState.IsValid || !selectedPeriod.HasValue || !assignment.TietBatDau.HasValue
-                || selectedPeriod < assignment.TietBatDau || selectedPeriod >= assignment.TietBatDau + (assignment.SoTiet ?? 1)
-                || assignment.Thu != GetThuFromDate(vm.NgayHoc))
-            {
-                TempData["Error"] = "Ngày hoặc tiết không đúng phân công. Vui lòng chọn lại đúng thứ và tiết dạy.";
-                return RedirectToAction(nameof(GiaoVienDiemDanh), new { idPhanCong = vm.IdPhanCong, ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd"), idTietHoc = selectedPeriod });
-            }
-            var validStudentIds = _context.HocSinhs
-                .Where(x => x.IdLopHoc == assignment.IdLop && x.TrangThai && !x.DaTotNghiep)
-                .Select(x => x.IdHocSinh)
-                .ToHashSet();
-
-            if (vm.HocSinhs == null || vm.HocSinhs.Count == 0
-                || vm.HocSinhs.Select(x => x.IdHocSinh).Distinct().Count() != vm.HocSinhs.Count
-                || !validStudentIds.SetEquals(vm.HocSinhs.Select(x => x.IdHocSinh))
-                || vm.HocSinhs.Any(x => x.GhiChu?.Trim().Length > 255))
-            {
-                TempData["Error"] = "Danh sách học sinh đã thay đổi, bị trùng hoặc ghi chú quá 255 ký tự. Hãy mở lại danh sách và kiểm tra trước khi lưu.";
-                return RedirectToAction(nameof(GiaoVienDiemDanh), new { idPhanCong = vm.IdPhanCong, ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd"), idTietHoc = selectedPeriod });
-            }
-            var schoolYear = _context.NamHocs.AsNoTracking().FirstOrDefault(x => x.TenNamHoc == assignment.NamHoc);
-            var holiday = _context.LichHocThayDois.Any(x => x.IsNghi && x.Ngay.Date == vm.NgayHoc.Date
-                && (!x.IdLop.HasValue || x.IdLop == assignment.IdLop)
-                && (!x.TietBatDau.HasValue || (selectedPeriod >= x.TietBatDau && selectedPeriod < x.TietBatDau + (x.SoTiet ?? 1))));
-            if (vm.NgayHoc.Date > DateTime.Today || schoolYear == null
-                || vm.NgayHoc.Date < schoolYear.NgayBatDau.Date || vm.NgayHoc.Date > schoolYear.NgayKetThuc.Date || holiday)
-            {
-                TempData["Error"] = "Không thể điểm danh ngày tương lai, ngoài năm học hoặc tiết đã được thông báo nghỉ.";
-                return RedirectToAction(nameof(GiaoVienDiemDanh), new { idPhanCong = vm.IdPhanCong, ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd"), idTietHoc = selectedPeriod });
-            }
-            using var transaction = _context.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
-            var existing = _context.DiemDanhs
-                .Where(x => x.IdLop == assignment.IdLop
-                    && x.NgayHoc.Date == vm.NgayHoc.Date
-                    && x.IdTietHoc == selectedPeriod)
-                .ToList()
-                .GroupBy(x => x.IdHocSinh).ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.IdDiemDanh).First());
-
-            foreach (var item in vm.HocSinhs.Where(x => validStudentIds.Contains(x.IdHocSinh)))
-            {
-                if (!existing.TryGetValue(item.IdHocSinh, out var record))
-                {
-                    record = new DiemDanh();
-                    _context.DiemDanhs.Add(record);
-                }
-
-                record.IdHocSinh = item.IdHocSinh;
-                record.IdLop = assignment.IdLop;
-                record.NgayHoc = vm.NgayHoc.Date;
-                record.IdTietHoc = selectedPeriod;
-                record.TrangThai = item.CoMat ? "Có mặt" : "Vắng";
-                record.GhiChu = string.IsNullOrWhiteSpace(item.GhiChu) ? null : item.GhiChu.Trim();
-            }
-
-            try
-            {
-                _context.SaveChanges();
-                transaction.Commit();
-            }
-            catch (DbUpdateException)
-            {
-                transaction.Rollback();
-                TempData["Error"] = "Chưa lưu được điểm danh. Vui lòng tải lại danh sách và thử lại.";
-                return RedirectToAction(nameof(GiaoVienDiemDanh), new { idPhanCong = vm.IdPhanCong, ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd"), idTietHoc = selectedPeriod });
-            }
-            TempData["Success"] = "Đã lưu điểm danh cho lớp học.";
-            return RedirectToAction(nameof(GiaoVienDiemDanh), new
-            {
-                idPhanCong = vm.IdPhanCong,
-                idTietHoc = selectedPeriod,
-                ngayHoc = vm.NgayHoc.ToString("yyyy-MM-dd")
-            });
-        }
-
-        [RoleAuthorize(3, 4)]
-        public IActionResult XemDiemDanh(int? idMonHoc, DateTime? ngayHoc, int? idTietHoc, int? idHocSinh)
-        {
-            var hocSinh = GetCurrentHocSinh();
-            if (HttpContext.Session.GetInt32("RoleId") == 4)
-            {
-                var accountId = HttpContext.Session.GetInt32("UserId");
-                var children = _context.HocSinhPhuHuynhs.Where(x => x.PhuHuynh!.IdTaiKhoan == accountId)
-                    .Select(x => x.HocSinh!).Distinct().OrderBy(x => x.HoTen).ToList();
-                hocSinh = idHocSinh.HasValue ? children.FirstOrDefault(x => x.IdHocSinh == idHocSinh) : children.FirstOrDefault();
-                ViewBag.Children = children.Select(x => new SelectListItem(x.HoTen + " - " + x.MaHS, x.IdHocSinh.ToString(), x.IdHocSinh == (hocSinh == null ? 0 : hocSinh.IdHocSinh))).ToList();
-            }
-            ViewBag.IdHocSinh = hocSinh?.IdHocSinh;            if (hocSinh == null)
-            {
-                return NotFound("Tài khoản này chưa được liên kết với hồ sơ học sinh.");
-            }
-
-            var attendanceRecords = _context.DiemDanhs
-                .Include(x => x.LopHoc)
-                .Where(x => x.IdHocSinh == hocSinh.IdHocSinh)
-                .OrderByDescending(x => x.NgayHoc)
-                .ToList();
-
-            var classIds = attendanceRecords.Select(x => x.IdLop).Distinct().ToList();
-            if (hocSinh.IdLopHoc.HasValue)
-            {
-                classIds.Add(hocSinh.IdLopHoc.Value);
-            }
-
-            classIds = classIds.Distinct().ToList();
-
-            var assignments = _context.PhanCongGiangDays
-                .Include(x => x.MonHoc)
-                .Include(x => x.GiaoVien)
-                .Include(x => x.LopHoc)
-                .Where(x => classIds.Contains(x.IdLop))
-                .AsNoTracking()
-                .ToList();
-
-            var monHocs = assignments
-                .Where(x => x.MonHoc != null)
-                .GroupBy(x => x.IdMonHoc)
-                .Select(x => x.First())
-                .OrderBy(x => x.MonHoc!.TenMon)
-                .Select(x => new SelectListItem(x.MonHoc!.TenMon, x.IdMonHoc.ToString()))
-                .ToList();
-
-            ViewBag.NgayHoc = ngayHoc?.ToString("yyyy-MM-dd");
-            ViewBag.IdTietHoc = idTietHoc;
-
-            var history = AttendanceRules.Latest(attendanceRecords)
-                .Where(r => (!ngayHoc.HasValue || r.NgayHoc.Date == ngayHoc.Value.Date)
-                    && (!idTietHoc.HasValue || r.IdTietHoc == idTietHoc.Value))
-                .Select(record =>
-                {
-                    var assignment = MatchAssignment(record, assignments);
-                    return new
-                    {
-                        Assignment = assignment,
-                        Item = new HocSinhDiemDanhChiTietViewModel
-                        {
-                            NgayHoc = record.NgayHoc,
-                            TenMonHoc = assignment?.MonHoc?.TenMon ?? "Chưa xác định",
-                            TenGiaoVien = assignment?.GiaoVien?.HoTen ?? "Chưa cập nhật",
-                            TenLop = record.LopHoc?.TenLop ?? string.Empty,
-                            IdTietHoc = record.IdTietHoc,
-                            TrangThai = record.TrangThai,
-                            GhiChu = record.GhiChu
-                        }
-                    };
-                })
-                .Where(x => !idMonHoc.HasValue || x.Assignment?.IdMonHoc == idMonHoc.Value)
-                .Select(x => x.Item)
-                .OrderByDescending(x => x.NgayHoc)
-                .ThenBy(x => x.IdTietHoc)
-                .ToList();
-
-            return View(new HocSinhDiemDanhPageViewModel
-            {
-                MonHocs = monHocs,
-                IdMonHoc = idMonHoc,
-                TenMonHocDangChon = monHocs.FirstOrDefault(x => x.Value == idMonHoc?.ToString())?.Text ?? "Tất cả môn học",
-                LichSuDiemDanh = history
-            });
-        }
-
-        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public async Task<IActionResult> HocPhi(int? trangThai, int? namHocId)
         {
             await UpdateQuaHanHocPhi();
@@ -976,6 +660,13 @@ namespace eSchool.Controllers
                 return Error(nameof(HocPhi), "Học kỳ không thuộc năm học đã chọn.");
             }
 
+            if (!_context.HocSinhs.Any(x => x.IdHocSinh == vm.IdHocSinh))
+                return Error(nameof(HocPhi), "Học sinh không tồn tại.");
+            if (vm.TrangThai is < 0 or > 2 || (vm.TrangThai == 1 && (!vm.NgayDong.HasValue || vm.NgayDong.Value.Date > DateTime.Today)))
+                return Error(nameof(HocPhi), "Trạng thái hoặc ngày thanh toán không hợp lệ.");
+            if (_context.HocPhis.Any(x => x.IdHocSinh == vm.IdHocSinh && x.IdHocKy == vm.IdHocKy))
+                return Error(nameof(HocPhi), "Học sinh đã có khoản học phí trong học kỳ này.");
+
             var hp = new HocPhi
             {
                 IdHocSinh = vm.IdHocSinh,
@@ -1034,7 +725,12 @@ namespace eSchool.Controllers
             if (hocKy == null)
                 return Error(nameof(HocPhi), "Học kỳ hoặc năm học không hợp lệ.");
 
-            var hocSinhsQuery = _context.HocSinhs.Include(x => x.LopHoc).AsQueryable();
+            if (!ModelState.IsValid || SoTien < 0 || SoTien > 999999999999m)
+                return Error(nameof(HocPhi), "Số tiền học phí không hợp lệ.");
+            var yearName = _context.NamHocs.Where(x => x.IdNamHoc == IdNamHoc).Select(x => x.TenNamHoc).FirstOrDefault();
+            var hocSinhsQuery = _context.HocSinhs.Include(x => x.LopHoc)
+                .Where(x => x.TrangThai && !x.DaTotNghiep && x.LopHoc != null && x.LopHoc.NamHoc == yearName)
+                .Where(x => !_context.HocPhis.Any(f => f.IdHocSinh == x.IdHocSinh && f.IdHocKy == IdHocKy));
             if (IdLop.HasValue)
                 hocSinhsQuery = hocSinhsQuery.Where(x => x.IdLopHoc == IdLop.Value);
             else if (!string.IsNullOrEmpty(Khoi))
@@ -1048,9 +744,11 @@ namespace eSchool.Controllers
 
             var hsIds = hocSinhs.Select(x => x.IdHocSinh).ToList();
             var policies = _context.ChinhSachMienGiams
-                                   .Where(x => hsIds.Contains(x.IdHocSinh))
+                                   .Where(x => hsIds.Contains(x.IdHocSinh) && (x.HieuLuc == yearName || x.HieuLuc == null || x.HieuLuc == ""))
                                    .ToList();
 
+            if (policies.Any(x => x.PhanTramGiam < 0 || x.PhanTramGiam > 100))
+                return Error(nameof(HocPhi), "Có chính sách miễn giảm ngoài khoảng 0–100%. Vui lòng sửa trước khi tạo học phí.");
             var phuHuynhEmails = _context.HocSinhPhuHuynhs
                 .Include(x => x.PhuHuynh)
                 .Where(x => hsIds.Contains(x.IdHocSinh) && x.PhuHuynh != null && x.PhuHuynh.Email != null && x.PhuHuynh.Email != "")
@@ -1127,6 +825,11 @@ namespace eSchool.Controllers
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult LuuMienGiam(ChinhSachMienGiam model)
         {
+            if (!ModelState.IsValid || model.PhanTramGiam < 0 || model.PhanTramGiam > 100 ||
+                !_context.HocSinhs.Any(x => x.IdHocSinh == model.IdHocSinh))
+                return Error(nameof(DanhSachMienGiam), "Học sinh hoặc phần trăm miễn giảm không hợp lệ (0–100%).");
+            if (_context.ChinhSachMienGiams.Any(x => x.IdHocSinh == model.IdHocSinh && x.HieuLuc == model.HieuLuc))
+                return Error(nameof(DanhSachMienGiam), "Học sinh đã có chính sách miễn giảm trong thời gian này.");
             _context.ChinhSachMienGiams.Add(model);
             _context.SaveChanges();
             return RedirectToAction(nameof(DanhSachMienGiam));
@@ -1245,6 +948,7 @@ namespace eSchool.Controllers
         }
 
         [HttpGet]
+        [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult GetHocSinhByLop(int lopId)
         {
             var data = _context.HocSinhs
@@ -1266,6 +970,8 @@ namespace eSchool.Controllers
                 return NotFound();
             }
 
+            if (hocPhi.TrangThai == 1)
+                return Success(nameof(HocPhi), "Khoản học phí đã được xác nhận trước đó.");
             hocPhi.TrangThai = 1;
             hocPhi.NgayDong = DateTime.Today;
             hocPhi.PhuongThuc = phuongThuc;
@@ -1284,6 +990,8 @@ namespace eSchool.Controllers
                 return NotFound();
             }
 
+            if (hocPhi.TrangThai == 1)
+                return Error(nameof(HocPhi), "Không thể xóa khoản học phí đã thanh toán. Cần thực hiện đối soát trước.");
             _context.HocPhis.Remove(hocPhi);
             _context.SaveChanges();
             return Success(nameof(HocPhi), "Da xoa khoan hoc phi.");
@@ -1292,148 +1000,24 @@ namespace eSchool.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RoleAuthorize(3, 4)]
-        public async Task<IActionResult> DongHocPhi(int id, string? phuongThuc)
+        public IActionResult DongHocPhi(int id, string? phuongThuc)
         {
-            var hocSinh = GetCurrentHocSinh();
-            if (hocSinh == null)
-            {
-                return NotFound("Tai khoan nay chua duoc lien ket voi ho so hoc sinh.");
-            }
-
-            var hocPhi = _context.HocPhis.FirstOrDefault(x => x.IdHocPhi == id && x.IdHocSinh == hocSinh.IdHocSinh);
-            if (hocPhi == null)
-            {
-                return NotFound();
-            }
-
-            if (hocPhi.TrangThai == 1)
-            {
-                return Success(nameof(XemHocPhi), "Khoản học phí này đã được thanh toán trước đó.");
-            }
-            
-            if (phuongThuc == "VNPAY")
-            {
-                string vnp_Returnurl = Url.Action("VnPayReturn", "KetQuaHocTap", new { id = hocPhi.IdHocPhi }, Request.Scheme) ?? "";
-                string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-                string vnp_TmnCode = "8241VKPZ"; // Mã website tại VNPAY (dummy)
-                string vnp_HashSecret = "BPKRATFNMZUPZTLNAVOAMUVDAALOMZKN"; // Chuỗi bí mật (dummy)
-
-                var vnpayData = new SortedList<string, string>(new VnPayCompare())
-                {
-                    { "vnp_Version", "2.1.0" },
-                    { "vnp_Command", "pay" },
-                    { "vnp_TmnCode", vnp_TmnCode },
-                    { "vnp_Amount", ((long)(hocPhi.SoTien * 100)).ToString() },
-                    { "vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss") },
-                    { "vnp_CurrCode", "VND" },
-                    { "vnp_IpAddr", HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1" },
-                    { "vnp_Locale", "vn" },
-                    { "vnp_OrderInfo", $"Thanh toan hoc phi {hocPhi.HocKy}" },
-                    { "vnp_OrderType", "other" },
-                    { "vnp_ReturnUrl", vnp_Returnurl },
-                    { "vnp_TxnRef", DateTime.Now.Ticks.ToString() }
-                };
-
-                var queryString = new System.Text.StringBuilder();
-                foreach (var kv in vnpayData)
-                {
-                    if (!string.IsNullOrEmpty(kv.Value))
-                    {
-                        queryString.Append(System.Net.WebUtility.UrlEncode(kv.Key) + "=" + System.Net.WebUtility.UrlEncode(kv.Value) + "&");
-                    }
-                }
-                
-                string signDataStr = queryString.ToString().TrimEnd('&');
-                string vnp_SecureHash = HmacSHA512(vnp_HashSecret, signDataStr);
-                queryString.Append("vnp_SecureHash=" + vnp_SecureHash);
-                
-                string paymentUrl = vnp_Url + "?" + queryString.ToString();
-                return Redirect(paymentUrl);
-            }
-
-            if (phuongThuc != "QR")
-            {
-                return Error(nameof(XemHocPhi), "Phương thức thanh toán không hợp lệ.");
-            }
-
-            var emails = _context.HocSinhPhuHuynhs
-                .Include(x => x.PhuHuynh)
-                .Where(x => x.IdHocSinh == hocSinh.IdHocSinh && x.PhuHuynh != null && x.PhuHuynh.Email != null && x.PhuHuynh.Email != "")
-                .Select(x => x.PhuHuynh.Email)
-                .ToList();
-
-            string subject = $"[Thanh toán QR] Học phí của học sinh {hocSinh.HoTen}";
-            string qrData = Uri.EscapeDataString($"TUITION_PAYMENT_{hocPhi.IdHocPhi}_{hocPhi.SoTien}");
-            string qrUrl = $"https://quickchart.io/qr?text={qrData}&size=300";
-
-            if (emails.Any())
-            {
-                string body = $"Kính gửi Phụ huynh,\n\nHọc sinh {hocSinh.HoTen} đã chọn thanh toán khoản học phí trị giá {hocPhi.SoTien:N0} đ.\n\nVui lòng quét mã QR tại đường dẫn sau để tiến hành thanh toán:\n{qrUrl}\n\nTrân trọng,\nNhà trường.";
-                foreach (var email in emails)
-                {
-                    if (!string.IsNullOrEmpty(email))
-                    {
-                        try { await _emailSender.SendAsync(email, subject, body); } catch (Exception ex) { Console.WriteLine($"Email send failed: {ex}"); }
-                    }
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(hocSinh.Email))
-            {
-                string body = $"Kính gửi Học sinh / Phụ huynh,\n\nBạn đã chọn thanh toán khoản học phí trị giá {hocPhi.SoTien:N0} đ.\n\nVui lòng quét mã QR tại đường dẫn sau để tiến hành thanh toán:\n{qrUrl}\n\nTrân trọng,\nNhà trường.";
-                try { await _emailSender.SendAsync(hocSinh.Email, subject, body); } catch (Exception ex) { Console.WriteLine($"Email send failed: {ex}"); }
-            }
-
-            return Success(nameof(XemHocPhi), "Đã gửi mã QR thanh toán vào email của phụ huynh.");
+            var student = GetCurrentHocSinh();
+            if (student == null) return NotFound();
+            var fee = _context.HocPhis.AsNoTracking()
+                .FirstOrDefault(x => x.IdHocPhi == id && x.IdHocSinh == student.IdHocSinh);
+            if (fee == null) return NotFound();
+            if (fee.TrangThai == 1)
+                return Success(nameof(XemHocPhi), "Khoản học phí đã được thanh toán.");
+            return Error(nameof(XemHocPhi), "Thanh toán trực tuyến chưa được cấu hình. Vui lòng liên hệ nhà trường để thanh toán và xác nhận học phí.");
         }
 
+        [HttpGet]
         [RoleAuthorize(3, 4)]
         public IActionResult VnPayReturn(int id)
         {
-            var vnp_ResponseCode = Request.Query["vnp_ResponseCode"].ToString();
-            
-            if (vnp_ResponseCode == "00")
-            {
-                // Payment success
-                var hocPhi = _context.HocPhis.Find(id);
-                if (hocPhi != null && hocPhi.TrangThai != 1)
-                {
-                    hocPhi.TrangThai = 1;
-                    hocPhi.NgayDong = DateTime.Today;
-                    hocPhi.PhuongThuc = "VNPAY";
-                    _context.SaveChanges();
-                    return Success(nameof(XemHocPhi), "Thanh toán qua VNPAY thành công.");
-                }
-            }
-            
-            return Error(nameof(XemHocPhi), "Thanh toán qua VNPAY thất bại hoặc bị hủy.");
-        }
-
-        private string HmacSHA512(string key, string inputData)
-        {
-            var hash = new System.Text.StringBuilder();
-            byte[] keyBytes = System.Text.Encoding.UTF8.GetBytes(key);
-            byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(inputData);
-            using (var hmac = new System.Security.Cryptography.HMACSHA512(keyBytes))
-            {
-                byte[] hashValue = hmac.ComputeHash(inputBytes);
-                foreach (var theByte in hashValue)
-                {
-                    hash.Append(theByte.ToString("x2"));
-                }
-            }
-            return hash.ToString();
-        }
-
-        public class VnPayCompare : IComparer<string>
-        {
-            public int Compare(string? x, string? y)
-            {
-                if (x == y) return 0;
-                if (x == null) return -1;
-                if (y == null) return 1;
-                var Compare = System.Globalization.CompareInfo.GetCompareInfo("en-US");
-                return Compare.Compare(x, y, System.Globalization.CompareOptions.Ordinal);
-            }
+            // No verified gateway transaction exists; URL parameters are not proof of payment.
+            return Error(nameof(XemHocPhi), "Chưa thể xác thực giao dịch. Vui lòng liên hệ nhà trường để đối soát học phí.");
         }
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult PhieuDiem()
@@ -1448,6 +1032,9 @@ namespace eSchool.Controllers
                     .OrderByDescending(x => x.NgayLap)
                     .ToList(),
                 HocSinhs = GetHocSinhSelectList(),
+                LopHocs = GetLopSelectList()
+                    .Select(x => new SelectListItem(x.Text, x.Text))
+                    .ToList(),
                 NamHocs = GetNamHocSelectList(),
                 HocKys = GetHocKySelectList()
             });
@@ -1477,7 +1064,7 @@ namespace eSchool.Controllers
 
             _context.PhieuDiems.Add(phieu);
             _context.SaveChanges();
-            return RedirectToAction(nameof(InPhieuDiem), new { id = phieu.IdPhieuDiem });
+            return RedirectToAction(nameof(PhieuDiem));
         }
 
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
@@ -1579,8 +1166,9 @@ namespace eSchool.Controllers
 
         private List<SelectListItem> GetHocSinhSelectList() =>
             _context.HocSinhs
+                .Include(x => x.LopHoc)
                 .OrderBy(x => x.HoTen)
-                .Select(x => new SelectListItem($"{x.MaHS} - {x.HoTen}", x.IdHocSinh.ToString()))
+                .Select(x => new SelectListItem($"{x.MaHS} - {x.HoTen} - {x.LopHoc!.TenLop}", x.IdHocSinh.ToString()))
                 .ToList();
 
         private List<SelectListItem> GetLopSelectList() =>
@@ -1601,91 +1189,6 @@ namespace eSchool.Controllers
                 .ThenBy(x => x.NgayBatDau)
                 .Select(x => new SelectListItem($"{x.TenHocKy} - {x.NamHoc!.TenNamHoc}", x.IdHocKy.ToString()))
                 .ToList();
-
-        private List<GiaoVienDiemDanhPhanCongViewModel> GetTeacherAttendanceAssignments(int giaoVienId)
-        {
-            return _context.PhanCongGiangDays
-                .Include(x => x.MonHoc)
-                .Include(x => x.LopHoc)
-                .Where(x => x.IdGiaoVien == giaoVienId)
-                .OrderBy(x => x.LopHoc!.TenLop)
-                .ThenBy(x => x.Thu)
-                .ThenBy(x => x.TietBatDau)
-                .Select(x => new GiaoVienDiemDanhPhanCongViewModel
-                {
-                    IdPhanCong = x.IdPhanCong,
-                    IdLop = x.IdLop,
-                    IdMonHoc = x.IdMonHoc,
-                    TenLop = x.LopHoc!.TenLop,
-                    TenMonHoc = x.MonHoc!.TenMon,
-                    HocKy = x.HocKy,
-                    NamHoc = x.NamHoc,
-                    Thu = x.Thu,
-                    TietBatDau = x.TietBatDau,
-                    SoTiet = x.SoTiet
-                })
-                .ToList();
-        }
-
-        private List<PhanCongGiangDay> GetAllAttendanceAssignments()
-        {
-            return _context.PhanCongGiangDays
-                .Include(x => x.MonHoc)
-                .Include(x => x.GiaoVien)
-                .Include(x => x.LopHoc)
-                .AsNoTracking()
-                .ToList();
-        }
-
-        private List<DiemDanhBuoiHocViewModel> BuildAttendanceSessionSummaries(List<PhanCongGiangDay> assignments)
-        {
-            var records = _context.DiemDanhs
-                .Include(x => x.LopHoc)
-                .AsNoTracking()
-                .ToList();
-
-            var classIds = assignments.Select(x => x.IdLop).ToHashSet();
-            return AttendanceRules.Latest(records).Where(x => classIds.Contains(x.IdLop))
-                .GroupBy(x => new { x.IdLop, Ngay = x.NgayHoc.Date, x.IdTietHoc })
-                .Select(group =>
-                {
-                    var first = group.First();
-                    var assignment = MatchAssignment(first, assignments);
-                    return new DiemDanhBuoiHocViewModel
-                    {
-                        IdLop = group.Key.IdLop,
-                        TenLop = first.LopHoc?.TenLop ?? $"Lop {group.Key.IdLop}",
-                        NgayHoc = group.Key.Ngay,
-                        IdTietHoc = group.Key.IdTietHoc,
-                        IdMonHoc = assignment?.IdMonHoc,
-                        TenMonHoc = assignment?.MonHoc?.TenMon ?? "Chua xac dinh",
-                        TenGiaoVien = assignment?.GiaoVien?.HoTen ?? "Chua cap nhat",
-                        TongHocSinh = group.Count(),
-                        SoHocSinhCoMat = group.Count(x => AttendanceRules.IsPresent(x.TrangThai)),
-                        SoHocSinhVang = group.Count(x => !AttendanceRules.IsPresent(x.TrangThai))
-                    };
-                })
-                .ToList();
-        }
-
-        private PhanCongGiangDay? MatchAssignment(DiemDanh record, List<PhanCongGiangDay> assignments)
-        {
-            return AttendanceRules.Match(record, assignments);
-        }
-
-        private static int GetThuFromDate(DateTime date)
-        {
-            return date.DayOfWeek switch
-            {
-                DayOfWeek.Monday => 2,
-                DayOfWeek.Tuesday => 3,
-                DayOfWeek.Wednesday => 4,
-                DayOfWeek.Thursday => 5,
-                DayOfWeek.Friday => 6,
-                DayOfWeek.Saturday => 7,
-                _ => 8
-            };
-        }
 
         private async Task UpdateQuaHanHocPhi()
         {

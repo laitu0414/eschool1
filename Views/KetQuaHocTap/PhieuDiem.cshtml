@@ -1,17 +1,163 @@
 @model eSchool.ViewModels.PhieuDiemPageViewModel
 @{ Layout = "~/Views/Shared/_ResultLayout.cshtml"; ViewData["Title"] = "In phiếu điểm"; }
 <div class="row g-4">
-<div class="col-xl-4"><div class="page-card">
-<h5 class="mb-3">Lập phiếu điểm</h5>
-<form asp-action="TaoPhieuDiem" method="post">@Html.AntiForgeryToken()
-<div class="mb-3"><label class="form-label">Học sinh</label><select name="idHocSinh" asp-items="Model.HocSinhs" class="form-select"><option value="">-- Chọn học sinh --</option></select></div>
-<div class="mb-3"><label class="form-label">Năm học</label><select name="idNamHoc" asp-items="Model.NamHocs" class="form-select"><option value="">-- Chọn năm học --</option></select></div>
-<div class="mb-3"><label class="form-label">Học kỳ</label><select name="idHocKy" asp-items="Model.HocKys" class="form-select"><option value="">-- Chọn học kỳ --</option></select></div>
-<button class="btn btn-primary w-100"><i class="bi bi-file-earmark-pdf"></i> Tạo và tải PDF</button>
-</form></div></div>
-<div class="col-xl-8"><div class="page-card"><h5 class="mb-3">Lịch sử phiếu điểm</h5>
-<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Học sinh</th><th>Lớp</th><th>Học kỳ</th><th>Ngày lập</th><th></th></tr></thead><tbody>
-@if(!Model.DanhSach.Any()){<tr><td colspan="5" class="text-center text-muted py-4">Chưa có phiếu điểm</td></tr>}
-@foreach(var item in Model.DanhSach){<tr><td><strong>@item.HocSinh?.HoTen</strong><small class="d-block text-muted">@item.HocSinh?.MaHS</small></td><td>@item.LopHoc?.TenLop</td><td>@item.HocKy?.TenHocKy - @item.NamHoc?.TenNamHoc</td><td>@item.NgayLap.ToString("dd/MM/yyyy HH:mm")</td><td><a asp-action="InPhieuDiem" asp-route-id="@item.IdPhieuDiem" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> PDF</a></td></tr>}
-</tbody></table></div></div></div>
+    <div class="col-xl-4">
+        <div class="page-card p-4">
+            <h5 class="mb-3">Lập phiếu điểm</h5>
+            <form asp-action="TaoPhieuDiem" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label">Năm học</label>
+                    <select id="namHocFilter" name="idNamHoc" class="form-select">
+                        <option value="">-- Chọn năm học --</option>
+                        @foreach (var item in Model.NamHocs)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Học kỳ</label>
+                    <select id="hocKyFilter" name="idHocKy" class="form-select" disabled>
+                        <option value="">-- Chọn học kỳ --</option>
+                        @foreach (var item in Model.HocKys)
+                        {
+                            <option value="@item.Value" data-namhoc="@item.Text">@item.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Lớp</label>
+                    <select id="lopFilter" class="form-select" disabled>
+                        <option value="">-- Chọn lớp --</option>
+                        @foreach (var item in Model.LopHocs)
+                        {
+                            <option value="@item.Text">@item.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Học sinh</label>
+                    <select id="studentSelect" name="idHocSinh" class="form-select" disabled>
+                        <option value="">-- Chọn học sinh --</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary w-100"><i class="bi bi-file-earmark-pdf"></i> Tạo và tải PDF</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="page-card">
+            <h5 class="mb-3">Lịch sử phiếu điểm</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Học sinh</th>
+                            <th>Lớp</th>
+                            <th>Học kỳ</th>
+                            <th>Ngày lập</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.DanhSach.Any())
+                        {
+                            <tr><td colspan="5" class="text-center text-muted py-4">Chưa có phiếu điểm</td></tr>
+                        }
+                        @foreach (var item in Model.DanhSach)
+                        {
+                            <tr>
+                                <td><strong>@item.HocSinh?.HoTen</strong><small class="d-block text-muted">@item.HocSinh?.MaHS</small></td>
+                                <td>@item.LopHoc?.TenLop</td>
+                                <td>@item.HocKy?.TenHocKy - @item.NamHoc?.TenNamHoc</td>
+                                <td>@item.NgayLap.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td><a asp-action="InPhieuDiem" asp-route-id="@item.IdPhieuDiem" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> PDF</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    (function () {
+        const namHocFilter = document.getElementById('namHocFilter');
+        const hocKyFilter = document.getElementById('hocKyFilter');
+        const lopFilter = document.getElementById('lopFilter');
+        const studentSelect = document.getElementById('studentSelect');
+
+        const studentData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.HocSinhs.Select(x => new {
+                value = x.Value,
+                className = x.Text.Contains(" - ") ? x.Text.Split(" - ").Last() : "",
+                label = x.Text.Contains(" - ") ? string.Join(" - ", x.Text.Split(" - ").Take(x.Text.Split(" - ").Length - 1)) : x.Text
+            })
+        ));
+
+        const reloadHockyOptions = () => {
+            const selectedNamHocValue = namHocFilter.value;
+            const selectedNamHocText = namHocFilter.options[namHocFilter.selectedIndex]?.text || '';
+            const hocKyOptions = Array.from(hocKyFilter.querySelectorAll('option[data-namhoc]'));
+
+            hocKyFilter.disabled = !selectedNamHocValue;
+            hocKyFilter.innerHTML = '<option value="">-- Chọn học kỳ --</option>';
+            lopFilter.disabled = true;
+            studentSelect.disabled = true;
+            studentSelect.innerHTML = '<option value="">-- Chọn học sinh --</option>';
+
+            hocKyOptions.forEach(option => {
+                const text = (option.dataset.namhoc || '').trim();
+                const keep = !selectedNamHocValue || text.includes(selectedNamHocText);
+                if (keep) {
+                    const clone = option.cloneNode(true);
+                    hocKyFilter.appendChild(clone);
+                }
+            });
+        };
+
+        const reloadClassOptions = () => {
+            const selectedNamHoc = namHocFilter.value;
+            const selectedHocKy = hocKyFilter.value;
+            lopFilter.disabled = !(selectedNamHoc && selectedHocKy);
+            lopFilter.value = '';
+            studentSelect.disabled = true;
+            studentSelect.innerHTML = '<option value="">-- Chọn học sinh --</option>';
+        };
+
+        const reloadStudentOptions = () => {
+            const selectedLop = lopFilter.value;
+            studentSelect.innerHTML = '<option value="">-- Chọn học sinh --</option>';
+
+            if (!selectedLop) {
+                studentSelect.disabled = true;
+                return;
+            }
+
+            studentSelect.disabled = false;
+            studentData.forEach(student => {
+                if (student.className === selectedLop) {
+                    const option = document.createElement('option');
+                    option.value = student.value;
+                    option.textContent = student.label;
+                    studentSelect.appendChild(option);
+                }
+            });
+        };
+
+        if (namHocFilter && hocKyFilter && lopFilter && studentSelect) {
+            namHocFilter.addEventListener('change', reloadHockyOptions);
+            hocKyFilter.addEventListener('change', reloadClassOptions);
+            lopFilter.addEventListener('change', reloadStudentOptions);
+            reloadHockyOptions();
+        }
+    })();
+</script>

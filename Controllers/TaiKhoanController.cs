@@ -119,6 +119,13 @@ namespace eSchool.Controllers
                 return RedirectToAction("Index");
             }
 
+            if ((idChucVu != 2 && _context.GiaoViens.Any(x => x.IdTaiKhoan == id)) ||
+                (idChucVu != 3 && _context.HocSinhs.Any(x => x.IdTaiKhoan == id)) ||
+                (idChucVu != 4 && _context.PhuHuynhs.Any(x => x.IdTaiKhoan == id)))
+            {
+                TempData["Error"] = "Chức vụ phải khớp với hồ sơ đã liên kết của tài khoản.";
+                return RedirectToAction(nameof(Index));
+            }
             if (!_accountService.Update(id, idChucVu, email))
             {
                 TempData["Error"] = "Cập nhật thất bại. Hãy kiểm tra chức vụ tài khoản.";
@@ -134,81 +141,72 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
-             var taiKhoan = _context.TaiKhoans
-        .FirstOrDefault(x => x.IdTaiKhoan == id);
+            var taiKhoan = _context.TaiKhoans.FirstOrDefault(x => x.IdTaiKhoan == id);
 
-        // if (taiKhoan == null)
-        // {
-        //     TempData["Error"] = "Không tìm thấy tài khoản.";
-        //     return RedirectToAction("Index");
-        // }
+            if (taiKhoan == null)
+            {
+                TempData["Error"] = "Không tìm thấy tài khoản.";
+                return RedirectToAction("Index");
+            }
 
-        // Không cho xóa System Admin
-        if (taiKhoan.IdChucVu == SystemRoleIds.SystemAdmin)
-        {
-            TempData["Error"] = "Không thể xóa tài khoản System Admin.";
+            if (taiKhoan.IdChucVu == SystemRoleIds.SystemAdmin)
+            {
+                TempData["Error"] = "Không thể xóa tài khoản System Admin.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                var hocSinhs = _context.HocSinhs
+                    .Where(x => x.IdTaiKhoan == id)
+                    .ToList();
+
+                foreach (var x in hocSinhs)
+                {
+                    x.IdTaiKhoan = null;
+                }
+
+                var giaoViens = _context.GiaoViens
+                    .Where(x => x.IdTaiKhoan == id)
+                    .ToList();
+
+                foreach (var x in giaoViens)
+                {
+                    x.IdTaiKhoan = null;
+                }
+
+                var phuHuynhs = _context.PhuHuynhs
+                    .Where(x => x.IdTaiKhoan == id)
+                    .ToList();
+
+                foreach (var x in phuHuynhs)
+                {
+                    x.IdTaiKhoan = null;
+                }
+
+                var phieuDiems = _context.PhieuDiems
+                    .Where(x => x.NguoiLap == id)
+                    .ToList();
+
+                foreach (var x in phieuDiems)
+                {
+                    x.NguoiLap = null;
+                }
+
+                _context.SaveChanges();
+
+                _context.TaiKhoans.Remove(taiKhoan);
+                _context.SaveChanges();
+
+                WriteLog("Xóa tài khoản", $"Đã xóa tài khoản ID {id}");
+                TempData["Success"] = "Xóa tài khoản thành công.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Xóa thất bại: " + ex.Message;
+            }
+
             return RedirectToAction("Index");
-        }
-
-        try
-        {
-            // 1. Gỡ tài khoản khỏi học sinh
-            var hocSinhs = _context.HocSinhs
-                .Where(x => x.IdTaiKhoan == id)
-                .ToList();
-
-            foreach (var x in hocSinhs)
-            {
-                x.IdTaiKhoan = null;
-            }
-
-            // 2. Gỡ tài khoản khỏi giáo viên
-            var giaoViens = _context.GiaoViens
-                .Where(x => x.IdTaiKhoan == id)
-                .ToList();
-
-            foreach (var x in giaoViens)
-            {
-                x.IdTaiKhoan = null;
-            }
-
-            // 3. Gỡ tài khoản khỏi phụ huynh
-            var phuHuynhs = _context.PhuHuynhs
-                .Where(x => x.IdTaiKhoan == id)
-                .ToList();
-
-            foreach (var x in phuHuynhs)
-            {
-                x.IdTaiKhoan = null;
-            }
-
-            // 4. Nếu tài khoản từng lập phiếu điểm
-            var phieuDiems = _context.PhieuDiems
-                .Where(x => x.NguoiLap == id)
-                .ToList();
-
-            foreach (var x in phieuDiems)
-            {
-                x.NguoiLap = null;
-            }
-
-            // Lưu việc gỡ liên kết
-            _context.SaveChanges();
-
-            // 5. Xóa tài khoản
-            _context.TaiKhoans.Remove(taiKhoan);
-            _context.SaveChanges();
-
-            WriteLog("Xóa tài khoản", $"Đã xóa tài khoản ID {id}");
-
-            TempData["Success"] = "Xóa tài khoản thành công.";
-        }
-        catch (Exception ex)
-        {
-            TempData["Error"] = "Xóa thất bại: " + ex.Message;
-        }
-
-        return RedirectToAction("Index");
         }
 
         [HttpPost]

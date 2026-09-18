@@ -268,6 +268,9 @@ namespace eSchool.Controllers
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult ChuNhiem()
         {
+            ViewBag.EditableYears = _context.NamHocs.AsNoTracking().ToList()
+                .Where(x => AcademicYearPolicy.CanModify(x, DateTime.Today))
+                .Select(x => x.TenNamHoc).ToHashSet();
             return View(new ChuNhiemViewModel
             {
                 LopHocs = _context.LopHocs
@@ -289,6 +292,11 @@ namespace eSchool.Controllers
         {
             var lop = _context.LopHocs.Find(idLop);
             if (lop == null) return NotFound();
+            if (!AcademicYearPolicy.CanModify(_context.NamHocs.FirstOrDefault(x => x.TenNamHoc == lop.NamHoc), DateTime.Today))
+            {
+                TempData["Error"] = AcademicYearPolicy.ReadOnlyMessage;
+                return RedirectToAction(nameof(ChuNhiem));
+            }
 
             if (idGiaoVien.HasValue && !_context.GiaoViens.Any(x => x.IdGiaoVien == idGiaoVien.Value))
             {
@@ -321,6 +329,12 @@ namespace eSchool.Controllers
             if (string.IsNullOrWhiteSpace(namHoc))
             {
                 TempData["Error"] = "Vui lòng chọn năm học cần phân công.";
+                return RedirectToAction(nameof(ChuNhiem));
+            }
+
+            if (!AcademicYearPolicy.CanModify(_context.NamHocs.FirstOrDefault(x => x.TenNamHoc == namHoc), DateTime.Today))
+            {
+                TempData["Error"] = AcademicYearPolicy.ReadOnlyMessage;
                 return RedirectToAction(nameof(ChuNhiem));
             }
 
@@ -516,6 +530,16 @@ namespace eSchool.Controllers
                 return RedirectToAction(nameof(QuanLyKyLuat));
             }
 
+            var student = _context.HocSinhs.Include(x => x.LopHoc).FirstOrDefault(x => x.IdHocSinh == model.IdHocSinh);
+            if (student?.LopHoc?.IdGiaoVienCN != giaoVienId.Value)
+                return NotFound();
+            var year = _context.NamHocs.FirstOrDefault(x => x.TenNamHoc == student.LopHoc.NamHoc);
+            if (!AcademicYearPolicy.CanModify(year, DateTime.Today) || model.NgayViPham.Date > DateTime.Today ||
+                model.NgayViPham.Date < year!.NgayBatDau.Date || model.NgayViPham.Date > year.NgayKetThuc.Date)
+            {
+                TempData["Error"] = "Ngày vi phạm phải thuộc năm học còn mở và không nằm trong tương lai.";
+                return RedirectToAction(nameof(QuanLyKyLuat));
+            }
             model.IdGiaoVien = giaoVienId.Value;
             model.TrangThai = true;
             _context.KyLuats.Add(model);
@@ -530,7 +554,17 @@ namespace eSchool.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult XoaKyLuat(int id)
         {
-            var kyLuat = _context.KyLuats.Find(id);
+            var teacherId = GetCurrentGiaoVienId();
+            var kyLuat = _context.KyLuats.Include(x => x.HocSinh).ThenInclude(x => x!.LopHoc)
+                .FirstOrDefault(x => x.IdKyLuat == id && x.IdGiaoVien == teacherId);
+            if (!teacherId.HasValue || kyLuat?.HocSinh?.LopHoc?.IdGiaoVienCN != teacherId)
+                return NotFound();
+            var year = _context.NamHocs.FirstOrDefault(x => x.TenNamHoc == kyLuat.HocSinh.LopHoc.NamHoc);
+            if (!AcademicYearPolicy.CanModify(year, DateTime.Today))
+            {
+                TempData["Error"] = AcademicYearPolicy.ReadOnlyMessage;
+                return RedirectToAction(nameof(QuanLyKyLuat));
+            }
             if (kyLuat != null)
             {
                 _context.KyLuats.Remove(kyLuat);
@@ -616,6 +650,13 @@ namespace eSchool.Controllers
                 return RedirectToAction(nameof(QuanLyHocPhi), new { namHocId, hocKyId, lopId });
             }
 
+            if (TrangThai is not (0 or 1) || (hocPhi.TrangThai == 1 && TrangThai != 1))
+            {
+                TempData["Error"] = "Không thể hủy khoản đã xác nhận thanh toán. Vui lòng liên hệ quản trị để đối soát.";
+                return RedirectToAction(nameof(QuanLyHocPhi), new { namHocId, hocKyId, lopId });
+            }
+            if (hocPhi.TrangThai == 1)
+                return RedirectToAction(nameof(QuanLyHocPhi), new { namHocId, hocKyId, lopId });
             // Update to selected status (0 = Chưa đóng, 1 = Đã đóng)
             hocPhi.TrangThai = TrangThai;
             if (TrangThai == 1) // Đã đóng
