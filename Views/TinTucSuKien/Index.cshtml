@@ -18,13 +18,16 @@
             <small class="text-muted">Tổng số: @(Model?.Count ?? 0) bài viết</small>
         </div>
 
-        <button type="button"
-                class="btn-icon-add"
-                title="Thêm tin tức sự kiện"
-                data-bs-toggle="modal"
-                data-bs-target="#createModal">
-            <i class="bi bi-plus-lg"></i>
-        </button>
+        <div class="d-flex gap-2 ms-auto">
+            @await Html.PartialAsync("_ExportDropdown")
+            <button type="button"
+                    class="btn btn-primary text-nowrap"
+                    title="Thêm tin tức sự kiện"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createModal">
+                <i class="bi bi-plus-lg"></i> Thêm bài viết
+            </button>
+        </div>
     </div>
 
     @if (TempData["Error"] != null)

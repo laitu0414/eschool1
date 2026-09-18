@@ -4,299 +4,438 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - eschool</title>
+    <link rel="icon" type="image/png" href="~/images/logo.png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/pagination.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/footer.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/table-column-manager.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/eschool.styles.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/home-portal.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body>
     <style>
-        @@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,400&display=swap');
         /* Reset and specific variables for the new header */
         .eschool-header {
-            font-family: 'Roboto', Arial, sans-serif;
+            font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             width: 100%;
         }
 
-        /* Tier 1 */
+        /* Tier 1: Blue Top Bar (Hình 2 + 4) */
         .eschool-top-bar {
-            background-color: #1a4175;
+            background: linear-gradient(90deg, #0d47a1 0%, #1558d6 100%);
             color: #ffffff;
-            font-size: 13px;
-            padding: 8px 30px;
+            padding: 8px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
         .eschool-top-bar .left-info, .eschool-top-bar .right-info {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
         }
-        .eschool-top-bar a {
+        .eschool-top-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
             color: #ffffff;
-            text-decoration: none;
+            text-decoration: none !important;
         }
-        .eschool-top-bar a:hover {
-            text-decoration: underline;
+        .eschool-top-brand-icon {
+            font-size: 1.25rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
         }
-        .eschool-top-bar i {
-            margin-right: 5px;
+        .eschool-top-brand-name {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+            font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
         }
-        .eschool-top-bar .divider {
-            color: rgba(255, 255, 255, 0.4);
-            margin: 0 10px;
+        .eschool-top-brand-desc {
+            font-size: 0.82rem;
+            color: #bfdbfe;
+            font-weight: 400;
+            padding-left: 10px;
+            border-left: 1px solid rgba(255, 255, 255, 0.35);
+        }
+        .eschool-top-date {
+            color: #ffffff;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            letter-spacing: 0.2px;
+        }
+        .eschool-top-date i {
+            font-size: 1rem;
+            color: #bfdbfe;
+        }
+        .eschool-login-dropdown {
+            position: relative;
+        }
+        .eschool-top-login-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 14px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffffff !important;
+            font-size: 0.88rem;
+            font-weight: 600;
+            line-height: 1;
+            text-decoration: none !important;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .eschool-top-login-btn:hover,
+        .eschool-login-dropdown:hover .eschool-top-login-btn {
+            background: #ffffff;
+            color: #0d47a1 !important;
+            border-color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .eschool-top-login-btn i {
+            font-size: 0.95rem;
+        }
+        .eschool-login-menu {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(13, 71, 161, 0.18);
+            margin-top: 6px;
+            padding: 8px;
+            min-width: 210px;
+            background: #ffffff;
+            z-index: 1050;
+        }
+        .eschool-login-menu .dropdown-item {
+            padding: 10px 14px;
+            font-size: 13.8px;
+            font-weight: 600;
+            color: #1e293b;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.18s ease;
+        }
+        .eschool-login-menu .dropdown-item i {
+            font-size: 1.1rem;
+            width: 26px;
+            text-align: center;
+        }
+        .eschool-login-menu .dropdown-item:hover {
+            background-color: #eff6ff;
+            color: #1a56db;
+            transform: translateX(3px);
+        }
+        .eschool-login-dropdown:hover .eschool-login-menu {
+            display: block;
         }
 
-        /* Tier 2 */
+        /* Tier 2: Seamless Banner */
         .eschool-middle-bar {
-            background-color: #ffffff;
-            padding: 15px 30px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
+            display: block;
+            width: 100%;
+            line-height: 0;
+            border-bottom: 2px solid #0d47a1;
+            background-color: #e0f2fe;
+            text-decoration: none;
             overflow: hidden;
-            height: 140px;
         }
-        .eschool-brand-section {
+        .eschool-middle-bar img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Tier 2 - Modern White Navbar with Blue Underline Indicator */
+        .eschool-nav-bar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            min-height: 56px;
+        }
+        .eschool-nav-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none !important;
+        }
+        .eschool-nav-brand-logo {
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+        }
+        .eschool-nav-brand-text {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #1a56db;
+            letter-spacing: -0.4px;
+            font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+        }
+        .eschool-nav-menu {
             display: flex;
             align-items: center;
-            gap: 20px;
-            z-index: 2;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 2px;
         }
-        .eschool-logo {
-            width: 90px;
-            height: 90px;
-            background-color: #f1f5f9;
-            border-radius: 50%;
+        .eschool-nav-menu > li > a, .eschool-nav-menu > .dropdown > a {
+            display: inline-flex;
+            align-items: center;
+            padding: 18px 13px;
+            color: #475569;
+            font-weight: 500;
+            font-size: 14.5px;
+            text-decoration: none;
+            position: relative;
+            font-family: 'Be Vietnam Pro', -apple-system, sans-serif;
+            letter-spacing: -0.1px;
+            transition: color 0.18s ease;
+        }
+        .eschool-nav-menu > li > a:hover, .eschool-nav-menu > .dropdown > a:hover {
+            color: #1a56db;
+            background-color: transparent;
+            font-weight: 600;
+        }
+        .eschool-nav-menu > li.active > a, .eschool-nav-menu > li > a.active {
+            color: #1a56db;
+            font-weight: 700;
+        }
+        .eschool-nav-menu > li.active > a::after,
+        .eschool-nav-menu > li > a.active::after,
+        .eschool-nav-menu > li > a:hover::after,
+        .eschool-nav-menu > .dropdown > a:hover::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 13px;
+            right: 13px;
+            height: 3px;
+            background-color: #1a56db;
+            border-radius: 99px 99px 0 0;
+        }
+        .eschool-nav-menu .dropdown-menu {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(13, 71, 161, 0.12);
+            margin-top: 0;
+            padding: 8px;
+            min-width: 270px;
+            background: #ffffff;
+        }
+        .eschool-nav-menu .dropdown-item {
+            padding: 10px 14px;
+            font-size: 13.8px;
+            font-weight: 500;
+            color: #334155;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.18s ease;
+        }
+        .eschool-nav-menu .dropdown-item i {
+            font-size: 1rem;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #1a4175;
-            font-size: 40px;
-            border: 2px solid #e2e8f0;
+            border-radius: 7px;
+            flex-shrink: 0;
+            transition: transform 0.18s ease;
         }
-        .eschool-titles {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
+        .eschool-nav-menu .dropdown-item:hover {
+            background-color: #eff6ff;
+            color: #1a56db;
+            transform: translateX(3px);
         }
-        .eschool-titles .title-small {
-            color: #1a4175;
-            font-size: 22px;
-            font-weight: 800;
-            margin: 0;
-            text-transform: uppercase;
-        }
-        .eschool-titles .title-large {
-            color: #e51d20;
-            font-size: 36px;
-            font-weight: 900;
-            margin: 5px 0;
-            text-transform: uppercase;
-        }
-        .eschool-titles .slogan {
-            color: #475569;
-            font-size: 15px;
-            font-style: italic;
-            margin: 0;
-        }
-
-        /* Background image blending on the right */
-        .eschool-middle-bg {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 55%;
-            background: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80') no-repeat right center;
-            background-size: cover;
-            z-index: 1;
-            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40%);
-            mask-image: linear-gradient(to right, transparent 0%, black 40%);
-        }
-
-        /* Search bar on the right */
-        .eschool-search-container {
-            z-index: 2;
-            position: relative;
-            margin-right: 20px;
-        }
-        .eschool-search-box {
-            display: flex;
-            align-items: center;
-            background: #ffffff;
-            border-radius: 25px;
-            padding: 8px 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 300px;
-            border: 1px solid #e2e8f0;
-        }
-        .eschool-search-box input {
-            border: none;
-            outline: none;
-            flex: 1;
-            padding: 5px;
-            font-size: 15px;
-        }
-        .eschool-search-box i {
-            color: #1a4175;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        /* Tier 3 */
-        .eschool-nav-bar {
-            background-color: #1a4175;
-            display: flex;
-            align-items: center;
-            padding: 0 30px;
-        }
-        .eschool-nav-menu {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            display: flex;
-        }
-        .eschool-nav-menu li {
-            position: relative;
-        }
-        .eschool-nav-menu a {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 15px 22px;
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-            transition: background-color 0.2s;
-        }
-        .eschool-nav-menu a:hover {
-            background-color: #12315c;
-        }
-        .eschool-nav-menu li.active a {
-            background-color: #0d47a1; /* Active state like Trang chủ */
-        }
-        .eschool-nav-menu .dropdown-icon {
-            font-size: 12px;
-        }
-
-        /* Tier 3 - New Blue Centered Nav */
-        .eschool-nav-bar {
-            background-color: #1a4175; /* Dark blue */
-            display: flex;
-            justify-content: center; /* Center the items */
-            align-items: center;
-        }
-        .eschool-nav-menu {
-            display: flex;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-        .eschool-nav-menu > li > a, .eschool-nav-menu > .dropdown > a {
-            display: inline-block;
-            padding: 15px 20px;
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-            text-decoration: none;
-        }
-        .eschool-nav-menu > li > a:hover, .eschool-nav-menu > .dropdown > a:hover {
-            background-color: #12315c;
-            color: #ffffff;
-        }
-        .eschool-nav-menu .dropdown-menu {
-            border: none;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-top: 0;
+        .eschool-nav-menu .dropdown-item:hover i {
+            transform: scale(1.12);
         }
         .eschool-nav-menu .dropdown:hover .dropdown-menu {
             display: block;
         }
+
+        @@media (max-width: 992px) {
+            .eschool-nav-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px 16px;
+            }
+            .eschool-nav-menu {
+                flex-wrap: wrap;
+                width: 100%;
+                gap: 0;
+            }
+            .eschool-nav-menu > li > a, .eschool-nav-menu > .dropdown > a {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+        }
     </style>
 
-    <header class="eschool-header">
-        <!-- Tier 1: Top Bar -->
-        <div class="eschool-top-bar">
-            <div class="left-info">
-                <span><i class="bi bi-geo-alt-fill"></i> Hà Nội, Việt Nam</span>
-                <span><i class="bi bi-telephone-fill"></i> 1900 9999</span>
-                <span><i class="bi bi-envelope-fill"></i> support@eschool.local</span>
+    <div class="site-wrapper portal-shell">
+        <header class="eschool-header">
+            <!-- Tier 1: Blue Top Bar (Hình 2) -->
+            <div class="eschool-top-bar">
+                <div class="left-info">
+                    <a asp-controller="Home" asp-action="Index" class="eschool-top-brand">
+                        <span class="eschool-top-brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
+                        <span class="eschool-top-brand-name">THCS eSchool</span>
+                    </a>
+                </div>
+                <div class="right-info d-flex align-items-center gap-3 gap-md-4">
+                    <div class="eschool-top-date">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="header-current-date"></span>
+                    </div>
+                    <div class="dropdown eschool-login-dropdown">
+                        <a href="#" class="eschool-top-login-btn dropdown-toggle" id="topLoginDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-fill"></i>
+                            <span>Đăng nhập</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end eschool-login-menu" aria-labelledby="topLoginDropdown">
+                            <li>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Login" asp-route-loginRole="1">
+                                    <i class="bi bi-shield-lock-fill text-primary"></i>
+                                    <span>Quản trị viên</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Login" asp-route-loginRole="2">
+                                    <i class="bi bi-person-workspace text-success"></i>
+                                    <span>Giáo viên</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Login" asp-route-loginRole="3">
+                                    <i class="bi bi-mortarboard-fill text-info"></i>
+                                    <span>Học sinh</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Login" asp-route-loginRole="4">
+                                    <i class="bi bi-people-fill text-warning"></i>
+                                    <span>Phụ huynh</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <div class="right-info">
-                <a href="#">Sơ đồ website</a> <span class="divider">|</span>
-                <a href="#">Hỏi đáp</a> <span class="divider">|</span>
-                <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="bi bi-person-fill"></i> Đăng nhập</a>
+
+            <!-- Tier 2: Modern White Nav Bar (Hình 1) -->
+            <div class="eschool-nav-bar">
+                <a asp-controller="Home" asp-action="Index" class="eschool-nav-brand">
+                    <img src="~/images/logo-icon.png" alt="THCS eSchool" class="eschool-nav-brand-logo" />
+                    <span class="eschool-nav-brand-text">THCS eSchool</span>
+                </a>
+                <ul class="eschool-nav-menu">
+                    <li class="active">
+                        <a asp-controller="Home" asp-action="Index" class="active">Trang chủ</a>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#gioi-thieu" class="dropdown-toggle" style="text-decoration: none;">Giới thiệu</a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" asp-controller="Home" asp-action="ThongDiepHieuTruong">
+                                    <i class="bi bi-chat-quote-fill text-primary" style="background: #eff6ff;"></i>
+                                    <span>Thông điệp của Hiệu trưởng</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Home" asp-action="TamNhin">
+                                    <i class="bi bi-compass-fill" style="background: #faf5ff; color: #9333ea;"></i>
+                                    <span>Tầm nhìn và sứ mệnh</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Home" asp-action="DoiNguGiaoVien">
+                                    <i class="bi bi-person-workspace" style="background: #fff7ed; color: #ea580c;"></i>
+                                    <span>Đội ngũ giáo viên</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Home" asp-action="CoSoVatChat">
+                                    <i class="bi bi-building-fill-check" style="background: #f0fdf4; color: #16a34a;"></i>
+                                    <span>Cơ sở vật chất</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Home" asp-action="MoHinhDaoTao">
+                                    <i class="bi bi-mortarboard-fill" style="background: #eef2ff; color: #4f46e5;"></i>
+                                    <span>Mô hình đào tạo</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><a href="/#cat-1">Tuyển sinh</a></li>
+                    <li><a href="/#cat-2">Tin tức - Sự kiện</a></li>
+                    <li><a href="/#cat-3">Thông báo</a></li>
+                    <li><a href="/#cat-4">Thành tích</a></li>
+                    <li><a href="/#cat-5">Chương trình đào tạo</a></li>
+                    <li><a href="/#lien-he">Liên hệ</a></li>
+                </ul>
             </div>
+
+            <!-- Tier 3: Middle Banner -->
+            <div class="eschool-middle-bar" title="Trường THCS eSchool">
+                <img src="~/images/hero-banner.png" alt="Trường THCS eSchool" asp-append-version="true" />
+            </div>
+        </header>
+        <div class="site-content-wrapper flex-grow-1 p-3 p-md-4">
+            <main role="main" class="pb-3">
+                @RenderBody()
+            </main>
         </div>
 
-        <!-- Tier 2: Middle Bar -->
-        <div class="eschool-middle-bar">
-            <div class="eschool-brand-section">
-                <div class="eschool-logo">
-                    <i class="bi bi-mortarboard-fill"></i>
-                </div>
-                <div class="eschool-titles">
-                    <h2 class="title-small">TRƯỜNG TRUNG HỌC CƠ SỞ</h2>
-                    <h1 class="title-large">ESCHOOL</h1>
-                    <p class="slogan">"Học tập sáng tạo - Rèn luyện chăm ngoan - Vui chơi lành mạnh"</p>
-                </div>
-            </div>
-            
-            <div class="eschool-search-container">
-                <div class="eschool-search-box">
-                    <input type="text" placeholder="Tìm kiếm..">
-                    <i class="bi bi-search"></i>
-                </div>
-            </div>
-
-            <div class="eschool-middle-bg"></div>
-        </div>
-
-        <!-- Tier 3: Nav Bar (Blue & Centered) -->
-        <div class="eschool-nav-bar">
-            <ul class="eschool-nav-menu">
-                <li>
-                    <a asp-controller="Home" asp-action="Index" style="background-color: #0d47a1;"><i class="bi bi-house-door-fill" style="margin-right: 5px;"></i> TRANG CHỦ</a>
-                </li>
-                <li class="dropdown">
-                    <a href="#gioi-thieu" class="dropdown-toggle" style="text-decoration: none;">GIỚI THIỆU</a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="ThongDiepHieuTruong" style="text-transform: none; font-weight: normal;">Thông điệp của Hiệu trưởng</a></li>
-                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="TamNhin" style="text-transform: none; font-weight: normal;">Tầm nhìn và sứ mệnh của chúng tôi</a></li>
-                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="DoiNguGiaoVien" style="text-transform: none; font-weight: normal;">Đội ngũ giáo viên</a></li>
-                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="CoSoVatChat" style="text-transform: none; font-weight: normal;">Cơ sở vật chất</a></li>
-                        <li><a class="dropdown-item text-dark" asp-controller="Home" asp-action="MoHinhDaoTao" style="text-transform: none; font-weight: normal;">Mô hình đào tạo</a></li>
-                    </ul>
-                </li>
-                <li><a href="#cat-1">TUYỂN SINH</a></li>
-                <li><a href="#cat-2">TIN TỨC - SỰ KIỆN</a></li>
-                <li><a href="#cat-3">THÔNG BÁO</a></li>
-                <li><a href="#cat-4">THÀNH TÍCH</a></li>
-                <li><a href="#cat-5">CHƯƠNG TRÌNH ĐÀO TẠO</a></li>
-                <li><a href="#lien-he">LIÊN HỆ</a></li>
-            </ul>
-        </div>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+        @await Html.PartialAsync("_SiteFooter")
     </div>
-
-    @await Html.PartialAsync("_SiteFooter")
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/required-fields.js" asp-append-version="true"></script>
+    <script src="~/js/table-pagination.js" asp-append-version="true"></script>
+    <script src="~/js/table-column-manager.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            function updateVietnameseDate() {
+                var days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+                var now = new Date();
+                var dayName = days[now.getDay()];
+                var day = String(now.getDate()).padStart(2, '0');
+                var month = String(now.getMonth() + 1).padStart(2, '0');
+                var year = now.getFullYear();
+                var formatted = dayName + ', ' + day + '/' + month + '/' + year;
+                var els = document.querySelectorAll('.header-current-date');
+                els.forEach(function (el) { el.textContent = formatted; });
+            }
+            updateVietnameseDate();
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

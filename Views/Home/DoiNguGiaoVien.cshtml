@@ -3,57 +3,219 @@
     ViewData["ActiveMenu"] = "DoiNguGiaoVien";
 }
 
+<style>
+    .intro-page-card {
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        overflow: hidden;
+    }
+    .intro-breadcrumb-bar {
+        background: linear-gradient(135deg, #0d47a1 0%, #1e40af 100%);
+        color: #ffffff;
+        padding: 12px 24px;
+        font-size: 13.5px;
+        font-weight: 500;
+    }
+    .intro-breadcrumb-bar a {
+        color: #bfdbfe;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .intro-breadcrumb-bar a:hover {
+        color: #ffffff;
+    }
+    .intro-title {
+        font-size: 26px;
+        font-weight: 800;
+        color: #0f172a;
+        position: relative;
+        display: inline-block;
+        letter-spacing: -0.5px;
+    }
+    .intro-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #2563eb, #60a5fa);
+        border-radius: 2px;
+    }
+    .teacher-group-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 24px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .teacher-group-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+        border-color: #cbd5e1;
+    }
+    .teacher-group-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: #2563eb;
+    }
+    .quote-box {
+        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+        border-left: 4px solid #3b82f6;
+        border-radius: 12px;
+        padding: 20px 24px;
+        font-style: italic;
+        color: #334155;
+    }
+    .signature-card {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 18px 24px;
+        display: inline-block;
+        text-align: center;
+    }
+</style>
+
 <div class="container my-5">
-    <div class="row">
-        <div class="col-lg-3 mb-4">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3">
             @await Html.PartialAsync("_SidebarGioiThieu")
         </div>
+
+        <!-- Main Content -->
         <div class="col-lg-9">
-            <div class="card rounded-0 border-1" style="border-color: #e0e0e0;">
-                <div class="card-header rounded-0 text-white" style="background-color: #e66624; border-bottom: none; font-size: 14px;">
-                    Trang chủ <i class="bi bi-chevron-right" style="font-size: 10px; margin: 0 5px;"></i> Đội ngũ giáo viên
+            <div class="intro-page-card">
+                <!-- Breadcrumb Bar -->
+                <div class="intro-breadcrumb-bar d-flex align-items-center">
+                    <i class="bi bi-house-door-fill me-2"></i>
+                    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                    <i class="bi bi-chevron-right mx-2 text-white-50" style="font-size: 11px;"></i>
+                    <span class="text-white-50">Giới thiệu</span>
+                    <i class="bi bi-chevron-right mx-2 text-white-50" style="font-size: 11px;"></i>
+                    <span class="text-white fw-semibold">Đội ngũ giáo viên</span>
                 </div>
-                <div class="card-body p-4 pt-3 bg-white">
-                    <h1 class="mb-3 text-uppercase" style="color: #e66624; font-size: 26px;">Đội ngũ giáo viên</h1>
-                    <div class="d-flex justify-content-between align-items-center mb-4 text-muted border-bottom pb-2">
+
+                <div class="p-4 p-md-5">
+                    <!-- Page Header -->
+                    <div class="mb-4 pb-2">
+                        <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold text-uppercase" style="font-size: 12px; letter-spacing: 1px;">
+                            <i class="bi bi-person-workspace"></i> Nguồn nhân lực cốt lõi
+                        </div>
+                        <h1 class="intro-title">Đội Ngũ Cán Bộ - Giáo Viên</h1>
                     </div>
 
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <img src="/image/giaovien.png" alt="Đội ngũ giáo viên" style="max-width: 100%; height: auto; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+                    <!-- Image Showcase -->
+                    <div class="text-center my-4">
+                        <img src="/image/giaovien.png" 
+                             alt="Đội ngũ giáo viên eSchool" 
+                             class="img-fluid rounded-4 shadow-sm border" 
+                             style="max-height: 420px; width: 100%; object-fit: cover;"
+                             onerror="this.src='/images/doi-ngu-giao-vien.jpg'" />
                     </div>
 
-                    <p style="font-family: Roboto, sans-serif; text-align: justify; line-height: 1.6;">
-                        Với quyết tâm trở thành đơn vị đi đầu trong đổi mới giáo dục theo mô hình chất lượng cao có hệ song bằng, eSchool chú trọng đầu tư chiều sâu vào việc phát triển năng lực đội ngũ CBQL, giáo viên cốt cán để đảm bảo chương trình giáo dục ưu việt của toàn bộ hệ thống phải được triển khai bởi đội ngũ chất lượng, những nhà giáo có <strong>Tâm - Tầm – Tài</strong>.
+                    <!-- Lead Paragraph -->
+                    <p class="lead text-secondary mb-4" style="font-size: 15.5px; line-height: 1.8; text-align: justify;">
+                        Với quyết tâm trở thành đơn vị tiên phong trong đổi mới giáo dục theo mô hình chất lượng cao và hệ song bằng Cambridge, <strong>eSchool</strong> chú trọng đầu tư chiều sâu vào việc nâng cao năng lực cho đội ngũ cán bộ quản lý và giáo viên cốt cán — những nhà giáo hội tụ đủ 3 yếu tố: <span class="badge px-2.5 py-1 fs-6 fw-bold" style="background-color: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe;">TÂM</span> - <span class="badge px-2.5 py-1 fs-6 fw-bold" style="background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;">TẦM</span> - <span class="badge px-2.5 py-1 fs-6 fw-bold" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a;">TÀI</span>.
                     </p>
 
-                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">1. Đội ngũ Cán bộ quản lý</h4>
-                    <p style="text-align: justify; line-height: 1.6;">
-                        Nhà trường có đội ngũ cán bộ quản lý giàu kinh nghiệm, có năng lực lãnh đạo, yêu nghề, tâm huyết với sự nghiệp giáo dục, năng động, sáng tạo và có tư duy đổi mới. Các thầy cô luôn tiên phong trong việc áp dụng các phương pháp giảng dạy tiên tiến nhất vào thực tiễn nhà trường.
-                    </p>
-
-                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">2. Đội ngũ Giáo viên</h4>
-                    <p style="text-align: justify; line-height: 1.6;">
-                        <strong>100% giáo viên tốt nghiệp đại học trở lên</strong> trong đó hơn 30% có trình độ thạc sĩ.<br><br>
-                        <strong>70% là những giáo viên dạy giỏi</strong> cấp Quận, cấp Thành phố được tuyển chọn từ các trường có uy tín, có năng lực chuyên môn vững vàng, có kinh nghiệm bồi dưỡng học sinh giỏi các cấp; phẩm chất đạo đức tốt, tâm huyết với nghề, có phong cách ứng xử thân thiện với học sinh và phụ huynh học sinh.<br><br>
-                        <strong>30% là giáo viên trẻ</strong> được đào tạo về chương trình song bằng, tốt nghiệp bằng giỏi hoặc thủ khoa của các trường Đại học Sư phạm, là giáo viên giỏi giàu kinh nghiệm từ các tỉnh.
-                    </p>
-
-                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">3. Đội ngũ Chuyên gia và Cố vấn</h4>
-                    <p style="text-align: justify; line-height: 1.6;">
-                        Ngoài ra, trường còn mời đội ngũ chuyên gia từ các trường đại học, các trung tâm giáo dục chất lượng cao thỉnh giảng tăng cường bồi dưỡng cho HS giỏi, phối hợp với trung tâm ngoại ngữ uy tín mời giáo viên người nước ngoài có kinh nghiệm giảng dạy, thân thiện với học sinh tham gia giảng dạy tại trường.
-                    </p>
-
-                    <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-                        <img src="/images/doi-ngu-giao-vien.jpg" alt="Đội ngũ giáo viên eSchool" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 5px;" onerror="this.src='https://via.placeholder.com/800x400?text=Hinh+Anh+Giao+Vien'"/>
+                    <!-- Key Stats Row -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded-3 border text-center">
+                                <div class="fs-2 fw-bolder text-primary">100%</div>
+                                <div class="fw-semibold text-dark small mt-1">Đạt chuẩn & Trên chuẩn</div>
+                                <div class="text-muted" style="font-size: 12px;">Tốt nghiệp Đại học trở lên</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded-3 border text-center">
+                                <div class="fs-2 fw-bolder text-success">> 30%</div>
+                                <div class="fw-semibold text-dark small mt-1">Trình độ Sau Đại học</div>
+                                <div class="text-muted" style="font-size: 12px;">Học vị Thạc sĩ, Tiến sĩ</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded-3 border text-center">
+                                <div class="fs-2 fw-bolder text-warning">70%</div>
+                                <div class="fw-semibold text-dark small mt-1">Giáo viên dạy giỏi</div>
+                                <div class="text-muted" style="font-size: 12px;">Cấp Quận & Cấp Thành phố</div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <p style="text-align: justify; line-height: 1.6; font-style: italic; color: #555;">
-                        "Một người thầy giỏi giống như ngọn nến - đốt cháy chính mình để soi sáng đường cho những người khác." - eSchool tự hào với những người "lái đò" tận tâm, luôn đồng hành cùng học sinh trên con đường chinh phục tri thức.
-                    </p>
 
-                    <div class="text-end mb-5 mt-4">
-                        <strong>TM. BGH NHÀ TRƯỜNG</strong><br />
-                        <strong>HIỆU TRƯỞNG</strong>
+                    <!-- Teacher Group Cards -->
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        <!-- Card 1: CBQL -->
+                        <div class="teacher-group-card">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-primary rounded-pill px-2.5 py-1">01</span>
+                                <h5 class="fw-bold text-dark mb-0">Đội ngũ Cán bộ Quản lý</h5>
+                            </div>
+                            <p class="text-secondary small mb-0" style="line-height: 1.7; text-align: justify;">
+                                Nhà trường có đội ngũ cán bộ quản lý giàu kinh nghiệm, có năng lực lãnh đạo xuất sắc, yêu nghề, tận tâm với sự nghiệp trồng người. BGH luôn chủ động, sáng tạo và có tư duy đổi mới trong công tác quản trị trường học thông minh, tiên phong đưa các mô hình giáo dục tiên tiến vào thực tiễn giảng dạy.
+                            </p>
+                        </div>
+
+                        <!-- Card 2: Giáo viên -->
+                        <div class="teacher-group-card" style="border-left-color: #10b981;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-success rounded-pill px-2.5 py-1">02</span>
+                                <h5 class="fw-bold text-dark mb-0">Đội ngũ Giáo viên Bộ môn</h5>
+                            </div>
+                            <div class="text-secondary small" style="line-height: 1.7; text-align: justify;">
+                                <div class="mb-2">
+                                    <i class="bi bi-check2-circle text-success me-1"></i>
+                                    <strong>70% Giáo viên dạy giỏi:</strong> Được tuyển chọn kỹ lưỡng từ các trường điểm có bề dày thành tích, vững vàng chuyên môn, giàu kinh nghiệm bồi dưỡng học sinh giỏi các cấp và có phong cách sư phạm chuẩn mực, gần gũi với học sinh.
+                                </div>
+                                <div>
+                                    <i class="bi bi-check2-circle text-success me-1"></i>
+                                    <strong>30% Giáo viên trẻ xuất sắc:</strong> Tốt nghiệp Thủ khoa, Bằng Giỏi từ các trường Đại học Sư phạm danh tiếng, được đào tạo chuyên sâu về giảng dạy chương trình Quốc tế Cambridge, năng động và tràn đầy nhiệt huyết.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Chuyên gia & Cố vấn -->
+                        <div class="teacher-group-card" style="border-left-color: #f59e0b;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1">03</span>
+                                <h5 class="fw-bold text-dark mb-0">Đội ngũ Chuyên gia & Cố vấn Quốc tế</h5>
+                            </div>
+                            <p class="text-secondary small mb-0" style="line-height: 1.7; text-align: justify;">
+                                Nhà trường liên kết chặt chẽ với các Giáo sư, Tiến sĩ đầu ngành từ các trường đại học lớn để cố vấn chuyên môn và trực tiếp bồi dưỡng các đội tuyển học sinh giỏi. Đồng thời, đội ngũ <strong>giáo viên nước ngoài bản ngữ</strong> có chứng chỉ giảng dạy quốc tế (TESOL, CELTA) trực tiếp phụ trách các môn chuẩn Cambridge, tạo môi trường giao tiếp 100% tiếng Anh chuẩn mực.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Quote Block -->
+                    <div class="quote-box my-4">
+                        <div class="d-flex gap-3 align-items-center">
+                            <i class="bi bi-quote fs-1 text-primary"></i>
+                            <div>
+                                <p class="mb-1 fw-medium">
+                                    "Một người thầy giỏi giống như ngọn nến — đốt cháy chính mình để soi sáng con đường tri thức cho những người khác."
+                                </p>
+                                <span class="small text-muted">— eSchool tự hào với những người "lái đò" tận tụy, luôn đồng hành cùng các em trên hành trình vươn ra biển lớn.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signature -->
+                    <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                        <div class="signature-card">
+                            <div class="text-uppercase text-muted fw-bold" style="font-size: 12px; letter-spacing: 0.5px;">TM. Ban Giám Hiệu Nhà Trường</div>
+                            <div class="fw-bolder text-primary fs-5 mt-1">HIỆU TRƯỞNG</div>
+                            <div class="text-secondary small mt-1 font-monospace">Hệ Thống Giáo Dục eSchool</div>
+                        </div>
                     </div>
 
                 </div>

@@ -87,8 +87,9 @@ namespace eSchool.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SDT")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("TonGiao")
                         .HasColumnType("nvarchar(max)");
@@ -207,6 +208,28 @@ namespace eSchool.Migrations
                     b.HasKey("IdChucVu");
 
                     b.ToTable("ChucVus");
+
+                    b.HasData(
+                        new
+                        {
+                            IdChucVu = 2,
+                            TenChucVu = "Giáo viên"
+                        },
+                        new
+                        {
+                            IdChucVu = 3,
+                            TenChucVu = "Học sinh"
+                        },
+                        new
+                        {
+                            IdChucVu = 4,
+                            TenChucVu = "Phụ huynh"
+                        },
+                        new
+                        {
+                            IdChucVu = 5,
+                            TenChucVu = "System Admin"
+                        });
                 });
 
             modelBuilder.Entity("eSchool.Models.ChuyenLop", b =>
@@ -703,6 +726,113 @@ namespace eSchool.Migrations
                     b.HasKey("IdMonHoc");
 
                     b.ToTable("MonHocs");
+
+                    b.HasData(
+                        new
+                        {
+                            IdMonHoc = 1,
+                            MaMon = "TOAN",
+                            SoTiet = 4,
+                            TenMon = "Toán"
+                        },
+                        new
+                        {
+                            IdMonHoc = 2,
+                            MaMon = "VAN",
+                            SoTiet = 4,
+                            TenMon = "Ngữ văn"
+                        },
+                        new
+                        {
+                            IdMonHoc = 3,
+                            MaMon = "ANH",
+                            SoTiet = 4,
+                            TenMon = "Tiếng Anh"
+                        },
+                        new
+                        {
+                            IdMonHoc = 4,
+                            MaMon = "LY",
+                            SoTiet = 2,
+                            TenMon = "Vật lý"
+                        },
+                        new
+                        {
+                            IdMonHoc = 5,
+                            MaMon = "HOA",
+                            SoTiet = 2,
+                            TenMon = "Hóa học"
+                        },
+                        new
+                        {
+                            IdMonHoc = 6,
+                            MaMon = "SINH",
+                            SoTiet = 2,
+                            TenMon = "Sinh học"
+                        },
+                        new
+                        {
+                            IdMonHoc = 7,
+                            MaMon = "SU",
+                            SoTiet = 2,
+                            TenMon = "Lịch sử"
+                        },
+                        new
+                        {
+                            IdMonHoc = 8,
+                            MaMon = "DIA",
+                            SoTiet = 2,
+                            TenMon = "Địa lý"
+                        },
+                        new
+                        {
+                            IdMonHoc = 9,
+                            MaMon = "TIN",
+                            SoTiet = 2,
+                            TenMon = "Tin học"
+                        },
+                        new
+                        {
+                            IdMonHoc = 10,
+                            MaMon = "CN",
+                            SoTiet = 2,
+                            TenMon = "Công nghệ"
+                        },
+                        new
+                        {
+                            IdMonHoc = 11,
+                            MaMon = "GDTC",
+                            SoTiet = 2,
+                            TenMon = "Giáo dục thể chất"
+                        },
+                        new
+                        {
+                            IdMonHoc = 12,
+                            MaMon = "GDCD",
+                            SoTiet = 1,
+                            TenMon = "Giáo dục công dân"
+                        },
+                        new
+                        {
+                            IdMonHoc = 13,
+                            MaMon = "NT",
+                            SoTiet = 2,
+                            TenMon = "Nghệ thuật (Âm nhạc, Mỹ thuật)"
+                        },
+                        new
+                        {
+                            IdMonHoc = 14,
+                            MaMon = "HDTN",
+                            SoTiet = 3,
+                            TenMon = "Hoạt động trải nghiệm, hướng nghiệp"
+                        },
+                        new
+                        {
+                            IdMonHoc = 15,
+                            MaMon = "GDDP",
+                            SoTiet = 1,
+                            TenMon = "Nội dung giáo dục địa phương"
+                        });
                 });
 
             modelBuilder.Entity("eSchool.Models.NamHoc", b =>
@@ -925,8 +1055,9 @@ namespace eSchool.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("SDT")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<bool>("TrangThai")
                         .HasColumnType("bit");

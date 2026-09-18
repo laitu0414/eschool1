@@ -33,16 +33,8 @@ Layout = isAdmin
                     <p>Theo dõi hồ sơ, lớp học, trạng thái và tài khoản liên kết của học sinh trong hệ thống.</p>
                 </div>
 
-                <div class="d-flex gap-2">
-                    <button class="student-admin-primary" type="button" data-bs-toggle="collapse" data-bs-target="#createStudentForm"
-                            aria-expanded="false" aria-controls="createStudentForm">
-                        <i class="bi bi-plus-lg"></i>
-                        Thêm học sinh
-                    </button>
-                    <button class="student-admin-primary bg-success border-success" type="button" data-bs-toggle="modal" data-bs-target="#importStudentModal">
-                        <i class="bi bi-file-earmark-excel"></i>
-                        Nhập từ Excel
-                    </button>
+                <div class="d-none">
+                    <!-- Nút Thêm đã được dời xuống phần .page-tools phía dưới bảng -->
                 </div>
             </div>
 
@@ -149,54 +141,84 @@ Layout = isAdmin
                     </div>
                 </div>
 
-                <form method="get" class="student-admin-filter">
-                    <div class="student-admin-search">
-                        <i class="bi bi-search"></i>
-                        <input name="keyword"
-                               value="@keyword"
-                               placeholder="Tìm theo họ tên, email hoặc số điện thoại..." />
+                <div class="page-tools d-flex justify-content-between align-items-center mb-4">
+                    <form method="get" class="m-0 shadow-none border-0 bg-transparent p-0 flex-grow-1 d-flex gap-2">
+                        <div class="input-group flex-grow-1">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                            <input name="keyword"
+                                   value="@keyword"
+                                   class="form-control border-start-0 ps-0"
+                                   placeholder="Tìm theo họ tên, email hoặc số điện thoại..." />
+                        </div>
+
+                        @await Html.PartialAsync("_ExportDropdown")
+                        <div class="dropdown filter-dropdown">
+                            <button type="button" class="btn btn-outline-secondary h-100 px-3" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                <i class="bi bi-funnel"></i>
+                            </button>
+                            <div class="dropdown-menu shadow">
+                                <h6 class="fw-bold mb-3 px-1">Bộ lọc</h6>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted mb-1">Lớp</label>
+                                    <select name="lopId" class="form-select form-select-sm">
+                                        <option value="">Tất cả lớp</option>
+                                        @foreach (var lop in lopHocs)
+                                        {
+                                            <option value="@lop.IdLop" selected="@(selectedLopId == lop.IdLop ? "selected" : null)">@lop.TenLop</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted mb-1">Trạng thái</label>
+                                    <select name="trangThai" class="form-select form-select-sm">
+                                        <option value="">Tất cả trạng thái</option>
+                                        <option value="true" selected="@(selectedTrangThai == true ? "selected" : null)">Đang học</option>
+                                        <option value="false" selected="@(selectedTrangThai == false ? "selected" : null)">Nghỉ học</option>
+                                    </select>
+                                </div>
+
+                                <div class="d-flex justify-content-between gap-2 mt-4">
+                                    <a asp-action="Index" class="btn btn-light btn-sm flex-grow-1">Đặt lại</a>
+                                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Áp dụng</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="d-flex gap-2 ms-auto">
+                        <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#importStudentModal">
+                            <i class="bi bi-file-earmark-excel"></i>
+                            Nhập từ Excel
+                        </button>
+                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#createStudentForm"
+                                aria-expanded="false" aria-controls="createStudentForm">
+                            <i class="bi bi-plus-lg"></i>
+                            Thêm học sinh
+                        </button>
                     </div>
+                </div>
 
-                    <select name="lopId" class="student-admin-select">
-                        <option value="">Tất cả lớp</option>
-                        @foreach (var lop in lopHocs)
-                        {
-                            <option value="@lop.IdLop" selected="@(selectedLopId == lop.IdLop ? "selected" : null)">@lop.TenLop</option>
-                        }
-                    </select>
-
-                    <select name="trangThai" class="student-admin-select">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="true" selected="@(selectedTrangThai == true ? "selected" : null)">Đang học</option>
-                        <option value="false" selected="@(selectedTrangThai == false ? "selected" : null)">Nghỉ học</option>
-                    </select>
-
-                    <button type="submit" class="student-admin-filter-btn">
-                        <i class="bi bi-funnel"></i>
-                        Lọc
-                    </button>
-
-                    <a asp-action="Index" class="student-admin-reset-btn">Làm mới</a>
-                </form>
-
-                <div class="student-admin-table-wrap">
-                    <table class="student-admin-table">
-                        <thead>
+                <div class="app-table-wrapper">
+                    <table class="table table-hover align-middle mb-0 app-table">
+                        <thead class="app-table-header">
                             <tr>
+                                <th class="text-center" style="width: 60px;">STT</th>
                                 <th>Học sinh</th>
                                 <th>Tài khoản</th>
                                 <th>Ngày sinh</th>
                                 <th>Giới tính</th>
                                 <th>Lớp</th>
                                 <th>Trạng thái</th>
-                                <th class="text-center">Thao tác</th>
+                                <th class="text-center" style="width: 140px;">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             @if (!danhSach.Any())
                             {
                                 <tr>
-                                    <td colspan="7">
+                                    <td colspan="8">
                                         <div class="student-admin-empty">
                                             <i class="bi bi-person-lines-fill"></i>
                                             <strong>Chưa có học sinh</strong>
@@ -207,9 +229,11 @@ Layout = isAdmin
                             }
                             else
                             {
+                                int stt = 1;
                                 @foreach (var item in danhSach)
                                 {
                                     <tr>
+                                        <td class="text-center text-muted fw-medium">@stt</td>
                                         <td>
                                             <button type="button" class="student-profile-link" title="Xem hồ sơ @item.HoTen"
                                                     data-bs-toggle="modal" data-bs-target="#studentProfileModal"
@@ -237,31 +261,31 @@ Layout = isAdmin
                                         <td>
                                             @if (!string.IsNullOrWhiteSpace(item.TenTaiKhoan))
                                             {
-                                                <span class="student-admin-badge linked">@item.TenTaiKhoan</span>
+                                                <span class="badge bg-success">@item.TenTaiKhoan</span>
                                             }
                                             else
                                             {
-                                                <span class="student-admin-badge unlinked">Chưa gắn</span>
+                                                <span class="badge bg-secondary">Chưa gắn</span>
                                             }
                                         </td>
                                         <td>@item.NgaySinh.ToString("dd/MM/yyyy")</td>
                                         <td>@(string.IsNullOrWhiteSpace(item.GioiTinh) ? "-" : item.GioiTinh)</td>
                                         <td>
-                                            <span class="student-admin-class">
+                                            <span class="badge bg-primary">
                                                 @(item.TenLop ?? "Chưa xếp lớp")
                                             </span>
                                         </td>
                                         <td>
                                             @if (item.DaTotNghiep) { <span class="badge bg-success">Đã tốt nghiệp</span> } else if (item.TrangThai)
                                             {
-                                                <span class="student-admin-status active">Đang học</span>
+                                                <span class="badge bg-success">Đang học</span>
                                             }
                                             else
                                             {
-                                                <span class="student-admin-status inactive">Nghỉ học</span>
+                                                <span class="badge bg-danger">Nghỉ học</span>
                                             }
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             <div class="student-admin-actions">
                                                 <a asp-action="Edit" asp-route-id="@item.IdHocSinh" class="student-admin-action edit" title="Sửa">
                                                     <i class="bi bi-pencil"></i>
@@ -269,7 +293,7 @@ Layout = isAdmin
                                                 <a asp-controller="ChuyenLop" asp-action="Create" asp-route-id="@item.IdHocSinh" class="student-admin-action transfer" title="Chuyển lớp">
                                                     <i class="bi bi-arrow-left-right"></i>
                                                 </a>
-                                                <form asp-action="Delete" method="post" class="d-inline"
+                                                <form asp-action="Delete" method="post" class="d-inline m-0 p-0"
                                                       onsubmit="return confirm('Bạn có chắc muốn chuyển học sinh này sang trạng thái nghỉ học?')">
                                                     <input type="hidden" name="id" value="@item.IdHocSinh" />
                                                     <button type="submit" class="student-admin-action delete" title="Nghỉ học">
@@ -279,6 +303,7 @@ Layout = isAdmin
                                             </div>
                                         </td>
                                     </tr>
+                                    stt++;
                                 }
                             }
                         </tbody>

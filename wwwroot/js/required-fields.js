@@ -19,23 +19,45 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("table").forEach(table => {
         // Skip specialized tables like calendar, timetable, etc.
         if (table.classList.contains("no-stt")) return;
+        if (table.dataset.sttGenerated === "true") return;
+
         const thead = table.querySelector("thead");
         const tbody = table.querySelector("tbody");
         if (!thead || !tbody) return;
 
-        const firstHeader = thead.querySelector("th, td");
-        if (!firstHeader) return;
+        const allThs = Array.from(thead.querySelectorAll("th, td"));
+        const alreadyHasStt = allThs.some(th => {
+            const titleEl = th.querySelector(".th-title-text");
+            let text = "";
+            if (titleEl) {
+                text = titleEl.textContent.trim().toLowerCase();
+            } else {
+                const clone = th.cloneNode(true);
+                clone.querySelectorAll(".th-column-resizer, .th-menu-dropdown, .th-sort-indicator, .th-pin-indicator, input, button, ul, select").forEach(el => el.remove());
+                text = clone.textContent.trim().toLowerCase();
+            }
+            return text === "stt" || text === "số tt" || text === "#" || text === "no." || 
+                   text === "thứ" || text === "tiết" || text === "thời gian" || text.includes("giờ");
+        });
 
-        const headerText = firstHeader.textContent.trim().toLowerCase();
-        if (headerText === "stt" || headerText === "số tt" || headerText === "thứ" || 
-            headerText === "tiết" || headerText === "thời gian" || headerText.includes("giờ")) return;
+        if (alreadyHasStt) {
+            table.dataset.sttGenerated = "true";
+            return;
+        }
+
+        table.dataset.sttGenerated = "true";
 
         thead.querySelectorAll("tr").forEach(tr => {
             const th = document.createElement("th");
             th.textContent = "STT";
             th.style.width = "60px";
             th.className = "text-center";
-            tr.insertBefore(th, tr.firstChild);
+            const firstChild = tr.firstElementChild;
+            if (firstChild && firstChild.classList.contains("app-table-checkbox-col")) {
+                tr.insertBefore(th, firstChild.nextElementSibling);
+            } else {
+                tr.insertBefore(th, tr.firstElementChild);
+            }
         });
 
         let stt = 1;
@@ -48,7 +70,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const td = document.createElement("td");
                 td.textContent = stt++;
                 td.className = "text-center text-muted fw-medium align-middle";
-                tr.insertBefore(td, tr.firstChild);
+                const firstChild = tr.firstElementChild;
+                if (firstChild && firstChild.classList.contains("app-table-checkbox-cell")) {
+                    tr.insertBefore(td, firstChild.nextElementSibling);
+                } else {
+                    tr.insertBefore(td, tr.firstElementChild);
+                }
             }
         });
     });

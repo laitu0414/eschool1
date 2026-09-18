@@ -3,46 +3,207 @@
     ViewData["ActiveMenu"] = "MoHinhDaoTao";
 }
 
+<style>
+    .intro-page-card {
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        overflow: hidden;
+    }
+    .intro-breadcrumb-bar {
+        background: linear-gradient(135deg, #0d47a1 0%, #1e40af 100%);
+        color: #ffffff;
+        padding: 12px 24px;
+        font-size: 13.5px;
+        font-weight: 500;
+    }
+    .intro-breadcrumb-bar a {
+        color: #bfdbfe;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .intro-breadcrumb-bar a:hover {
+        color: #ffffff;
+    }
+    .intro-title {
+        font-size: 26px;
+        font-weight: 800;
+        color: #0f172a;
+        position: relative;
+        display: inline-block;
+        letter-spacing: -0.5px;
+    }
+    .intro-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #2563eb, #60a5fa);
+        border-radius: 2px;
+    }
+    .pillar-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 24px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .pillar-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+        border-color: #93c5fd;
+    }
+    .pillar-card-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+    .clb-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+    }
+</style>
+
 <div class="container my-5">
-    <div class="row">
-        <div class="col-lg-3 mb-4">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3">
             @await Html.PartialAsync("_SidebarGioiThieu")
         </div>
+
+        <!-- Main Content -->
         <div class="col-lg-9">
-            <div class="card rounded-0 border-1" style="border-color: #e0e0e0;">
-                <div class="card-header rounded-0 text-white" style="background-color: #e66624; border-bottom: none; font-size: 14px;">
-                    Trang chủ <i class="bi bi-chevron-right" style="font-size: 10px; margin: 0 5px;"></i> Mô hình đào tạo
+            <div class="intro-page-card">
+                <!-- Breadcrumb Bar -->
+                <div class="intro-breadcrumb-bar d-flex align-items-center">
+                    <i class="bi bi-house-door-fill me-2"></i>
+                    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                    <i class="bi bi-chevron-right mx-2 text-white-50" style="font-size: 11px;"></i>
+                    <span class="text-white-50">Giới thiệu</span>
+                    <i class="bi bi-chevron-right mx-2 text-white-50" style="font-size: 11px;"></i>
+                    <span class="text-white fw-semibold">Mô hình đào tạo</span>
                 </div>
-                <div class="card-body p-4 pt-3 bg-white">
-                    <h1 class="mb-3 text-uppercase" style="color: #e66624; font-size: 26px;">Mô hình đào tạo</h1>
-                    
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <img src="/image/mohinh.png" alt="Mô hình đào tạo" style="max-width: 100%; height: auto; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+
+                <div class="p-4 p-md-5">
+                    <!-- Page Header -->
+                    <div class="mb-4 pb-2">
+                        <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold text-uppercase" style="font-size: 12px; letter-spacing: 1px;">
+                            <i class="bi bi-mortarboard-fill"></i> Triết lý giáo dục khai phóng
+                        </div>
+                        <h1 class="intro-title">Mô Hình Đào Tạo Tiên Phong</h1>
                     </div>
 
-                    <p style="font-family: Roboto, sans-serif; text-align: justify; line-height: 1.6;">
-                        eSchool tự hào tiên phong ứng dụng các phương pháp giảng dạy hiện đại, tích hợp công nghệ, với mục tiêu không chỉ truyền đạt tri thức mà còn khơi dậy tư duy sáng tạo và kỹ năng thực tiễn của học sinh.
+                    <!-- Showcase Image -->
+                    <div class="text-center my-4">
+                        <img src="/image/mohinh.png" 
+                             alt="Mô hình đào tạo eSchool" 
+                             class="img-fluid rounded-4 shadow-sm border" 
+                             style="max-height: 420px; width: 100%; object-fit: cover;"
+                             onerror="this.src='/images/mo-hinh-dao-tao.jpg'" />
+                    </div>
+
+                    <!-- Lead Paragraph -->
+                    <p class="lead text-secondary mb-4" style="font-size: 15.5px; line-height: 1.8; text-align: justify;">
+                        <strong>eSchool</strong> tự hào tiên phong ứng dụng các mô hình đào tạo chuẩn hóa quốc tế, tích hợp công nghệ số tiên tiến, với triết lý không chỉ truyền thụ tri thức mà còn khơi gợi niềm đam mê học tập trọn đời, tôi luyện bản lĩnh và tư duy độc lập cho từng học sinh.
                     </p>
 
-                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">1. Định hướng giáo dục</h4>
-                    <p style="text-align: justify; line-height: 1.6;">
-                        Hệ thống hoạt động theo mô hình trường chất lượng cao, kết hợp chương trình của Bộ GD&ĐT cùng các chương trình chuẩn Quốc tế (như hệ song bằng Cambridge). Sự kết hợp này mang lại cho các em học sinh lợi thế hội nhập, sẵn sàng trở thành công dân toàn cầu.
-                    </p>
+                    <!-- 3 Pillar Cards -->
+                    <div class="row g-3 mb-4">
+                        <!-- Pillar 1 -->
+                        <div class="col-md-12">
+                            <div class="pillar-card border-start border-4 border-primary">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="pillar-card-icon bg-primary bg-opacity-10 text-primary mb-0">
+                                        <i class="bi bi-compass"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold text-dark mb-0">1. Định Hướng Giáo Dục Chuẩn Quốc Tế</h5>
+                                        <span class="text-muted small">Hội nhập toàn cầu - Gìn giữ bản sắc</span>
+                                    </div>
+                                </div>
+                                <p class="text-secondary small mt-3 mb-0" style="line-height: 1.7; text-align: justify;">
+                                    Hệ thống hoạt động theo mô hình trường chất lượng cao, kết hợp hài hòa giữa chương trình giáo dục quốc gia của Bộ GD&ĐT cùng chương trình Quốc tế Cambridge danh giá. Nhờ vậy, học sinh eSchool vừa làm chủ nền tảng văn hóa Việt Nam, vừa vững bước trở thành những công dân toàn cầu có năng lực cạnh tranh quốc tế.
+                                </p>
+                            </div>
+                        </div>
 
-                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">2. Phương pháp giảng dạy</h4>
-                    <p style="text-align: justify; line-height: 1.6;">
-                        - <strong>Lấy học sinh làm trung tâm:</strong> Tăng cường các hoạt động khám phá, thực hành, làm việc nhóm, giúp học sinh chủ động hình thành kiến thức và phát triển năng lực tự học.<br>
-                        - <strong>Học đi đôi với hành:</strong> Tổ chức thường xuyên các hoạt động trải nghiệm thực tế, giáo dục kỹ năng sống (STEM, Kỹ năng sinh tồn, Nghệ thuật ứng xử...).<br>
-                        - <strong>Tích hợp công nghệ:</strong> Sử dụng hệ thống quản lý học tập điện tử (eLearning), sổ liên lạc điện tử, kiểm tra đánh giá trên nền tảng số giúp cá nhân hóa lộ trình học tập của từng học sinh.
-                    </p>
+                        <!-- Pillar 2 -->
+                        <div class="col-md-12">
+                            <div class="pillar-card border-start border-4 border-success">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="pillar-card-icon bg-success bg-opacity-10 text-success mb-0">
+                                        <i class="bi bi-lightbulb"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold text-dark mb-0">2. Phương Pháp Giảng Dạy Đột Phá</h5>
+                                        <span class="text-muted small">Chủ động sáng tạo - Lấy học sinh làm trung tâm</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3 text-secondary small" style="line-height: 1.7;">
+                                    <div class="mb-2">
+                                        <strong class="text-dark"><i class="bi bi-check-circle-fill text-success me-1"></i> Lấy người học làm trung tâm:</strong> Tăng cường các hoạt động tương tác, thảo luận nhóm, thuyết trình dự án giúp học sinh làm chủ kiến thức và tự tin bày tỏ chính kiến.
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong class="text-dark"><i class="bi bi-check-circle-fill text-success me-1"></i> Học đi đôi với hành:</strong> Đan xen lý thuyết cùng các chuyến đi thực địa, xưởng thực hành STEM và các dự án vì cộng đồng.
+                                    </div>
+                                    <div>
+                                        <strong class="text-dark"><i class="bi bi-check-circle-fill text-success me-1"></i> Chuyển đổi số giáo dục:</strong> Hệ thống eLearning, sổ liên lạc thông minh và đánh giá năng lực số hóa giúp cá nhân hóa lộ trình phát triển cho từng em.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                    <h4 class="mt-4 text-primary" style="color: #e66624 !important;">3. Chương trình giáo dục toàn diện</h4>
-                    <p style="text-align: justify; line-height: 1.6;">
-                        Hướng tới sự phát triển toàn diện Đức - Trí - Thể - Mỹ, nhà trường xây dựng chương trình phát triển cá nhân với sự tham gia của các CLB năng khiếu: CLB Thể chất (bóng đá, bóng rổ, khiêu vũ...), CLB Nghệ thuật (âm nhạc, hội họa), CLB Khoa học (STEM, Lập trình Robotics). Học sinh được khuyến khích giao lưu trong nước và quốc tế để tăng cường sự tự tin và tư duy phản biện.
-                    </p>
+                        <!-- Pillar 3 -->
+                        <div class="col-md-12">
+                            <div class="pillar-card border-start border-4 border-warning">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="pillar-card-icon bg-warning bg-opacity-10 text-warning mb-0">
+                                        <i class="bi bi-stars"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold text-dark mb-0">3. Phát Triển Toàn Diện (Đức - Trí - Thể - Mỹ)</h5>
+                                        <span class="text-muted small">Khám phá tiềm năng - Khẳng định đam mê</span>
+                                    </div>
+                                </div>
+                                <p class="text-secondary small mt-3 mb-3" style="line-height: 1.7; text-align: justify;">
+                                    Chương trình phát triển cá nhân tại eSchool được thiết kế đa dạng với hệ sinh thái Câu lạc bộ phong phú, tạo sân chơi thỏa sức đam mê và tỏa sáng tài năng:
+                                </p>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="clb-tag"><i class="bi bi-dribbble text-danger"></i> CLB Thể Thao (Bóng đá, Bóng rổ, Cầu lông)</span>
+                                    <span class="clb-tag"><i class="bi bi-palette-fill text-primary"></i> CLB Mỹ Thuật & Hội Họa</span>
+                                    <span class="clb-tag"><i class="bi bi-music-note-beamed text-success"></i> CLB Âm Nhạc & Guitar</span>
+                                    <span class="clb-tag"><i class="bi bi-cpu-fill text-info"></i> CLB STEM & Robotics</span>
+                                    <span class="clb-tag"><i class="bi bi-mic-fill text-warning"></i> CLB MC & Hùng Biện Tiếng Anh</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                    <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-                        <img src="/images/mo-hinh-dao-tao.jpg" alt="Mô hình đào tạo eSchool" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 5px;" onerror="this.src='https://via.placeholder.com/800x400?text=Hinh+Anh+Mo+Hinh+Dao+Tao'"/>
+                    <!-- Secondary Photo Showcase -->
+                    <div class="text-center my-4">
+                        <img src="/images/mo-hinh-dao-tao.jpg" 
+                             alt="Mô hình đào tạo eSchool" 
+                             class="img-fluid rounded-4 shadow-sm border" 
+                             style="max-height: 380px; width: 100%; object-fit: cover;"
+                             onerror="this.style.display='none'" />
                     </div>
 
                 </div>

@@ -56,15 +56,15 @@
         gap: 5px;
     }
 
-    .bg-blue-light { background-color: #f1f5fd !important; }
+    .bg-blue-light { background-color: #dbeafe !important; }
     .icon-blue { background-color: #e6f0ff; color: #0d6efd; }
     .text-blue { color: #0d6efd; }
 
-    .bg-green-light { background-color: #f2f9f4 !important; }
+    .bg-green-light { background-color: #dcfce7 !important; }
     .icon-green { background-color: #e6f5ea; color: #198754; }
     .text-green { color: #198754; }
 
-    .bg-orange-light { background-color: #fdf5f0 !important; }
+    .bg-orange-light { background-color: #ffedd5 !important; }
     .icon-orange { background-color: #fceddb; color: #fd7e14; }
     .text-orange { color: #d97706; }
 
@@ -120,33 +120,94 @@
 <div class="tab-content" id="myTabContent">
     <!-- Tab Phòng Học -->
     <div class="tab-pane fade show active" id="phonghoc-pane" role="tabpanel" tabindex="0">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <form method="get" class="d-flex gap-2 align-items-center">
-                <select name="loaiPhong" class="form-select w-auto">
-                    <option value="">Tất cả loại phòng</option>
-                    @Html.Raw($"<option value='Học lý thuyết' {(ViewBag.FilterLoaiPhong == "Học lý thuyết" ? "selected" : "")}>Học lý thuyết</option>")
-                    @Html.Raw($"<option value='Thực hành' {(ViewBag.FilterLoaiPhong == "Thực hành" ? "selected" : "")}>Thực hành</option>")
-                    @Html.Raw($"<option value='Lab' {(ViewBag.FilterLoaiPhong == "Lab" ? "selected" : "")}>Lab</option>")
-                    @Html.Raw($"<option value='Thể chất' {(ViewBag.FilterLoaiPhong == "Thể chất" ? "selected" : "")}>Thể chất</option>")
-                </select>
-                <select name="trangThai" class="form-select w-auto">
-                    <option value="">Tất cả trạng thái</option>
-                    @Html.Raw($"<option value='true' {(ViewBag.FilterTrangThai == true ? "selected" : "")}>Hoạt động</option>")
-                    @Html.Raw($"<option value='false' {(ViewBag.FilterTrangThai == false ? "selected" : "")}>Bảo trì</option>")
-                </select>
-                <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm phòng hoặc thiết bị..." style="min-width: 250px;" />
-                <button type="submit" class="btn btn-light border px-3"><i class="bi bi-funnel"></i> Lọc</button>
+        <div class="page-tools d-flex justify-content-between align-items-center mb-4">
+            <form method="get" class="student-admin-filter m-0 shadow-none border-0 bg-transparent p-0 flex-grow-1 d-flex gap-2">
+                <div class="student-admin-search flex-grow-1">
+                    <i class="bi bi-search"></i>
+                    <input name="keyword" value="@ViewBag.Keyword" placeholder="Tìm phòng hoặc thiết bị..." />
+                </div>
+                @await Html.PartialAsync("_ExportDropdown")
+                <div class="dropdown filter-dropdown">
+                    <button type="button" class="btn btn-outline-secondary h-100 px-3" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                    <div class="dropdown-menu shadow">
+                        <h6 class="fw-bold mb-3 px-1">Bộ lọc</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">Loại phòng</label>
+                            <select name="loaiPhong" class="form-select form-select-sm">
+                                <option value="">Tất cả loại phòng</option>
+                                @Html.Raw($"<option value='Học lý thuyết' {(ViewBag.FilterLoaiPhong == "Học lý thuyết" ? "selected" : "")}>Học lý thuyết</option>")
+                                @Html.Raw($"<option value='Thực hành' {(ViewBag.FilterLoaiPhong == "Thực hành" ? "selected" : "")}>Thực hành</option>")
+                                @Html.Raw($"<option value='Lab' {(ViewBag.FilterLoaiPhong == "Lab" ? "selected" : "")}>Lab</option>")
+                                @Html.Raw($"<option value='Thể chất' {(ViewBag.FilterLoaiPhong == "Thể chất" ? "selected" : "")}>Thể chất</option>")
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">Trạng thái</label>
+                            <select name="trangThai" class="form-select form-select-sm">
+                                <option value="">Tất cả trạng thái</option>
+                                @Html.Raw($"<option value='true' {(ViewBag.FilterTrangThai == true ? "selected" : "")}>Hoạt động</option>")
+                                @Html.Raw($"<option value='false' {(ViewBag.FilterTrangThai == false ? "selected" : "")}>Bảo trì</option>")
+                            </select>
+                        </div>
+
+                        <div class="d-flex justify-content-between gap-2 mt-4">
+                            <a asp-action="PhongHoc" class="btn btn-light btn-sm flex-grow-1">Đặt lại</a>
+                            <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Áp dụng</button>
+                        </div>
+                    </div>
+                </div>
             </form>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPhong">
-                <i class="bi bi-plus-lg"></i> Thêm phòng
-            </button>
+            <div class="d-flex gap-2 ms-auto">
+                <button class="btn btn-success text-nowrap" type="button" data-bs-toggle="modal" data-bs-target="#importPhongHocModal">
+                    <i class="bi bi-file-earmark-excel"></i> Nhập từ Excel
+                </button>
+                <button class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#createPhong">
+                    <i class="bi bi-plus-lg"></i> Thêm phòng
+                </button>
+            </div>
         </div>
 
-        <div class="table-responsive bg-white rounded shadow-sm border border-light">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+        <!-- Modal Import Excel -->
+        <div class="modal fade" id="importPhongHocModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content student-admin-card p-0">
+                    <form asp-action="ImportPhongHocExcel" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title">Nhập phòng học từ Excel</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3 text-muted">Vui lòng tải file mẫu để xem định dạng chuẩn trước khi nhập dữ liệu.</p>
+                            <a asp-action="DownloadPhongHocTemplate" class="btn btn-outline-success mb-4">
+                                <i class="bi bi-download me-1"></i> Tải file mẫu
+                            </a>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Chọn file Excel (.xlsx) <span class="text-danger">*</span></label>
+                                <input type="file" name="file" class="form-control" accept=".xlsx" required />
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-upload me-1"></i> Nhập dữ liệu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-table-wrapper">
+            <table class="table table-hover align-middle mb-0 app-table">
+                <thead class="app-table-header">
                     <tr>
-                        <th class="ps-4">Phòng</th>
+                        <th>Phòng</th>
                         <th>Loại</th>
                         <th>Sức chứa</th>
                         <th>Trạng thái</th>
@@ -154,15 +215,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="6" class="text-center text-muted py-5">Không tìm thấy phòng học phù hợp</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-5">Không tìm thấy phòng học phù hợp</td></tr>
                     }
                     @foreach (var item in Model)
                     {
                         <tr>
-                            <td class="ps-4">
+                            <td>
                                 <i class="bi bi-building text-secondary me-2"></i><strong>@item.TenPhong</strong>
                             </td>
                             <td>@item.LoaiPhong</td>
@@ -190,18 +250,22 @@
 
     <!-- Tab Bảo Trì -->
     <div class="tab-pane fade" id="baotri-pane" role="tabpanel" tabindex="0">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">Danh sách các yêu cầu/phiếu bảo trì</h5>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBaoTri">
-                <i class="bi bi-plus-lg"></i> Thêm bảo trì
-            </button>
+        <div class="page-tools d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="mb-0 fw-bold">Danh sách các yêu cầu/phiếu bảo trì</h5>
+            </div>
+            <div class="d-flex gap-2 ms-auto">
+                <button class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#createBaoTri">
+                    <i class="bi bi-plus-lg"></i> Thêm bảo trì
+                </button>
+            </div>
         </div>
         
-        <div class="table-responsive bg-white rounded shadow-sm border border-light">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+        <div class="app-table-wrapper">
+            <table class="table table-hover align-middle mb-0 app-table">
+                <thead class="app-table-header">
                     <tr>
-                        <th class="ps-4">Mã phiếu</th>
+                        <th>Mã phiếu</th>
                         <th>Mã TB</th>
                         <th>Tên thiết bị</th>
                         <th>Ngày bảo trì</th>
@@ -220,7 +284,7 @@
                     @foreach (var item in baoTris)
                     {
                         <tr>
-                            <td class="ps-4"><strong>@item.MaBaoTri</strong></td>
+                            <td><strong>@item.MaBaoTri</strong></td>
                             <td>@item.ThietBi?.MaTB</td>
                             <td>@item.ThietBi?.TenTB</td>
                             <td>@item.NgayBaoTri.ToString("dd/MM/yyyy")</td>
@@ -513,3 +577,4 @@
         </div>
     </div>
 }
+

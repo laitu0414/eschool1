@@ -24,8 +24,11 @@ namespace eschool
                     new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtectionKeys")))
                 .SetApplicationName("eSchool");
 
+            var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+                ?? "Data Source=.\\SQLEXPRESS;Initial Catalog=eschool;Integrated Security=True;TrustServerCertificate=True";
+
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(defaultConnection));
 
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<IEmailSender, EmailSender>();
@@ -54,30 +57,52 @@ namespace eschool
             using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                dbContext.Database.Migrate();
 
-                var defaultRoles = new Dictionary<int, string>
+                try
                 {
-                    [SystemRoleIds.SystemAdmin] = "System Admin",
-                    [2] = "Giáo viên",
-                    [3] = "Học sinh",
-                    [4] = "Phụ huynh"
-                };
+                    dbContext.Database.Migrate();
+                    EnsureCompatibilityColumns(dbContext);
 
-                foreach (var role in defaultRoles)
+                    var defaultRoles = new Dictionary<int, string>
+                    {
+                        [SystemRoleIds.SystemAdmin] = "System Admin",
+                        [2] = "Giáo viên",
+                        [3] = "Học sinh",
+                        [4] = "Phụ huynh"
+                    };
+
+                    foreach (var role in defaultRoles)
+                    {
+                        if (dbContext.ChucVus.Any(c => c.IdChucVu == role.Key))
+                            continue;
+
+                        try
+                        {
+                            dbContext.Database.ExecuteSqlRaw(
+                                $"SET IDENTITY_INSERT ChucVus ON; INSERT INTO ChucVus (IdChucVu, TenChucVu) VALUES ({role.Key}, N'{role.Value.Replace("'", "''")}'); SET IDENTITY_INSERT ChucVus OFF;");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error seeding role {role.Key}: {ex.Message}");
+                        }
+                    }
+
+                    if (!dbContext.TaiKhoans.Any(t => t.IdChucVu == SystemRoleIds.SystemAdmin))
+                    {
+                        dbContext.TaiKhoans.Add(new TaiKhoan
+                        {
+                            Username = "admin",
+                            Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                            IdChucVu = SystemRoleIds.SystemAdmin,
+                            TrangThai = true,
+                            BatBuocDoiMatKhau = false
+                        });
+                        dbContext.SaveChanges();
+                    }
+                }
+                catch (Exception ex)
                 {
-                    if (dbContext.ChucVus.Any(c => c.IdChucVu == role.Key))
-                        continue;
-
-                    try
-                    {
-                        dbContext.Database.ExecuteSqlRaw(
-                            $"SET IDENTITY_INSERT ChucVus ON; INSERT INTO ChucVus (IdChucVu, TenChucVu) VALUES ({role.Key}, N'{role.Value.Replace("'", "''")}'); SET IDENTITY_INSERT ChucVus OFF;");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error seeding role {role.Key}: {ex.Message}");
-                    }
+                    Console.WriteLine($"Database is unavailable. App will continue without automatic migration/seeding: {ex.Message}");
                 }
             }
 
@@ -108,6 +133,23 @@ namespace eschool
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
+        }
+
+        private static void EnsureCompatibilityColumns(AppDbContext dbContext)
+        {
+            dbContext.Database.ExecuteSqlRaw("""
+                IF OBJECT_ID(N'dbo.HocSinhs', N'U') IS NOT NULL
+                   AND COL_LENGTH(N'dbo.HocSinhs', N'AnhDaiDien') IS NULL
+                BEGIN
+                    ALTER TABLE [dbo].[HocSinhs] ADD [AnhDaiDien] nvarchar(max) NULL;
+                END;
+
+                IF OBJECT_ID(N'dbo.GiaoViens', N'U') IS NOT NULL
+                   AND COL_LENGTH(N'dbo.GiaoViens', N'AnhDaiDien') IS NULL
+                BEGIN
+                    ALTER TABLE [dbo].[GiaoViens] ADD [AnhDaiDien] nvarchar(255) NULL;
+                END;
+                """);
         }
     }
 }

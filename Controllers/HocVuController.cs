@@ -1,9 +1,11 @@
-using eSchool.Infrastructure;
+﻿using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using ClosedXML.Excel;
+using System.IO;
 
 namespace eSchool.Controllers
 {
@@ -17,7 +19,7 @@ namespace eSchool.Controllers
             _context = context;
         }
 
-        public IActionResult LopHoc(string? keyword)
+        public IActionResult LopHoc(string? keyword, string? khoi, string? namHoc)
         {
             var query = _context.LopHocs
                 .Include(x => x.GiaoVienChuNhiem)
@@ -31,10 +33,21 @@ namespace eSchool.Controllers
                     x.TenLop.Contains(keyword) ||
                     (x.Khoi != null && x.Khoi.Contains(keyword)));
             }
+            if (!string.IsNullOrWhiteSpace(khoi))
+            {
+                query = query.Where(x => x.Khoi == khoi);
+            }
+            if (!string.IsNullOrWhiteSpace(namHoc))
+            {
+                query = query.Where(x => x.NamHoc == namHoc);
+            }
 
             ViewBag.Keyword = keyword;
+            ViewBag.SelectedKhoi = khoi;
+            ViewBag.SelectedNamHoc = namHoc;
             ViewBag.GiaoViens = GetGiaoVienSelectList();
             ViewBag.NamHocs = GetNamHocSelectList();
+            ViewBag.Khois = _context.LopHocs.Where(x => x.Khoi != null).Select(x => x.Khoi).Distinct().OrderBy(x => x).ToList();
             ViewBag.PhongHocs = _context.PhongHocs.Select(x => new SelectListItem(x.TenPhong, x.IdPhongHoc.ToString())).ToList();
             
             var phongHocMap = _context.PhongHocs.Where(x => x.IdLop != null).ToDictionary(x => x.IdLop.Value, x => x.IdPhongHoc);
@@ -1809,7 +1822,7 @@ namespace eSchool.Controllers
             var subjectConfigs = new System.Collections.Generic.List<(string MaMon, string TenMon, int SoTiet)>
             {
                 ("TOAN", "Toán", 4),
-                ("VAN", "Ngữ văn", 4),
+                ("VAN", "Ngữ vĐƒn", 4),
                 ("ANH", "Tiếng Anh", 4),
 
                 ("LY", "Vật lý", 2),
@@ -2411,5 +2424,243 @@ namespace eSchool.Controllers
             TempData["Success"] = $"Đã thêm năm học, tạo 20 lớp, tự phân công {autoAssignedCount} giáo viên chủ nhiệm và xếp TKB thành công.";
             return RedirectToAction("Index", "LenLop");
         }
+
+        // ==========================================
+        // EXCEL IMPORT CHO LỚP HỌC
+        // ==========================================
+        [HttpGet]
+        public IActionResult DownloadLopHocTemplate()
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("LopHoc");
+            worksheet.Cell(1, 1).Value = "Mã lớp (*)";
+            worksheet.Cell(1, 2).Value = "Tên lớp (*)";
+            worksheet.Cell(1, 3).Value = "Khối";
+            worksheet.Cell(1, 4).Value = "Buổi học";
+            worksheet.Cell(1, 5).Value = "Năm học";
+
+            worksheet.Cell(2, 1).Value = "10A1";
+            worksheet.Cell(2, 2).Value = "Lớp 10A1";
+            worksheet.Cell(2, 3).Value = "10";
+            worksheet.Cell(2, 4).Value = "Sáng";
+            worksheet.Cell(2, 5).Value = "2026-2027";
+
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "LopHoc_Template.xlsx");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportLopHocExcel(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Vui lòng chọn file hợp lệ.";
+                return RedirectToAction("LopHoc");
+            }
+
+            try
+            {
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+                using var workbook = new XLWorkbook(stream);
+                var worksheet = workbook.Worksheet(1);
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+
+                int count = 0;
+                foreach (var row in rows)
+                {
+                    var maLop = row.Cell(1).Value.ToString().Trim();
+                    var tenLop = row.Cell(2).Value.ToString().Trim();
+                    
+                    if (string.IsNullOrEmpty(maLop) || string.IsNullOrEmpty(tenLop))
+                        continue;
+
+                    if (_context.LopHocs.Any(x => x.MaLop == maLop))
+                        continue;
+
+                    var lop = new LopHoc
+                    {
+                        MaLop = maLop,
+                        TenLop = tenLop,
+                        Khoi = row.Cell(3).Value.ToString().Trim(),
+                        BuoiHoc = row.Cell(4).Value.ToString().Trim(),
+                        NamHoc = row.Cell(5).Value.ToString().Trim()
+                    };
+                    _context.LopHocs.Add(lop);
+                    count++;
+                }
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"Đã nhập thành công {count} lớp học từ Excel.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Có lỗi xảy ra: " + ex.Message;
+            }
+            return RedirectToAction("LopHoc");
+        }
+
+        // ==========================================
+        // EXCEL IMPORT CHO MÔN HỌC
+        // ==========================================
+        [HttpGet]
+        public IActionResult DownloadMonHocTemplate()
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("MonHoc");
+            worksheet.Cell(1, 1).Value = "Mã môn (*)";
+            worksheet.Cell(1, 2).Value = "Tên môn (*)";
+            worksheet.Cell(1, 3).Value = "Số tiết (*)";
+
+            worksheet.Cell(2, 1).Value = "TOAN";
+            worksheet.Cell(2, 2).Value = "Toán học";
+            worksheet.Cell(2, 3).Value = "45";
+
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "MonHoc_Template.xlsx");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportMonHocExcel(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Vui lòng chọn file hợp lệ.";
+                return RedirectToAction("MonHoc");
+            }
+
+            try
+            {
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+                using var workbook = new XLWorkbook(stream);
+                var worksheet = workbook.Worksheet(1);
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+
+                int count = 0;
+                foreach (var row in rows)
+                {
+                    var maMon = row.Cell(1).Value.ToString().Trim();
+                    var tenMon = row.Cell(2).Value.ToString().Trim();
+                    
+                    if (string.IsNullOrEmpty(maMon) || string.IsNullOrEmpty(tenMon))
+                        continue;
+
+                    if (_context.MonHocs.Any(x => x.MaMon == maMon))
+                        continue;
+
+                    int soTiet = 0;
+                    int.TryParse(row.Cell(3).Value.ToString().Trim(), out soTiet);
+
+                    var mon = new MonHoc
+                    {
+                        MaMon = maMon,
+                        TenMon = tenMon,
+                        SoTiet = soTiet > 0 ? soTiet : 45
+                    };
+                    _context.MonHocs.Add(mon);
+                    count++;
+                }
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"Đã nhập thành công {count} môn học từ Excel.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Có lỗi xảy ra: " + ex.Message;
+            }
+            return RedirectToAction("MonHoc");
+        }
+
+        // ==========================================
+        // EXCEL IMPORT CHO PHÒNG HỌC
+        // ==========================================
+        [HttpGet]
+        public IActionResult DownloadPhongHocTemplate()
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("PhongHoc");
+            worksheet.Cell(1, 1).Value = "Mã phòng (*)";
+            worksheet.Cell(1, 2).Value = "Tên phòng (*)";
+            worksheet.Cell(1, 3).Value = "Sức chứa";
+            worksheet.Cell(1, 4).Value = "Loại phòng";
+            worksheet.Cell(1, 5).Value = "Trang thiết bị";
+
+            worksheet.Cell(2, 1).Value = "P101";
+            worksheet.Cell(2, 2).Value = "Phòng 101";
+            worksheet.Cell(2, 3).Value = "40";
+            worksheet.Cell(2, 4).Value = "Học lý thuyết";
+            worksheet.Cell(2, 5).Value = "Máy chiếu, Điều hòa";
+
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "PhongHoc_Template.xlsx");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportPhongHocExcel(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Vui lòng chọn file hợp lệ.";
+                return RedirectToAction("PhongHoc");
+            }
+
+            try
+            {
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+                using var workbook = new XLWorkbook(stream);
+                var worksheet = workbook.Worksheet(1);
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+
+                int count = 0;
+                foreach (var row in rows)
+                {
+                    var maPhong = row.Cell(1).Value.ToString().Trim();
+                    var tenPhong = row.Cell(2).Value.ToString().Trim();
+                    
+                    if (string.IsNullOrEmpty(maPhong) || string.IsNullOrEmpty(tenPhong))
+                        continue;
+
+                    if (_context.PhongHocs.Any(x => x.MaPhong == maPhong))
+                        continue;
+
+                    int sucChua = 40;
+                    if (int.TryParse(row.Cell(3).Value.ToString().Trim(), out int s))
+                        sucChua = s;
+
+                    var loaiPhong = row.Cell(4).Value.ToString().Trim();
+                    if (string.IsNullOrEmpty(loaiPhong)) loaiPhong = "Học lý thuyết";
+
+                    var phong = new PhongHoc
+                    {
+                        MaPhong = maPhong,
+                        TenPhong = tenPhong,
+                        SucChua = sucChua,
+                        LoaiPhong = loaiPhong,
+                        TrangThietBi = row.Cell(5).Value.ToString().Trim(),
+                        TrangThai = true
+                    };
+                    _context.PhongHocs.Add(phong);
+                    count++;
+                }
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"Đã nhập thành công {count} phòng học từ Excel.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Có lỗi xảy ra: " + ex.Message;
+            }
+            return RedirectToAction("PhongHoc");
+        }
     }
 }
+
+

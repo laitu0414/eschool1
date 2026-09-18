@@ -17,19 +17,86 @@
 
 <div class="content-card">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-tools d-flex justify-content-between align-items-center mb-4 gap-3">
         <div>
-            <h5 class="mb-1">Danh sách tài khoản</h5>
-            <small class="text-muted">Tổng số: @(Model?.Count ?? 0) tài khoản</small>
+            <h5 class="mb-1 text-nowrap">Danh sách tài khoản</h5>
         </div>
 
-        <button type="button"
-                class="btn-icon-add"
-                title="Thêm tài khoản"
-                data-bs-toggle="modal"
-                data-bs-target="#createModal">
-            <i class="bi bi-plus-lg"></i>
-        </button>
+        <form asp-action="Index" method="get" class="m-0 p-0 flex-grow-1 d-flex gap-2">
+            <div class="input-group flex-grow-1">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input name="keyword" value="@ViewBag.Keyword" class="form-control border-start-0 ps-0" placeholder="Tìm theo số điện thoại, họ tên hoặc email..." />
+            </div>
+
+            @await Html.PartialAsync("_ExportDropdown")
+
+            <div class="dropdown filter-dropdown">
+                <button type="button" class="btn btn-outline-secondary h-100 px-3" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <i class="bi bi-funnel"></i>
+                </button>
+                <div class="dropdown-menu shadow">
+                    <h6 class="fw-bold mb-3 px-1">Bộ lọc</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Chức vụ</label>
+                        <select name="idChucVu" class="form-select form-select-sm">
+                            <option value="">-- Tất cả chức vụ --</option>
+                            @if (chucVus != null)
+                            {
+                                foreach (var cv in chucVus)
+                                {
+                                    if (ViewBag.IdChucVu != null && ViewBag.IdChucVu == cv.IdChucVu)
+                                    {
+                                        <option value="@cv.IdChucVu" selected>@cv.TenChucVu</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@cv.IdChucVu">@cv.TenChucVu</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Trạng thái</label>
+                        <select name="trangThai" class="form-select form-select-sm">
+                            <option value="">-- Tất cả trạng thái --</option>
+                            @if (ViewBag.TrangThai != null && ViewBag.TrangThai == true)
+                            {
+                                <option value="true" selected>Hoạt động</option>
+                                <option value="false">Đã khóa</option>
+                            }
+                            else if (ViewBag.TrangThai != null && ViewBag.TrangThai == false)
+                            {
+                                <option value="true">Hoạt động</option>
+                                <option value="false" selected>Đã khóa</option>
+                            }
+                            else
+                            {
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Đã khóa</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="d-flex justify-content-between gap-2 mt-4">
+                        <a asp-action="Index" class="btn btn-light btn-sm flex-grow-1">Đặt lại</a>
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Áp dụng</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="d-flex gap-2">
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createModal">
+                <i class="bi bi-plus-lg"></i>
+                Thêm tài khoản
+            </button>
+        </div>
     </div>
 
     @if (TempData["Error"] != null)
@@ -41,65 +108,6 @@
     {
         <div class="alert alert-success">@TempData["Success"]</div>
     }
-
-    <form asp-action="Index" method="get" class="row g-3 mb-4">
-        <div class="col-md-4">
-            <input name="keyword"
-                   value="@ViewBag.Keyword"
-                   class="form-control"
-                   placeholder="Tìm theo số điện thoại, họ tên hoặc email..." />
-        </div>
-
-        <div class="col-md-3">
-            <select name="idChucVu" class="form-select">
-                <option value="">-- Tất cả chức vụ --</option>
-
-                @if (chucVus != null)
-                {
-                    foreach (var cv in chucVus)
-                    {
-                        if (ViewBag.IdChucVu != null && ViewBag.IdChucVu == cv.IdChucVu)
-                        {
-                            <option value="@cv.IdChucVu" selected>@cv.TenChucVu</option>
-                        }
-                        else
-                        {
-                            <option value="@cv.IdChucVu">@cv.TenChucVu</option>
-                        }
-                    }
-                }
-            </select>
-        </div>
-
-        <div class="col-md-3">
-            <select name="trangThai" class="form-select">
-                <option value="">-- Tất cả trạng thái --</option>
-
-                @if (ViewBag.TrangThai != null && ViewBag.TrangThai == true)
-                {
-                    <option value="true" selected>Hoạt động</option>
-                    <option value="false">Đã khóa</option>
-                }
-                else if (ViewBag.TrangThai != null && ViewBag.TrangThai == false)
-                {
-                    <option value="true">Hoạt động</option>
-                    <option value="false" selected>Đã khóa</option>
-                }
-                else
-                {
-                    <option value="true">Hoạt động</option>
-                    <option value="false">Đã khóa</option>
-                }
-            </select>
-        </div>
-
-        <div class="col-md-2">
-            <button class="btn btn-primary w-100">
-                <i class="bi bi-search me-1"></i>
-                Lọc
-            </button>
-        </div>
-    </form>
 
     <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle">
@@ -513,3 +521,4 @@
         syncProfileLinkFields();
     })();
 </script>
+

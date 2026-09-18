@@ -4,71 +4,179 @@
 }
 
 <style>
-    .message-container {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        color: #333;
+    .intro-page-card {
+        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        overflow: hidden;
     }
-    .message-title {
-        color: #d85a18;
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 5px;
+    .intro-breadcrumb-bar {
+        background: linear-gradient(135deg, #0d47a1 0%, #1e40af 100%);
+        color: #ffffff;
+        padding: 12px 24px;
+        font-size: 13.5px;
+        font-weight: 500;
     }
-    .message-meta {
-        background-color: #f2f2f2;
-        padding: 5px 10px;
-        font-size: 13px;
-        color: #666;
-        margin-bottom: 15px;
+    .intro-breadcrumb-bar a {
+        color: #bfdbfe;
+        text-decoration: none;
+        transition: color 0.2s;
     }
-
-    .message-image {
-        width: 100%;
-        max-width: 800px;
-        margin: 0 auto 20px auto;
-        display: block;
-        border: 2px solid #ddd;
+    .intro-breadcrumb-bar a:hover {
+        color: #ffffff;
     }
-    .message-content p {
-        margin-bottom: 15px;
+    .intro-title {
+        font-size: 26px;
+        font-weight: 800;
+        color: #0f172a;
+        position: relative;
+        display: inline-block;
+        letter-spacing: -0.5px;
+    }
+    .intro-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #2563eb, #60a5fa);
+        border-radius: 2px;
+    }
+    .quote-hero-box {
+        background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+        border-left: 5px solid #2563eb;
+        border-radius: 12px;
+        padding: 24px;
+        position: relative;
+    }
+    .message-text p {
+        font-size: 15.5px;
+        line-height: 1.8;
+        color: #334155;
         text-align: justify;
+        margin-bottom: 18px;
+    }
+    .signature-card {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 18px 24px;
+        display: inline-block;
+        text-align: center;
     }
 </style>
 
-<div class="container message-container my-5">
-    <div class="row">
-        <div class="col-lg-3 mb-4">
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3">
             @await Html.PartialAsync("_SidebarGioiThieu")
         </div>
+
+        <!-- Main Content -->
         <div class="col-lg-9">
-            <div class="card rounded-0 border-1" style="border-color: #e0e0e0;">
-                <div class="card-header rounded-0 text-white" style="background-color: #e66624; border-bottom: none; font-size: 14px;">
-                    Trang chủ <i class="bi bi-chevron-right" style="font-size: 10px; margin: 0 5px;"></i> Thông điệp của Hiệu trưởng
+            <div class="intro-page-card">
+                <!-- Breadcrumb Bar -->
+                <div class="intro-breadcrumb-bar d-flex align-items-center">
+                    <i class="bi bi-house-door-fill me-2"></i>
+                    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                    <i class="bi bi-chevron-right mx-2 text-white-50" style="font-size: 11px;"></i>
+                    <span class="text-white-50">Giới thiệu</span>
+                    <i class="bi bi-chevron-right mx-2 text-white-50" style="font-size: 11px;"></i>
+                    <span class="text-white fw-semibold">Thông điệp của Hiệu trưởng</span>
                 </div>
-                <div class="card-body p-4 pt-3 bg-white">
-                    <h1 class="message-title" style="color: #e66624; font-size: 26px;">Thông điệp của hiệu trưởng</h1>
-    
 
+                <div class="p-4 p-md-5">
+                    <!-- Page Header -->
+                    <div class="mb-4 pb-2">
+                        <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold text-uppercase" style="font-size: 12px; letter-spacing: 1px;">
+                            <i class="bi bi-chat-quote-fill"></i> Lời ngỏ từ Ban giám hiệu
+                        </div>
+                        <h1 class="intro-title">Thông điệp của Hiệu trưởng</h1>
+                    </div>
 
-    <!-- Hình ảnh thông điệp (thay thế đoạn text cũ) -->
-    <div style="text-align: center; margin-bottom: 20px;">
-        <img src="~/images/khat-khao-cong-hien.png" alt="Khát khao cống hiến, cháy bỏng đam mê" style="max-width: 100%; height: auto; border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
-    </div>
+                    <!-- Banner Image -->
+                    <div class="text-center my-4">
+                        <img src="~/images/khat-khao-cong-hien.png" 
+                             alt="Khát khao cống hiến, cháy bỏng đam mê" 
+                             class="img-fluid rounded-4 shadow-sm border" 
+                             style="max-height: 400px; width: 100%; object-fit: cover;" />
+                    </div>
 
-    <div class="message-content">
-        <p><strong>Chào mừng Quý vị phụ huynh và học sinh đến với trường eschool.</strong> Với tư cách là Hiệu trưởng nhà trường, tôi vô cùng hân hạnh khi được giới thiệu với Quý vị phụ huynh và học sinh những cơ hội đặc biệt mà chúng tôi dành cho các em học sinh.</p>
-        
-        <p>Trong bối cảnh toàn cầu hóa và sự bùng nổ công nghệ của thế kỷ XXI, chúng ta đang đứng trước ngưỡng cửa của cuộc cách mạng công nghiệp 4.0 giáo dục buộc phải thay đổi. Phương pháp dạy học chỉ tập trung vào truyền đạt kiến thức không còn phù hợp nữa. Thay vào đó, phương pháp tập trung vào tư duy và kỹ năng ngày càng được chú trọng. Đây là cốt lõi của giáo dục hiện đại.</p>
-        
-        <p>Nhận thức xu hướng đó, trường eschool chúng tôi mong muốn trang bị cho học sinh đầy đủ kiến thức, kỹ năng để các em có thể tự tin vững bước vào đời sống xã hội và phát triển những đức tính tốt, thích nghi với hoàn cảnh sống trong tương lai.</p>
-        
-        <p>Chúng tôi hiểu rằng giá trị cuộc sống của các em được xây dựng và hình thành qua những bài giảng trên lớp, những nhu cầu chính đáng, những trải nghiệm mà nhờ thế chúng tôi xây dựng cho học sinh những phẩm chất cao đẹp đó là phẩm chất yêu nước, nhân ái, chăm chỉ, trung thực, trách nhiệm. Những phẩm chất ấy là mạch máu chảy trong con người Việt Nam, là bệ phóng bồi đắp vào lòng kính trọng bản thân, tôn trọng nhân loại và tự hào về đất nước.</p>
-        
-        <p>Thông qua các chương trình học, chúng tôi khuyến khích học sinh đi theo lối tư duy logic, tích cực, tính tự giác cao, tự tin, sáng tạo và ý thức cộng đồng, từ đó HS khám phá ra những điều các em thực sự thích và rèn luyện chúng. Chúng tôi mang đến nhiều hoạt động trải nghiệm trong và ngoài nhà trường để hình thành tính cách, tính thiết thực, và hoàn thiện, giúp cho cuộc sống của các em thêm phong phú, toàn diện. Phát triển bản thân, sự tin tưởng vững chắc vào tương lai tươi sáng và quyết tâm tự khẳng định những giá trị cốt lõi trong tố chất đạo đức và nghị lực của học sinh chúng tôi.</p>
-        
-        <p>Xây dựng một môi trường giáo dục văn hóa "Thân thiện - Trung thực - An toàn" phải huy động mọi lực, phẩm chất, học sinh với sự phối hợp đồng bộ giữa "Gia đình, Nhà trường, Học sinh và Xã hội" tạo ra một ngôi nhà chung "Tự chủ - Đam mê - Hợp tác – Sáng tạo" để học sinh mỗi ngày tới trường là một ngày Hạnh phúc. Đó là mục tiêu mà chúng tôi và học sinh cùng hướng tới.</p>
-    </div>
+                    <!-- Welcome Callout Box -->
+                    <div class="quote-hero-box my-4">
+                        <div class="d-flex align-items-start gap-3">
+                            <i class="bi bi-quote text-primary" style="font-size: 38px; line-height: 1;"></i>
+                            <div>
+                                <h5 class="fw-bold text-primary mb-1">Chào mừng Quý phụ huynh & các em học sinh đến với eSchool!</h5>
+                                <p class="mb-0 text-secondary" style="font-size: 14.5px;">
+                                    Với tư cách là Hiệu trưởng nhà trường, tôi vô cùng hân hạnh được giới thiệu với Quý vị những cơ hội đặc biệt và hành trình khai mở tiềm năng mà chúng tôi tận tâm xây dựng cho từng em học sinh.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Content -->
+                    <div class="message-text">
+                        <p>
+                            Trong bối cảnh toàn cầu hóa và sự bùng nổ công nghệ của thế kỷ XXI, chúng ta đang đứng trước ngưỡng cửa của cuộc cách mạng công nghiệp 4.0 giáo dục buộc phải thay đổi. Phương pháp dạy học chỉ tập trung vào truyền đạt kiến thức không còn phù hợp nữa. Thay vào đó, phương pháp tập trung vào <strong>tư duy sáng tạo, kỹ năng thực hành và thích ứng linh hoạt</strong> ngày càng được chú trọng. Đây chính là cốt lõi của giáo dục hiện đại.
+                        </p>
+                        
+                        <p>
+                            Nhận thức rõ xu thế tất yếu đó, <strong>Hệ thống giáo dục eSchool</strong> chúng tôi mong muốn trang bị cho học sinh một nền tảng tri thức vững chắc cùng bộ kỹ năng thế kỷ 21 toàn diện, để các em có thể tự tin vững bước vào đời sống xã hội, kiến tạo tương lai và hội nhập quốc tế.
+                        </p>
+                        
+                        <p>
+                            Chúng tôi hiểu rằng giá trị cuộc sống của các em được bồi đắp từ từng bài giảng trên lớp, từng hoạt động trải nghiệm thực tế. Qua đó, nhà trường cùng gia đình rèn luyện cho các em những phẩm chất cao đẹp: <strong>Yêu nước – Nhân ái – Chăm chỉ – Trung thực – Trách nhiệm</strong>. Những phẩm chất ấy là mạch nguồn chảy trong con người Việt Nam, là bệ phóng giúp các em tôn trọng chính mình, trân trọng nhân loại và tự hào về đất nước.
+                        </p>
+
+                        <!-- Key Pillars Grid -->
+                        <div class="row g-3 my-4">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 border h-100 text-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-lightbulb-fill fs-5"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Tư duy Logic & Độc lập</h6>
+                                    <p class="small text-muted mb-0">Khơi dậy niềm đam mê học hỏi, sáng tạo không giới hạn.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 border h-100 text-center">
+                                    <div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-heart-pulse-fill fs-5"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Trải nghiệm Toàn diện</h6>
+                                    <p class="small text-muted mb-0">Hoạt động ngoại khóa phong phú giúp hình thành nhân cách vững vàng.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 border h-100 text-center">
+                                    <div class="rounded-circle bg-warning bg-opacity-10 text-warning d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-globe-americas fs-5"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Công dân Toàn cầu</h6>
+                                    <p class="small text-muted mb-0">Hội nhập quốc tế chuẩn mực với bản sắc Việt Nam sâu sắc.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p>
+                            Xây dựng một môi trường văn hóa học đường <strong>"Thân thiện - Trung thực - An toàn"</strong> là trách nhiệm chung của toàn thể cán bộ, giáo viên cùng sự phối hợp đồng bộ giữa <em>"Gia đình – Nhà trường – Học sinh – Xã hội"</em>, nhằm kiến tạo một ngôi nhà chung <strong>"Tự chủ – Đam mê – Hợp tác – Sáng tạo"</strong> để mỗi ngày đến trường của học sinh thực sự là một ngày hạnh phúc.
+                        </p>
+                    </div>
+
+                    <!-- Sign-off Block -->
+                    <div class="d-flex justify-content-end mt-5 pt-3 border-top">
+                        <div class="signature-card">
+                            <div class="text-uppercase text-muted fw-bold" style="font-size: 12px; letter-spacing: 0.5px;">TM. Ban Giám Hiệu Nhà Trường</div>
+                            <div class="fw-bolder text-primary fs-5 mt-1">HIỆU TRƯỞNG</div>
+                            <div class="text-secondary small mt-1 font-monospace">Hệ Thống Giáo Dục eSchool</div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

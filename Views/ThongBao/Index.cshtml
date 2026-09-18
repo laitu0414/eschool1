@@ -1,4 +1,4 @@
-﻿@using System.Linq
+@using System.Linq
 @model List<eSchool.Models.ThongBao>
 
 @{
@@ -19,13 +19,16 @@
             <small class="text-muted">Tổng số: @(Model?.Count ?? 0) thông báo</small>
         </div>
 
-        <button type="button"
-                class="btn-icon-add"
-                title="Thêm thông báo"
-                data-bs-toggle="modal"
-                data-bs-target="#createModal">
-            <i class="bi bi-plus-lg"></i>
-        </button>
+        <div class="d-flex gap-2 ms-auto">
+            @await Html.PartialAsync("_ExportDropdown")
+            <button type="button"
+                    class="btn btn-primary text-nowrap"
+                    title="Thêm thông báo"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createModal">
+                <i class="bi bi-plus-lg"></i> Thêm thông báo
+            </button>
+        </div>
     </div>
 
     @if (TempData["Error"] != null)

@@ -1,4 +1,4 @@
-using eSchool.Infrastructure;
+﻿using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.ViewModels;
 using eSchool.Services;
@@ -304,9 +304,7 @@ namespace eSchool.Controllers
             worksheet.Cell(1, 6).Value = "Điểm Giữa Kỳ";
             worksheet.Cell(1, 7).Value = "Điểm Cuối Kỳ";
 
-            var headerRow = worksheet.Row(1);
-            headerRow.Style.Font.Bold = true;
-            headerRow.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
 
             int row = 2;
             foreach (var hs in hocSinhs)
@@ -1150,6 +1148,7 @@ namespace eSchool.Controllers
             ws.Cell(2, 4).Value = "2026-2027";
             ws.Cell(2, 5).Value = "Ghi chú mẫu...";
 
+            eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(ws);
             ws.Columns().AdjustToContents();
 
             using var stream = new MemoryStream();
@@ -1541,18 +1540,18 @@ namespace eSchool.Controllers
                             {
                                 foreach (var title in new[] { "Mon hoc", "15 phut", "1 tiet", "Giua ky", "Cuoi ky", "TB" })
                                 {
-                                    header.Cell().Background(Colors.Blue.Lighten4).Border(1).Padding(6).Text(title).Bold();
+                                    header.Cell().Background("#1f4e78").Border(1).BorderColor("#1f4e78").Padding(6).Text(title).Bold().FontColor(QuestPDF.Helpers.Colors.White);
                                 }
                             });
 
                             foreach (var diem in diems)
                             {
-                                table.Cell().Border(1).Padding(6).Text(diem.MonHoc?.TenMon ?? string.Empty);
-                                table.Cell().Border(1).Padding(6).Text(FormatScore(diem.Diem15Phut));
-                                table.Cell().Border(1).Padding(6).Text(FormatScore(diem.Diem1Tiet));
-                                table.Cell().Border(1).Padding(6).Text(FormatScore(diem.DiemGiuaKy));
-                                table.Cell().Border(1).Padding(6).Text(FormatScore(diem.DiemCuoiKy));
-                                table.Cell().Border(1).Padding(6).Text(FormatScore(diem.DiemTB)).Bold();
+                                table.Cell().Background("#d9ead3").Border(1).BorderColor("#8fce00").Padding(6).Text(diem.MonHoc?.TenMon ?? string.Empty);
+                                table.Cell().Background("#d9ead3").Border(1).BorderColor("#8fce00").Padding(6).Text(FormatScore(diem.Diem15Phut));
+                                table.Cell().Background("#d9ead3").Border(1).BorderColor("#8fce00").Padding(6).Text(FormatScore(diem.Diem1Tiet));
+                                table.Cell().Background("#d9ead3").Border(1).BorderColor("#8fce00").Padding(6).Text(FormatScore(diem.DiemGiuaKy));
+                                table.Cell().Background("#d9ead3").Border(1).BorderColor("#8fce00").Padding(6).Text(FormatScore(diem.DiemCuoiKy));
+                                table.Cell().Background("#d9ead3").Border(1).BorderColor("#8fce00").Padding(6).Text(FormatScore(diem.DiemTB)).Bold();
                             }
                         });
 
@@ -1802,3 +1801,7 @@ namespace eSchool.Controllers
         }
     }
 }
+
+
+
+

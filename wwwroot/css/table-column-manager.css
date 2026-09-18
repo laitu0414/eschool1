@@ -1,0 +1,264 @@
+/* Universal Table Column Manager & Resizer Styles */
+
+.table th,
+.student-admin-table th,
+.teacher-admin-table th,
+.student-modern-table th,
+.student-fee-table th,
+.student-score-table th,
+.table-custom th,
+table th {
+    position: relative !important;
+    user-select: none;
+}
+
+/* Resizer Handle on TH */
+.th-column-resizer {
+    position: absolute;
+    top: 0;
+    right: -5px;
+    width: 10px;
+    height: 100%;
+    cursor: col-resize !important;
+    user-select: none;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+}
+
+/* Hover vertical line on header */
+.th-column-resizer::after {
+    content: '';
+    display: block;
+    width: 2px;
+    height: 100%;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+    border-radius: 1px;
+}
+
+.th-column-resizer:hover::after,
+.th-column-resizer.is-resizing::after {
+    background-color: #0284c7;
+    box-shadow: 0 0 6px rgba(2, 132, 199, 0.7);
+}
+
+/* Full-Height Vertical Guide Line running all the way down the entire table */
+.table-col-resize-guide-line {
+    position: absolute;
+    display: none;
+    width: 2px;
+    background-color: #0284c7;
+    box-shadow: 0 0 8px rgba(2, 132, 199, 0.85);
+    z-index: 999999;
+    pointer-events: none;
+    border-radius: 1px;
+}
+
+.table-column-resizing-active,
+.table-column-resizing-active * {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+/* Column Manager Dropdown Panel */
+.column-manager-menu {
+    min-width: 275px;
+    max-width: 320px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    border: 1px solid #e2e8f0;
+    padding: 14px 16px;
+    z-index: 1060;
+}
+
+.column-manager-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s;
+}
+
+.column-manager-item:hover {
+    background-color: #f1f5f9;
+}
+
+.column-manager-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #0284c7;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* Column Drag and Drop Reordering */
+th.is-column-draggable {
+    cursor: grab;
+}
+
+th.is-column-draggable:active {
+    cursor: grabbing;
+}
+
+th.th-is-dragging {
+    opacity: 0.45 !important;
+    background-color: #e0f2fe !important;
+    outline: 2px dashed #0284c7 !important;
+}
+
+th.th-drag-over-left {
+    border-left: 3px solid #0284c7 !important;
+    box-shadow: inset 4px 0 0 rgba(2, 132, 199, 0.25) !important;
+}
+
+th.th-drag-over-right {
+    border-right: 3px solid #0284c7 !important;
+    box-shadow: inset -4px 0 0 rgba(2, 132, 199, 0.25) !important;
+}
+
+/* TH Content Wrapper & Header Elements */
+.th-content-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    width: 100%;
+    min-height: 24px;
+}
+
+.th-title-text {
+    flex: 1 1 auto;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.th-pin-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.th-sort-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 13px;
+    padding: 0 2px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+}
+
+.th-sort-indicator:hover {
+    color: #0284c7;
+}
+
+/* 3-Dots Menu Button: Hidden by default, visible only on hover or when dropdown open */
+.th-menu-dropdown {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.th-menu-btn {
+    opacity: 0;
+    visibility: hidden;
+    padding: 0 4px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #64748b !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    border-radius: 4px !important;
+    transition: opacity 0.15s ease, visibility 0.15s ease, background-color 0.15s ease;
+    cursor: pointer !important;
+}
+
+th:hover .th-menu-btn,
+.th-menu-dropdown.show .th-menu-btn,
+.th-menu-btn:focus {
+    opacity: 1;
+    visibility: visible;
+}
+
+.th-menu-btn:hover {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+    color: #0f172a !important;
+}
+
+/* 3-Dots Dropdown Panel */
+.th-dropdown-panel {
+    min-width: 180px;
+    border-radius: 8px;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    font-size: 13px;
+    z-index: 1070;
+}
+
+.th-dropdown-panel .dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 5px;
+    color: #334155;
+    font-weight: 500;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.th-dropdown-panel .dropdown-item i {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.th-dropdown-panel .dropdown-item:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.th-dropdown-panel .dropdown-item:hover i {
+    color: #0284c7;
+}
+
+/* Pinned column styling */
+th.is-pinned,
+th.is-pinned-col {
+    background-color: #f1f5f9 !important;
+    cursor: default !important;
+    font-weight: 700 !important;
+}
+
+th.is-pinned .th-title-text,
+th.is-pinned-col .th-title-text {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+td.is-pinned-cell {
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    background-color: #f8fafc !important;
+}
+
+tr:hover td.is-pinned-cell {
+    background-color: #f1f5f9 !important;
+}
+

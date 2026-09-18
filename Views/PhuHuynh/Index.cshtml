@@ -91,17 +91,30 @@
                 </div>
             </div>
 
-            <form method="get" class="teacher-admin-filter">
-                <div class="teacher-admin-search">
-                    <i class="bi bi-search"></i>
-                    <input name="keyword" value="@keyword" placeholder="Tìm theo họ tên, email hoặc số điện thoại..." />
-                </div>
-                <button type="submit" class="teacher-admin-filter-btn">
-                    <i class="bi bi-funnel"></i>
-                    Tìm
-                </button>
-                <a asp-action="Index" class="teacher-admin-reset-btn">Làm mới</a>
-            </form>
+            <div class="page-tools mb-4">
+                <form method="get" class="m-0 shadow-none border-0 bg-transparent p-0 flex-grow-1 d-flex gap-2">
+                    <div class="input-group flex-grow-1">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input name="keyword" value="@keyword" class="form-control border-start-0 ps-0" placeholder="Tìm theo họ tên, email hoặc số điện thoại..." />
+                    </div>
+                    @await Html.PartialAsync("_ExportDropdown")
+                    <div class="dropdown filter-dropdown">
+                        <button type="button" class="btn btn-outline-secondary h-100 px-3" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <i class="bi bi-funnel"></i>
+                        </button>
+                        <div class="dropdown-menu shadow">
+                            <h6 class="fw-bold mb-3 px-1">Bộ lọc</h6>
+                            <div class="text-muted small px-1 mb-3">
+                                Chưa có bộ lọc nâng cao cho danh mục này.
+                            </div>
+                            <div class="d-flex justify-content-between gap-2 mt-4">
+                                <a asp-action="Index" class="btn btn-light btn-sm flex-grow-1">Đặt lại</a>
+                                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Áp dụng</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
             <div class="teacher-admin-table-wrap">
                 <table class="teacher-admin-table">
@@ -393,3 +406,4 @@ else
         });
     }
 </script>
+

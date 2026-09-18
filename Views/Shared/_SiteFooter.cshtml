@@ -1,37 +1,93 @@
-<footer class="eschool-footer">
-    <div class="eschool-footer-card">
-        <div class="footer-brand">
-            <a class="footer-logo" asp-controller="Admin" asp-action="Index" aria-label="eSchool">
-                <span class="footer-logo-icon"><i class="bi bi-mortarboard-fill"></i></span>
-                <span>
-                    <strong>eSchool</strong>
-                    <small>School Management System</small>
-                </span>
-            </a>
-            <p>
-                Nền tảng quản lý nhà trường giúp kết nối học sinh, giáo viên, phụ huynh và bộ phận quản trị trong một hệ thống.
-            </p>
+<footer class="eschool-footer" id="lien-he">
+    <!-- Top Accent Bar -->
+    <div class="footer-top-accent"></div>
+
+    <div class="container py-3">
+        <div class="row g-3 align-items-center">
+            <!-- Brand Column -->
+            <div class="col-lg-4 col-md-12">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="footer-logo-card">
+                        <img src="~/images/logo.png" alt="THCS eSchool" class="footer-logo-img" />
+                    </div>
+                    <div>
+                        <h5 class="footer-brand-title mb-0">TRƯỜNG THCS ESCHOOL</h5>
+                        <div class="footer-brand-subtitle">Hệ Thống Giáo Dục Chất Lượng Cao</div>
+                    </div>
+                </div>
+                <div class="footer-desc-text small text-secondary mb-2">
+                    Tiên phong đổi mới giáo dục, ứng dụng công nghệ & chuẩn quốc tế.
+                </div>
+                <div class="footer-social-links d-flex gap-2">
+                    <a href="https://www.facebook.com/profile.php?id=61594183663536" target="_blank" rel="noopener noreferrer" class="footer-social-btn btn-facebook" title="Trang Facebook THCS eSchool"><i class="bi bi-facebook"></i></a>
+                    <a href="https://www.youtube.com/channel/UCX2kpwH_P_ACD5ZOl7exu2g" target="_blank" rel="noopener noreferrer" class="footer-social-btn btn-youtube" title="Kênh YouTube THCS eSchool"><i class="bi bi-youtube"></i></a>
+                    <a href="mailto:eschool935@gmail.com" class="footer-social-btn btn-email" title="Email: eschool935@gmail.com"><i class="bi bi-envelope-fill"></i></a>
+                    <a href="tel:0325541147" class="footer-social-btn btn-hotline" title="Hotline: 0325541147"><i class="bi bi-telephone-fill"></i></a>
+                </div>
+            </div>
+
+            <!-- Management Unit Column -->
+            <div class="col-lg-4 col-md-6">
+                <div class="footer-section-box">
+                    <div class="footer-heading">
+                        <span class="heading-icon-wrap"><i class="bi bi-building"></i></span>
+                        ĐƠN VỊ CHỦ QUẢN
+                    </div>
+                    <div class="footer-info-item">
+                        <span class="info-label">Chủ quản:</span>
+                        <span class="info-value fw-semibold text-white">UBND Phường Ô Chợ Dừa</span>
+                    </div>
+                    <div class="footer-info-item mt-1">
+                        <span class="info-label"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Địa chỉ:</span>
+                        <span class="info-value">Phường Ô Chợ Dừa, TP Hà Nội</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- School & Contact Column -->
+            <div class="col-lg-4 col-md-6">
+                <div class="footer-section-box">
+                    <div class="footer-heading">
+                        <span class="heading-icon-wrap"><i class="bi bi-mortarboard-fill"></i></span>
+                        THÔNG TIN LIÊN HỆ
+                    </div>
+                    <div class="footer-info-item">
+                        <span class="info-label"><i class="bi bi-geo-alt-fill text-warning me-1"></i> Địa chỉ:</span>
+                        <span class="info-value">Phường Ô Chợ Dừa, TP Hà Nội</span>
+                    </div>
+                    <div class="footer-info-item mt-1">
+                        <span class="info-label"><i class="bi bi-telephone-fill text-success me-1"></i> Hotline:</span>
+                        <a href="tel:0325541147" class="footer-contact-link fw-bold text-success small">0325541147</a>
+                        <span class="mx-1 text-white-50">|</span>
+                        <span class="info-label"><i class="bi bi-envelope-fill text-info me-1"></i> Email:</span>
+                        <a href="mailto:eschool935@gmail.com" class="footer-contact-link text-info small">eschool935@gmail.com</a>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="footer-contact">
-            <h4>Liên hệ</h4>
-            <div class="footer-contact-item">
-                <i class="bi bi-geo-alt-fill"></i>
-                <span>Trường học số eSchool, Việt Nam</span>
+        <!-- Divider & Bottom Bar -->
+        <div class="footer-divider my-2.5"></div>
+
+        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 footer-copyright-bar">
+            <div class="d-flex align-items-center gap-1.5 small">
+                <i class="bi bi-shield-check text-primary"></i>
+                <span>© @DateTime.Now.Year <strong>THCS eSchool</strong>. Bản quyền thuộc về nhà trường.</span>
             </div>
-            <div class="footer-contact-item">
-                <i class="bi bi-telephone-fill"></i>
-                <span>1900 996 686</span>
-            </div>
-            <div class="footer-contact-item">
-                <i class="bi bi-envelope-fill"></i>
-                <a href="mailto:support@eschool.edu.vn">support@eschool.edu.vn</a>
+            <div class="small text-secondary" style="font-size: 11.5px;">
+                Hệ Thống Quản Trị Giáo Dục Thông Minh eSchool
             </div>
         </div>
-    </div>
-
-    <div class="eschool-footer-bottom">
-        <span>© 2026 eSchool. All rights reserved.</span>
-        <span>Designed for school administration.</span>
     </div>
 </footer>
+
+<!-- Floating Hotline Widget in Screen Corner -->
+<a href="tel:0325541147" class="floating-hotline-pill" title="Liên hệ THCS eSchool" aria-label="Hotline THCS eSchool">
+    <div class="floating-hotline-icon">
+        <i class="bi bi-telephone-fill"></i>
+    </div>
+    <div class="floating-hotline-info">
+        <span class="floating-hotline-phone">0325541147</span>
+        <span class="floating-hotline-email">eschool935@gmail.com</span>
+    </div>
+</a>

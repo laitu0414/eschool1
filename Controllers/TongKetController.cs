@@ -1,4 +1,4 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.Services;
@@ -131,7 +131,7 @@ public sealed class TongKetController(AppDbContext context) : Controller
             sheet.Cell(row, 10).Value = string.IsNullOrEmpty(subject.Error) ? student.Reason : subject.Error;
             row++;
         }
-        sheet.Row(1).Style.Font.Bold = true;
+        eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(sheet);
         sheet.Columns(6, 8).Style.NumberFormat.Format = "0.00";
         sheet.SheetView.FreezeRows(1); sheet.Columns().AdjustToContents();
         using var stream = new MemoryStream(); book.SaveAs(stream);
