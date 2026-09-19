@@ -768,18 +768,20 @@ body {
     background: rgba(255, 255, 255, .18);
     font-size: 13px;
     font-weight: 700;
+    color: #fff !important;
 }
 
 .teacher-admin-hero h2 {
     margin: 14px 0 8px;
     font-size: 34px;
     font-weight: 800;
+    color: #fff !important;
 }
 
 .teacher-admin-hero p {
     max-width: 640px;
     margin: 0;
-    color: rgba(255, 255, 255, .85);
+    color: rgba(255, 255, 255, .88) !important;
 }
 
 .teacher-admin-primary {

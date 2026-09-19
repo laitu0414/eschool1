@@ -42,7 +42,7 @@ namespace eSchool.Controllers
             }
             return years.Count > 0 && years.All(x => AcademicYearPolicy.CanModify(x, DateTime.Today));
         }
-        public IActionResult LopHoc(string? keyword)
+        public IActionResult LopHoc(string? keyword, string? khoi = null, string? namHoc = null)
         {
             var query = _context.LopHocs
                 .Include(x => x.GiaoVienChuNhiem)
@@ -66,6 +66,8 @@ namespace eSchool.Controllers
             }
 
             ViewBag.Keyword = keyword;
+            ViewBag.Khoi = khoi;
+            ViewBag.NamHoc = namHoc;
             var editableYears = _context.NamHocs.AsNoTracking().ToList()
                 .Where(x => AcademicYearPolicy.CanModify(x, DateTime.Today))
                 .Select(x => x.TenNamHoc).ToHashSet();
@@ -121,7 +123,22 @@ namespace eSchool.Controllers
                 return RedirectWithError(nameof(LopHoc), AcademicYearPolicy.ReadOnlyMessage);
 
             NormalizeLop(vm);
-            vm.MaLop = GenerateClassCode();
+            if (string.IsNullOrWhiteSpace(vm.MaLop))
+            {
+                var prefix = ExtractYearPrefix(vm.NamHoc);
+                vm.MaLop = !string.IsNullOrEmpty(prefix) ? $"K{prefix}_{vm.TenLop}" : GenerateClassCode();
+            }
+
+            if (_context.LopHocs.Any(x => x.MaLop == vm.MaLop))
+            {
+                return RedirectWithError(nameof(LopHoc), $"Mã lớp '{vm.MaLop}' đã tồn tại.");
+            }
+
+            if (_context.LopHocs.Any(x => x.TenLop == vm.TenLop && x.NamHoc == vm.NamHoc))
+            {
+                return RedirectWithError(nameof(LopHoc), $"Lớp '{vm.TenLop}' trong năm học {vm.NamHoc} đã tồn tại.");
+            }
+
             ModelState.Clear();
             TryValidateModel(vm);
 
@@ -194,7 +211,20 @@ namespace eSchool.Controllers
                 return RedirectWithError(nameof(LopHoc), AcademicYearPolicy.ReadOnlyMessage);
 
             NormalizeLop(vm);
-            vm.MaLop = lop.MaLop;
+            if (string.IsNullOrWhiteSpace(vm.MaLop))
+            {
+                vm.MaLop = lop.MaLop;
+            }
+            else if (_context.LopHocs.Any(x => x.MaLop == vm.MaLop && x.IdLop != lop.IdLop))
+            {
+                return RedirectWithError(nameof(LopHoc), $"Mã lớp '{vm.MaLop}' đã tồn tại.");
+            }
+
+            if (_context.LopHocs.Any(x => x.TenLop == vm.TenLop && x.NamHoc == vm.NamHoc && x.IdLop != lop.IdLop))
+            {
+                return RedirectWithError(nameof(LopHoc), $"Lớp '{vm.TenLop}' trong năm học {vm.NamHoc} đã tồn tại.");
+            }
+
             ModelState.Clear();
             TryValidateModel(vm);
 
@@ -217,6 +247,7 @@ namespace eSchool.Controllers
                     );
                 }
             }
+            lop.MaLop = vm.MaLop;
             lop.TenLop = vm.TenLop.Trim();
             lop.Khoi = vm.Khoi;
             lop.BuoiHoc = vm.BuoiHoc;
@@ -572,15 +603,32 @@ namespace eSchool.Controllers
 
         // --- QUẢN LÝ MÔN HỌC ---
 
-        public IActionResult MonHoc(string? keyword)
+        public IActionResult MonHoc(string? keyword, string? khoi)
         {
             var query = _context.MonHocs.AsNoTracking().AsQueryable();
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 query = query.Where(x => x.MaMon.Contains(keyword) || x.TenMon.Contains(keyword));
             }
+            if (!string.IsNullOrWhiteSpace(khoi))
+            {
+                query = query.Where(x => string.IsNullOrEmpty(x.Khoi) || x.Khoi.Contains(khoi));
+            }
 
+            Func<MonHoc, int> getYearPeriods = m => m.SoTiet > 10 ? m.SoTiet : m.SoTiet * 35;
+
+            var allSubjects = _context.MonHocs.AsNoTracking().ToList();
+            var gradeLoads = new Dictionary<string, int>
+            {
+                { "6", allSubjects.Where(m => string.IsNullOrEmpty(m.Khoi) || m.Khoi.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().Replace("Khối", "")).Contains("6")).Sum(getYearPeriods) },
+                { "7", allSubjects.Where(m => string.IsNullOrEmpty(m.Khoi) || m.Khoi.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().Replace("Khối", "")).Contains("7")).Sum(getYearPeriods) },
+                { "8", allSubjects.Where(m => string.IsNullOrEmpty(m.Khoi) || m.Khoi.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().Replace("Khối", "")).Contains("8")).Sum(getYearPeriods) },
+                { "9", allSubjects.Where(m => string.IsNullOrEmpty(m.Khoi) || m.Khoi.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().Replace("Khối", "")).Contains("9")).Sum(getYearPeriods) }
+            };
+
+            ViewBag.GradeLoads = gradeLoads;
             ViewBag.Keyword = keyword;
+            ViewBag.Khoi = khoi;
             return View(query.OrderBy(x => x.TenMon).ToList());
         }
 
@@ -596,11 +644,16 @@ namespace eSchool.Controllers
             if (_context.MonHocs.Any(x => x.MaMon == vm.MaMon))
                 return RedirectWithError(nameof(MonHoc), "Mã môn đã tồn tại.");
 
+            var khoiStr = vm.SelectedKhoi != null && vm.SelectedKhoi.Any()
+                ? string.Join(",", vm.SelectedKhoi.OrderBy(x => x))
+                : (!string.IsNullOrWhiteSpace(vm.Khoi) ? vm.Khoi.Trim() : "6,7,8,9");
+
             _context.MonHocs.Add(new MonHoc
             {
                 MaMon = vm.MaMon.Trim(),
                 TenMon = vm.TenMon.Trim(),
-                SoTiet = vm.SoTiet
+                SoTiet = vm.SoTiet,
+                Khoi = khoiStr
             });
             _context.SaveChanges();
             return RedirectWithSuccess(nameof(MonHoc), "Đã thêm môn học.");
@@ -624,9 +677,14 @@ namespace eSchool.Controllers
             int oldSoTiet = mon.SoTiet;
             int diff = vm.SoTiet - oldSoTiet;
 
+            var khoiStr = vm.SelectedKhoi != null && vm.SelectedKhoi.Any()
+                ? string.Join(",", vm.SelectedKhoi.OrderBy(x => x))
+                : (!string.IsNullOrWhiteSpace(vm.Khoi) ? vm.Khoi.Trim() : "6,7,8,9");
+
             mon.MaMon = vm.MaMon.Trim();
             mon.TenMon = vm.TenMon.Trim();
             mon.SoTiet = vm.SoTiet;
+            mon.Khoi = khoiStr;
 
             if (diff != 0)
             {
@@ -1452,6 +1510,17 @@ namespace eSchool.Controllers
             return $"{grade - 1}{match.Groups["suffix"].Value}";
         }
 
+        private static string ExtractYearPrefix(string? namHoc)
+        {
+            if (string.IsNullOrWhiteSpace(namHoc)) return string.Empty;
+            var match = System.Text.RegularExpressions.Regex.Match(namHoc.Trim(), @"^(\d{4})");
+            if (match.Success && match.Groups[1].Value.Length >= 4)
+            {
+                return match.Groups[1].Value.Substring(2, 2);
+            }
+            return string.Empty;
+        }
+
         private static void NormalizeLop(LopHocFormViewModel vm)
         {
             vm.MaLop = vm.MaLop?.Trim() ?? string.Empty;
@@ -1803,33 +1872,60 @@ namespace eSchool.Controllers
             if (!CanModifyAcademicYear(lop.NamHoc))
                 throw new InvalidOperationException(AcademicYearPolicy.ReadOnlyMessage);
 
-            var subjectConfigs = new System.Collections.Generic.List<(string MaMon, string TenMon, int SoTiet)>
+            string lopKhoi = "";
+            if (!string.IsNullOrWhiteSpace(lop.Khoi))
             {
-                ("TOAN", "Toán", 4),
-                ("VAN", "Ngữ vĐƒn", 4),
-                ("ANH", "Tiếng Anh", 4),
-
-                ("LY", "Vật lý", 2),
-                ("HOA", "Hóa học", 2),
-                ("SINH", "Sinh học", 2),
-
-                ("SU", "Lịch sử", 2),
-                ("DIA", "Địa lý", 2),
-
-                ("TIN", "Tin học", 2),
-                ("CN", "Công nghệ", 2),
-
-                ("GDTC", "Giáo dục thể chất", 2),
-                ("GDCD", "Giáo dục công dân", 1),
-
-                ("NT", "Nghệ thuật (Âm nhạc, Mỹ thuật)", 2),
-
-                ("HDTN", "Hoạt động trải nghiệm, hướng nghiệp", 3),
-
-                ("GDDP", "Nội dung giáo dục địa phương", 1)
-            };
+                lopKhoi = lop.Khoi.Replace("Khối", "").Trim();
+            }
+            if (string.IsNullOrEmpty(lopKhoi) && !string.IsNullOrWhiteSpace(lop.TenLop))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(lop.TenLop, @"(?:^|[^0-9])([6-9])(?=[A-Za-z])");
+                if (match.Success) lopKhoi = match.Groups[1].Value;
+            }
 
             var allMonHocs = _context.MonHocs.ToList();
+
+            // Lọc danh sách môn học áp dụng riêng cho khối của lớp này
+            var applicableMonHocs = allMonHocs.Where(m =>
+            {
+                if (string.IsNullOrWhiteSpace(m.Khoi)) return true;
+                if (string.IsNullOrEmpty(lopKhoi)) return true;
+                var grades = m.Khoi.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().Replace("Khối", ""));
+                return grades.Contains(lopKhoi);
+            }).ToList();
+
+            var subjectConfigs = new System.Collections.Generic.List<(string MaMon, string TenMon, int SoTiet)>();
+
+            if (applicableMonHocs.Any())
+            {
+                subjectConfigs = applicableMonHocs.Select(m => (
+                    MaMon: m.MaMon,
+                    TenMon: m.TenMon,
+                    SoTiet: m.SoTiet > 10 ? (int)Math.Max(1, Math.Round((double)m.SoTiet / 35.0)) : (m.SoTiet > 0 ? m.SoTiet : 2)
+                )).ToList();
+            }
+            else
+            {
+                subjectConfigs = new System.Collections.Generic.List<(string MaMon, string TenMon, int SoTiet)>
+                {
+                    ("TOAN", "Toán", 4),
+                    ("VAN", "Ngữ văn", 4),
+                    ("ANH", "Tiếng Anh", 4),
+                    ("LY", "Vật lý", 2),
+                    ("HOA", "Hóa học", 2),
+                    ("SINH", "Sinh học", 2),
+                    ("SU", "Lịch sử", 2),
+                    ("DIA", "Địa lý", 2),
+                    ("TIN", "Tin học", 2),
+                    ("CN", "Công nghệ", 2),
+                    ("GDTC", "Giáo dục thể chất", 2),
+                    ("GDCD", "Giáo dục công dân", 1),
+                    ("NT", "Nghệ thuật (Âm nhạc, Mỹ thuật)", 2),
+                    ("HDTN", "Hoạt động trải nghiệm, hướng nghiệp", 3),
+                    ("GDDP", "Nội dung giáo dục địa phương", 1)
+                };
+            }
+
             var allGiaoViens = _context.GiaoViens.ToList();
             var homeroomTeacher = GetHomeroomTeacher(lop);
             if (lop.IdGiaoVienCN.HasValue && homeroomTeacher?.IdMonHoc == null)
@@ -1838,7 +1934,7 @@ namespace eSchool.Controllers
             if (homeroomTeacher != null && (homeroomSubject == null || !subjectConfigs.Any(c =>
                 string.Equals(c.MaMon, homeroomSubject.MaMon, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(c.TenMon, homeroomSubject.TenMon, StringComparison.OrdinalIgnoreCase))))
-                throw new InvalidOperationException("Môn chuyên môn của giáo viên chủ nhiệm chưa có trong cấu hình xếp lịch.");
+                throw new InvalidOperationException("Môn chuyên môn của giáo viên chủ nhiệm chưa có trong cấu hình xếp lịch cho khối này.");
             subjectConfigs = subjectConfigs.OrderByDescending(c => homeroomSubject != null
                 && (string.Equals(c.MaMon, homeroomSubject.MaMon, StringComparison.OrdinalIgnoreCase)
                     || string.Equals(c.TenMon, homeroomSubject.TenMon, StringComparison.OrdinalIgnoreCase))).ToList();
@@ -2427,22 +2523,125 @@ namespace eSchool.Controllers
         {
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("LopHoc");
-            worksheet.Cell(1, 1).Value = "Mã lớp (*)";
+            worksheet.Cell(1, 1).Value = "Mã lớp";
             worksheet.Cell(1, 2).Value = "Tên lớp (*)";
             worksheet.Cell(1, 3).Value = "Khối";
             worksheet.Cell(1, 4).Value = "Buổi học";
             worksheet.Cell(1, 5).Value = "Năm học";
 
-            worksheet.Cell(2, 1).Value = "10A1";
-            worksheet.Cell(2, 2).Value = "Lớp 10A1";
-            worksheet.Cell(2, 3).Value = "10";
+            worksheet.Cell(2, 1).Value = "K27_6A1";
+            worksheet.Cell(2, 2).Value = "6A1";
+            worksheet.Cell(2, 3).Value = "6";
             worksheet.Cell(2, 4).Value = "Sáng";
-            worksheet.Cell(2, 5).Value = "2026-2027";
+            worksheet.Cell(2, 5).Value = "2027-2028";
+
+            worksheet.Cell(3, 1).Value = "K27_6A2";
+            worksheet.Cell(3, 2).Value = "6A2";
+            worksheet.Cell(3, 3).Value = "6";
+            worksheet.Cell(3, 4).Value = "Chiều";
+            worksheet.Cell(3, 5).Value = "2027-2028";
+
+            worksheet.Cell(4, 1).Value = "K27_7A1";
+            worksheet.Cell(4, 2).Value = "7A1";
+            worksheet.Cell(4, 3).Value = "7";
+            worksheet.Cell(4, 4).Value = "Sáng";
+            worksheet.Cell(4, 5).Value = "2027-2028";
+
+            worksheet.Cell(5, 1).Value = "K27_8A1";
+            worksheet.Cell(5, 2).Value = "8A1";
+            worksheet.Cell(5, 3).Value = "8";
+            worksheet.Cell(5, 4).Value = "Sáng";
+            worksheet.Cell(5, 5).Value = "2027-2028";
+
+            worksheet.Cell(6, 1).Value = "K27_9A1";
+            worksheet.Cell(6, 2).Value = "9A1";
+            worksheet.Cell(6, 3).Value = "9";
+            worksheet.Cell(6, 4).Value = "Sáng";
+            worksheet.Cell(6, 5).Value = "2027-2028";
 
             eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
             return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "LopHoc_Template.xlsx");
+        }
+
+        private static (string MaLop, string TenLop, string NamHoc, string Khoi) ResolveClassInfoFromCode(string maLopRaw, string tenLopRaw, string namHocRaw, string khoiRaw)
+        {
+            var maLop = (maLopRaw ?? "").Trim();
+            var tenLop = (tenLopRaw ?? "").Trim();
+            var namHoc = (namHocRaw ?? "").Trim();
+            var khoi = (khoiRaw ?? "").Trim();
+
+            // Check if maLop or tenLop starts with K{digits}_ (e.g. K27_6A1, k26_6a1, K2027_6A1)
+            var codeToInspect = !string.IsNullOrEmpty(maLop) ? maLop : tenLop;
+            var matchK = System.Text.RegularExpressions.Regex.Match(codeToInspect, @"^[kK](\d{2,4})_(.+)$");
+
+            if (matchK.Success)
+            {
+                var yearDigits = matchK.Groups[1].Value;
+                var classSuffix = matchK.Groups[2].Value.Trim();
+
+                int startYear;
+                if (yearDigits.Length == 2 && int.TryParse(yearDigits, out var y2))
+                {
+                    startYear = 2000 + y2;
+                }
+                else if (yearDigits.Length == 4 && int.TryParse(yearDigits, out var y4))
+                {
+                    startYear = y4;
+                }
+                else
+                {
+                    startYear = DateTime.Now.Year;
+                }
+
+                if (string.IsNullOrEmpty(namHoc))
+                {
+                    namHoc = $"{startYear}-{startYear + 1}";
+                }
+
+                if (string.IsNullOrEmpty(tenLop) || System.Text.RegularExpressions.Regex.IsMatch(tenLop, @"^[kK]\d{2,4}_"))
+                {
+                    tenLop = classSuffix;
+                }
+
+                if (string.IsNullOrEmpty(maLop))
+                {
+                    var prefix = (startYear % 100).ToString("D2");
+                    maLop = $"K{prefix}_{tenLop}";
+                }
+            }
+            else
+            {
+                var matchTenLop = System.Text.RegularExpressions.Regex.Match(tenLop, @"^[kK](\d{2,4})_(.+)$");
+                if (matchTenLop.Success)
+                {
+                    var yStr = matchTenLop.Groups[1].Value;
+                    int sYear = yStr.Length == 2 ? 2000 + int.Parse(yStr) : int.Parse(yStr);
+                    if (string.IsNullOrEmpty(namHoc))
+                    {
+                        namHoc = $"{sYear}-{sYear + 1}";
+                    }
+                    tenLop = matchTenLop.Groups[2].Value.Trim();
+                }
+            }
+
+            if (!string.IsNullOrEmpty(namHoc))
+            {
+                var matchYearOnly = System.Text.RegularExpressions.Regex.Match(namHoc, @"^(\d{4})$");
+                if (matchYearOnly.Success && int.TryParse(matchYearOnly.Groups[1].Value, out var yOnly))
+                {
+                    namHoc = $"{yOnly}-{yOnly + 1}";
+                }
+            }
+
+            if (string.IsNullOrEmpty(khoi) && !string.IsNullOrEmpty(tenLop))
+            {
+                var matchKhoi = System.Text.RegularExpressions.Regex.Match(tenLop, @"^\d+");
+                khoi = matchKhoi.Success ? matchKhoi.Value : "6";
+            }
+
+            return (maLop, tenLop, namHoc, khoi);
         }
 
         [HttpPost]
@@ -2451,7 +2650,7 @@ namespace eSchool.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                TempData["Error"] = "Vui lòng chọn file hợp lệ.";
+                TempData["Error"] = "Vui lòng chọn file Excel hợp lệ.";
                 return RedirectToAction("LopHoc");
             }
 
@@ -2461,37 +2660,132 @@ namespace eSchool.Controllers
                 await file.CopyToAsync(stream);
                 using var workbook = new XLWorkbook(stream);
                 var worksheet = workbook.Worksheet(1);
-                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+                var rows = worksheet.RangeUsed()?.RowsUsed()?.Skip(1);
+
+                if (rows == null || !rows.Any())
+                {
+                    TempData["Error"] = "File Excel không có dữ liệu.";
+                    return RedirectToAction("LopHoc");
+                }
 
                 int count = 0;
+                int skipCount = 0;
+                var errors = new List<string>();
+
                 foreach (var row in rows)
                 {
-                    var maLop = row.Cell(1).Value.ToString().Trim();
-                    var tenLop = row.Cell(2).Value.ToString().Trim();
-                    
-                    if (string.IsNullOrEmpty(maLop) || string.IsNullOrEmpty(tenLop))
+                    var maLopRaw = row.Cell(1).Value.ToString().Trim();
+                    var tenLopRaw = row.Cell(2).Value.ToString().Trim();
+                    var khoiRaw = row.Cell(3).Value.ToString().Trim();
+                    var buoiHocRaw = row.Cell(4).Value.ToString().Trim();
+                    var namHocRaw = row.Cell(5).Value.ToString().Trim();
+
+                    if (string.IsNullOrEmpty(tenLopRaw) && string.IsNullOrEmpty(maLopRaw))
                         continue;
 
-                    if (_context.LopHocs.Any(x => x.MaLop == maLop))
+                    var (maLop, tenLop, namHoc, khoi) = ResolveClassInfoFromCode(maLopRaw, tenLopRaw, namHocRaw, khoiRaw);
+
+                    if (string.IsNullOrEmpty(tenLop))
+                    {
+                        errors.Add($"Dòng {row.RowNumber()}: Thiếu tên lớp.");
                         continue;
+                    }
+
+                    if (string.IsNullOrEmpty(namHoc))
+                    {
+                        var defaultNamHoc = _context.NamHocs.FirstOrDefault(x => x.TrangThai)?.TenNamHoc
+                            ?? _context.NamHocs.OrderByDescending(x => x.IdNamHoc).FirstOrDefault()?.TenNamHoc;
+                        namHoc = defaultNamHoc ?? string.Empty;
+                    }
+
+                    if (!CanModifyAcademicYear(namHoc))
+                    {
+                        errors.Add($"Dòng {row.RowNumber()} ({tenLop}): Năm học '{namHoc}' đã khóa hoặc không được phép chỉnh sửa.");
+                        continue;
+                    }
+
+                    // Tự động tạo Năm học nếu chưa tồn tại trong hệ thống
+                    if (!string.IsNullOrEmpty(namHoc))
+                    {
+                        var existingNamHoc = _context.NamHocs.FirstOrDefault(x => x.TenNamHoc == namHoc);
+                        if (existingNamHoc == null)
+                        {
+                            var matchStart = System.Text.RegularExpressions.Regex.Match(namHoc, @"^(\d{4})");
+                            int startY = matchStart.Success ? int.Parse(matchStart.Groups[1].Value) : DateTime.Now.Year;
+                            var newNamHoc = new NamHoc
+                            {
+                                TenNamHoc = namHoc,
+                                NgayBatDau = new DateTime(startY, 9, 5),
+                                NgayKetThuc = new DateTime(startY + 1, 5, 31),
+                                TrangThai = true,
+                                HocKys = new List<HocKy>
+                                {
+                                    new HocKy { TenHocKy = "Học kỳ 1", NgayBatDau = new DateTime(startY, 9, 5), NgayKetThuc = new DateTime(startY + 1, 1, 15), TrangThai = true },
+                                    new HocKy { TenHocKy = "Học kỳ 2", NgayBatDau = new DateTime(startY + 1, 1, 16), NgayKetThuc = new DateTime(startY + 1, 5, 31), TrangThai = true }
+                                }
+                            };
+                            _context.NamHocs.Add(newNamHoc);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
+                    var buoiHoc = string.IsNullOrEmpty(buoiHocRaw) ? "Sáng" : buoiHocRaw;
+
+                    if (string.IsNullOrEmpty(maLop))
+                    {
+                        var prefix = ExtractYearPrefix(namHoc);
+                        maLop = !string.IsNullOrEmpty(prefix) ? $"K{prefix}_{tenLop}" : $"LOP_{tenLop}_{namHoc.Replace("-", "_")}";
+                    }
+
+                    if (_context.LopHocs.Any(x => x.MaLop == maLop))
+                    {
+                        skipCount++;
+                        continue;
+                    }
+
+                    if (_context.LopHocs.Any(x => x.TenLop == tenLop && x.NamHoc == namHoc))
+                    {
+                        skipCount++;
+                        continue;
+                    }
 
                     var lop = new LopHoc
                     {
                         MaLop = maLop,
                         TenLop = tenLop,
-                        Khoi = row.Cell(3).Value.ToString().Trim(),
-                        BuoiHoc = row.Cell(4).Value.ToString().Trim(),
-                        NamHoc = row.Cell(5).Value.ToString().Trim()
+                        Khoi = khoi,
+                        BuoiHoc = buoiHoc,
+                        NamHoc = namHoc
                     };
                     _context.LopHocs.Add(lop);
                     count++;
                 }
+
                 await _context.SaveChangesAsync();
-                TempData["Success"] = $"Đã nhập thành công {count} lớp học từ Excel.";
+
+                if (count > 0)
+                {
+                    var msg = $"Đã nhập thành công {count} lớp học từ Excel.";
+                    if (skipCount > 0) msg += $" (Bỏ qua {skipCount} lớp đã tồn tại).";
+                    if (errors.Any()) msg += $" Lưu ý: {string.Join(" ", errors.Take(3))}";
+                    TempData["Success"] = msg;
+                }
+                else if (skipCount > 0)
+                {
+                    TempData["Error"] = $"Không có lớp mới nào được thêm (Tất cả {skipCount} lớp đã tồn tại trong hệ thống).";
+                }
+                else if (errors.Any())
+                {
+                    TempData["Error"] = "Không thể nhập dữ liệu: " + string.Join(" | ", errors.Take(5));
+                }
+                else
+                {
+                    TempData["Error"] = "Không tìm thấy dữ liệu lớp học hợp lệ trong file Excel.";
+                }
             }
             catch (Exception ex)
             {
-                TempData["Error"] = "Có lỗi xảy ra: " + ex.Message;
+                TempData["Error"] = "Có lỗi khi đọc file Excel: " + ex.Message;
             }
             return RedirectToAction("LopHoc");
         }
@@ -2506,11 +2800,43 @@ namespace eSchool.Controllers
             var worksheet = workbook.Worksheets.Add("MonHoc");
             worksheet.Cell(1, 1).Value = "Mã môn (*)";
             worksheet.Cell(1, 2).Value = "Tên môn (*)";
-            worksheet.Cell(1, 3).Value = "Số tiết (*)";
+            worksheet.Cell(1, 3).Value = "Số tiết cả năm (*)";
+            worksheet.Cell(1, 4).Value = "Khối áp dụng (VD: 6,7,8,9 hoặc 8,9 hoặc để trống)";
 
             worksheet.Cell(2, 1).Value = "TOAN";
             worksheet.Cell(2, 2).Value = "Toán học";
-            worksheet.Cell(2, 3).Value = "45";
+            worksheet.Cell(2, 3).Value = "140";
+            worksheet.Cell(2, 4).Value = "6,7,8,9";
+
+            worksheet.Cell(3, 1).Value = "VAN";
+            worksheet.Cell(3, 2).Value = "Ngữ văn";
+            worksheet.Cell(3, 3).Value = "140";
+            worksheet.Cell(3, 4).Value = "6,7,8,9";
+
+            worksheet.Cell(4, 1).Value = "ANH";
+            worksheet.Cell(4, 2).Value = "Tiếng Anh";
+            worksheet.Cell(4, 3).Value = "105";
+            worksheet.Cell(4, 4).Value = "6,7,8,9";
+
+            worksheet.Cell(5, 1).Value = "HOA";
+            worksheet.Cell(5, 2).Value = "Hóa học";
+            worksheet.Cell(5, 3).Value = "37";
+            worksheet.Cell(5, 4).Value = "8,9";
+
+            worksheet.Cell(6, 1).Value = "CN";
+            worksheet.Cell(6, 2).Value = "Công nghệ";
+            worksheet.Cell(6, 3).Value = "54";
+            worksheet.Cell(6, 4).Value = "6,7";
+
+            worksheet.Cell(7, 1).Value = "GDCD";
+            worksheet.Cell(7, 2).Value = "Giáo dục công dân";
+            worksheet.Cell(7, 3).Value = "35";
+            worksheet.Cell(7, 4).Value = "6,7,8,9";
+
+            worksheet.Cell(8, 1).Value = "GDTC";
+            worksheet.Cell(8, 2).Value = "Giáo dục thể chất";
+            worksheet.Cell(8, 3).Value = "70";
+            worksheet.Cell(8, 4).Value = "6,7,8,9";
 
             eSchool.Infrastructure.ExcelHelper.ApplyTemplateStyle(worksheet);
             using var stream = new MemoryStream();
@@ -2551,11 +2877,14 @@ namespace eSchool.Controllers
                     int soTiet = 0;
                     int.TryParse(row.Cell(3).Value.ToString().Trim(), out soTiet);
 
+                    var khoiVal = row.Cell(4).Value.ToString().Trim();
+
                     var mon = new MonHoc
                     {
                         MaMon = maMon,
                         TenMon = tenMon,
-                        SoTiet = soTiet > 0 ? soTiet : 45
+                        SoTiet = soTiet > 0 ? soTiet : 70,
+                        Khoi = string.IsNullOrWhiteSpace(khoiVal) ? "6,7,8,9" : khoiVal
                     };
                     _context.MonHocs.Add(mon);
                     count++;

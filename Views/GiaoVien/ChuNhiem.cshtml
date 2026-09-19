@@ -1,9 +1,7 @@
 @model eSchool.ViewModels.ChuNhiemViewModel
 
 @{
-    Layout = Context.Session.GetInt32("RoleId") == SystemRoleIds.SystemAdmin
-        ? "~/Views/Shared/_AdminLayout.cshtml"
-        : "~/Views/Shared/_TeacherLayout.cshtml";
+    Layout = "~/Views/Shared/_AcademicLayout.cshtml";
     ViewData["Title"] = "Chủ nhiệm lớp";
     var editableYears = ViewBag.EditableYears as HashSet<string> ?? new();
 }
@@ -45,6 +43,7 @@
         <table class="table table-hover">
             <thead>
                 <tr>
+                    <th>Mã lớp</th>
                     <th>Tên lớp</th>
                     <th>Khối</th>
                     <th>Năm học</th>
@@ -54,11 +53,12 @@
             <tbody>
                 @if (!Model.LopHocs.Any())
                 {
-                    <tr><td colspan="4" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
                 }
                 @foreach (var lop in Model.LopHocs)
                 {
                     <tr>
+                        <td><span class="badge text-bg-light border font-monospace">@lop.MaLop</span></td>
                         <td><strong>@lop.TenLop</strong></td>
                         <td>@lop.Khoi</td>
                         <td>@lop.NamHoc</td>

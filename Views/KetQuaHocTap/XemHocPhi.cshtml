@@ -78,13 +78,10 @@
                         <th>Học kỳ</th>
                         <th>Hạn nộp</th>
                         <th>Số tiền</th>
-                        @if (Context.Session.GetInt32("RoleId") == 4)
+                        <th>Trạng thái</th>
+                        @if (Context.Session.GetInt32("RoleId") == 4 || Context.Session.GetInt32("RoleId") == 3)
                         {
                             <th class="text-end">Thanh toán</th>
-                        }
-                        else
-                        {
-                            <th>Trạng thái</th>
                         }
                     </tr>
                 </thead>
@@ -92,7 +89,7 @@
                     @if (!Model.DanhSach.Any())
                     {
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">Chưa có khoản học phí nào.</td>
+                            <td colspan="6" class="text-center py-5 text-muted">Chưa có khoản học phí nào.</td>
                         </tr>
                     }
                     else
@@ -104,7 +101,12 @@
                                 <td>@(item.HocKyInfo?.TenHocKy ?? item.HocKy)</td>
                                 <td>@(item.HanDongTien.HasValue ? item.HanDongTien.Value.ToString("dd/MM/yyyy") : "-")</td>
                                 <td class="student-fee-money">@item.SoTien.ToString("N0") đ</td>
-                                @if (Context.Session.GetInt32("RoleId") == 4)
+                                <td>
+                                    <span class="student-fee-badge @(item.TrangThai == 1 ? "success" : item.TrangThai == 2 ? "danger" : "warning")">
+                                        @Status(item.TrangThai)
+                                    </span>
+                                </td>
+                                @if (Context.Session.GetInt32("RoleId") == 4 || Context.Session.GetInt32("RoleId") == 3)
                                 {
                                     <td class="text-end">
                                         @if (item.TrangThai == 1)
@@ -119,14 +121,6 @@
                                         }
                                     </td>
                                 }
-                                else
-                                {
-                                    <td>
-                                        <span class="student-fee-badge @(item.TrangThai == 1 ? "success" : item.TrangThai == 2 ? "danger" : "warning")">
-                                            @Status(item.TrangThai)
-                                        </span>
-                                    </td>
-                                }
                             </tr>
                         }
                     }
@@ -136,7 +130,7 @@
     </div>
 </div>
 
-@if (Context.Session.GetInt32("RoleId") == 4)
+@if (Context.Session.GetInt32("RoleId") == 4 || Context.Session.GetInt32("RoleId") == 3)
 {
     @foreach (var item in Model.DanhSach.Where(x => x.TrangThai != 1))
     {
@@ -163,11 +157,13 @@
                             </div>
                         </div>
 
-                        <div class="alert alert-info mb-3">Vui lòng liên hệ nhà trường để thanh toán. Khoản thu sẽ được cập nhật sau khi nhà trường xác nhận.</div>
-
-                        <div class="alert mb-0" style="background-color: #f5f8fc; border: none; color: #5c728e; border-radius: 8px;">
-                            <i class="bi bi-info-circle me-1 text-primary"></i> <strong>Thanh toán trực tuyến:</strong> Chưa được cấu hình.
-                        </div>
+                        <form asp-action="DongHocPhi" asp-route-id="@item.IdHocPhi" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="phuongThuc" value="VNPAY" />
+                            <button type="submit" class="btn w-100 py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(90deg, #1976d2 0%, #7b1fa2 100%); border: none; border-radius: 8px;">
+                                <i class="bi bi-credit-card me-2"></i>Thanh toán qua VNPAY
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

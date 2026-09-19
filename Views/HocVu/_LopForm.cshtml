@@ -1,14 +1,32 @@
 @model eSchool.ViewModels.LopHocFormViewModel
 
-<div class="row g-3">
-    <div class="col-md-12">
+<div class="row g-3 lop-form-container">
+    <div class="col-md-6">
+        <label class="form-label">Năm học <span class="text-danger">*</span></label>
+        <select asp-for="NamHoc" asp-items="ViewBag.EditableNamHocs" required class="form-select select-namhoc"
+                onchange="window.syncLopFormFields(this)" oninput="window.syncLopFormFields(this)">
+            <option value="">-- Chọn năm học --</option>
+        </select>
+        <span asp-validation-for="NamHoc" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Mã lớp <span class="text-danger">*</span></label>
+        <div class="input-group">
+            <input asp-for="MaLop" class="form-control font-monospace input-malop" required maxlength="20" placeholder="Ví dụ: K26_6A1"
+                   onfocus="window.syncLopFormFields(this)" />
+        </div>
+        <span asp-validation-for="MaLop" class="text-danger"></span>
+        <small class="text-muted">Tự động tạo theo tiền tố năm học (VD: 2026-2027 &rarr; K26_)</small>
+    </div>
+    <div class="col-md-6">
         <label class="form-label">Tên lớp <span class="text-danger">*</span></label>
-        <input asp-for="TenLop" class="form-control" required maxlength="50" />
+        <input asp-for="TenLop" class="form-control input-tenlop" required maxlength="50" placeholder="Ví dụ: 6A1"
+               oninput="window.syncLopFormFields(this)" onchange="window.syncLopFormFields(this)" onkeyup="window.syncLopFormFields(this)" />
         <span asp-validation-for="TenLop" class="text-danger"></span>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label class="form-label">Khối</label>
-        <select asp-for="Khoi" class="form-select">
+        <select asp-for="Khoi" class="form-select select-khoi" onchange="window.syncLopKhoi(this)">
             <option value="">-- Chọn khối --</option>
             <option value="Khối 6">Khối 6</option>
             <option value="Khối 7">Khối 7</option>
@@ -19,19 +37,12 @@
     </div>
     <div class="col-md-4">
         <label class="form-label">Buổi học</label>
-        <select asp-for="BuoiHoc" class="form-select" id="BuoiHocSelect">
+        <select asp-for="BuoiHoc" class="form-select select-buoihoc" id="BuoiHocSelect">
             <option value="">-- Chọn buổi học --</option>
             <option value="Sáng">Sáng</option>
             <option value="Chiều">Chiều</option>
         </select>
         <span asp-validation-for="BuoiHoc" class="text-danger"></span>
-    </div>
-    <div class="col-md-4">
-        <label class="form-label">Năm học</label>
-        <select asp-for="NamHoc" asp-items="ViewBag.EditableNamHocs" required class="form-select">
-            <option value="">-- Chọn năm học --</option>
-        </select>
-        <span asp-validation-for="NamHoc" class="text-danger"></span>
     </div>
     <div class="col-md-4">
         <label class="form-label">Giáo viên chủ nhiệm</label>
@@ -48,23 +59,78 @@
 </div>
 
 <script>
-    if (!window.lopFormScriptLoaded) {
-        window.lopFormScriptLoaded = true;
+    window.getYearPrefixFromVal = function(namHocVal) {
+        if (!namHocVal) return '';
+        var m = String(namHocVal).trim().match(/^(\d{4})/);
+        if (m && m[1].length >= 4) {
+            return 'K' + m[1].substring(2, 4) + '_';
+        }
+        return '';
+    };
 
-        document.addEventListener('change', function (e) {
-            if (e.target.matches('select[name="Khoi"]')) {
-                var form = e.target.closest('.row');
-                if (!form) return;
-                var buoiHocSelect = form.querySelector('select[name="BuoiHoc"]');
+    window.syncLopKhoi = function(el) {
+        var form = el.closest('.lop-form-container');
+        if (!form) return;
+        var buoiHocSelect = form.querySelector('select[name="BuoiHoc"]');
+        if (buoiHocSelect) {
+            var val = el.value;
+            if (val === 'Khối 6' || val === 'Khối 7') {
+                buoiHocSelect.value = 'Sáng';
+            } else if (val === 'Khối 8' || val === 'Khối 9') {
+                buoiHocSelect.value = 'Chiều';
+            }
+        }
+    };
+
+    window.syncLopFormFields = function(el) {
+        var form = el.closest ? el.closest('.lop-form-container') : el;
+        if (!form) return;
+
+        var namHocSelect = form.querySelector('select[name="NamHoc"]');
+        var tenLopInput = form.querySelector('input[name="TenLop"]');
+        var maLopInput = form.querySelector('input[name="MaLop"]');
+        var khoiSelect = form.querySelector('select[name="Khoi"]');
+        var buoiHocSelect = form.querySelector('select[name="BuoiHoc"]');
+
+        if (!namHocSelect || !maLopInput) return;
+
+        var namHocVal = namHocSelect.value || (namHocSelect.options[namHocSelect.selectedIndex] ? namHocSelect.options[namHocSelect.selectedIndex].text : '');
+        var prefix = window.getYearPrefixFromVal(namHocVal);
+        var tenLopVal = tenLopInput ? tenLopInput.value.trim() : '';
+
+        // Tự động suy luận khối và buổi học nếu người dùng gõ tên lớp (VD: 6A1 -> Khối 6, Sáng)
+        if (tenLopVal) {
+            var gradeMatch = tenLopVal.match(/^([6-9])/);
+            if (gradeMatch && khoiSelect && !khoiSelect.value) {
+                khoiSelect.value = 'Khối ' + gradeMatch[1];
                 if (buoiHocSelect) {
-                    var val = e.target.value;
-                    if (val === 'Khối 6' || val === 'Khối 7') {
-                        buoiHocSelect.value = 'Sáng';
-                    } else if (val === 'Khối 8' || val === 'Khối 9') {
-                        buoiHocSelect.value = 'Chiều';
-                    }
+                    var g = parseInt(gradeMatch[1], 10);
+                    buoiHocSelect.value = (g === 6 || g === 7) ? 'Sáng' : 'Chiều';
                 }
             }
-        });
-    }
+        }
+
+        // Tạo mã lớp theo quy tắc: K{yy}_{TenLop}
+        var cleanTenLop = tenLopVal.replace(/^K\d{2}_/i, '');
+        if (prefix) {
+            maLopInput.value = prefix + cleanTenLop;
+        } else if (cleanTenLop) {
+            maLopInput.value = cleanTenLop;
+        }
+    };
+
+    // Tự động điền tiền tố ngay khi mở modal hoặc khi trang sẵn sàng
+    document.addEventListener('show.bs.modal', function (e) {
+        var form = e.target.querySelector('.lop-form-container');
+        if (form) {
+            setTimeout(function() { window.syncLopFormFields(form); }, 50);
+        }
+    });
+
+    document.addEventListener('shown.bs.modal', function (e) {
+        var form = e.target.querySelector('.lop-form-container');
+        if (form) {
+            window.syncLopFormFields(form);
+        }
+    });
 </script>

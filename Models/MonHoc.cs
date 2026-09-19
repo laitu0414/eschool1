@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace eSchool.Models
 {
@@ -17,6 +17,9 @@ namespace eSchool.Models
 
         [Range(1, 500, ErrorMessage = "Số tiết phải lớn hơn 0")]
         public int SoTiet { get; set; }
+
+        [StringLength(50)]
+        public string? Khoi { get; set; }
 
         public ICollection<PhanCongGiangDay>? PhanCongGiangDays { get; set; }
 

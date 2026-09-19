@@ -14,22 +14,28 @@
             <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm theo tên lớp hoặc khối..." />
             <button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Tìm</button>
         </form>
-        <button class="btn btn-primary" disabled="@(!editableYears.Any())" data-bs-toggle="modal" data-bs-target="#createClass">
-            <i class="bi bi-plus-lg"></i> Thêm lớp
-        </button>
+        <div class="d-flex gap-2 ms-auto">
+            <button class="btn btn-success text-nowrap" type="button" data-bs-toggle="modal" data-bs-target="#importLopHocModal" @(!editableYears.Any() ? "disabled" : "")>
+                <i class="bi bi-file-earmark-excel"></i> Nhập từ Excel
+            </button>
+            <button class="btn btn-primary text-nowrap" disabled="@(!editableYears.Any())" data-bs-toggle="modal" data-bs-target="#createClass">
+                <i class="bi bi-plus-lg"></i> Thêm lớp
+            </button>
+        </div>
     </div>
 
     <div class="table-responsive">
         <table class="table table-hover">
-            <thead><tr><th>Tên lớp</th><th>Khối</th><th>Năm học</th><th>Sĩ số</th><th>Chủ nhiệm</th><th class="text-end">Thao tác</th></tr></thead>
+            <thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Khối</th><th>Năm học</th><th>Sĩ số</th><th>Chủ nhiệm</th><th class="text-end">Thao tác</th></tr></thead>
             <tbody>
                 @if (!Model.Any())
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">Chưa có lớp học</td></tr>
                 }
                 @foreach (var item in Model)
                 {
                     <tr>
+                        <td><span class="badge text-bg-light border font-monospace">@item.MaLop</span></td>
                         <td><strong>@item.TenLop</strong></td>
                         <td>@item.Khoi</td>
                         <td>@item.NamHoc</td>
@@ -59,6 +65,41 @@
                 }
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modal Import Excel -->
+<div class="modal fade" id="importLopHocModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="ImportLopHocExcel" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Nhập danh sách lớp học từ Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2 text-muted">Vui lòng tải file mẫu để xem định dạng chuẩn trước khi nhập dữ liệu.</p>
+                    <div class="alert alert-light border py-2 px-3 mb-3 small text-muted">
+                        <i class="bi bi-info-circle me-1 text-primary"></i> <strong>Quy tắc nhận diện:</strong> Khi nhập mã/tên lớp dạng <code>K27_6A1</code>, hệ thống sẽ tự động xác định <strong>Năm học 2027-2028</strong>, <strong>Tên lớp 6A1</strong> và <strong>Khối 6</strong>.
+                    </div>
+                    <a asp-action="DownloadLopHocTemplate" class="btn btn-outline-success mb-4">
+                        <i class="bi bi-download me-1"></i> Tải file mẫu Excel
+                    </a>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn file Excel (.xlsx) <span class="text-danger">*</span></label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-upload me-1"></i> Nhập dữ liệu
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

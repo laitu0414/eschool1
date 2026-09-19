@@ -3,13 +3,73 @@
 @{
     Layout = "~/Views/Shared/_AcademicLayout.cshtml";
     ViewData["Title"] = "Quản lý môn học";
+    var gradeLoads = ViewBag.GradeLoads as Dictionary<string, int> ?? new Dictionary<string, int>();
+    string currentKhoi = ViewBag.Khoi as string ?? "";
 }
+
+<!-- Thống kê tổng số tiết theo khối (Định mức 1 năm học = 35 tuần x 30 tiết = 1.050 tiết) -->
+<div class="row g-3 mb-4">
+    @foreach (var k in new[] { "6", "7", "8", "9" })
+    {
+        int load = gradeLoads.ContainsKey(k) ? gradeLoads[k] : 0;
+        bool isOverload = load > 1050;
+        bool isSelected = currentKhoi == k;
+        double weekEquivalent = Math.Round((double)load / 35.0, 1);
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 @(isSelected ? "border border-2 border-primary" : "")" style="background: @(isOverload ? "#fff5f5" : "#ffffff");">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge @(isOverload ? "bg-danger" : "bg-primary-subtle text-primary") fw-bold px-2 py-1">
+                            <i class="bi bi-mortarboard me-1"></i> Khối @k
+                        </span>
+                        @if (isOverload)
+                        {
+                            <span class="badge bg-danger-subtle text-danger small">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Vượt định mức năm!
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success-subtle text-success small">
+                                <i class="bi bi-check-circle-fill me-1"></i> Chuẩn (&le; 1.050 tiết)
+                            </span>
+                        }
+                    </div>
+                    <div class="d-flex align-items-baseline justify-content-between">
+                        <div>
+                            <h4 class="mb-0 fw-bold @(isOverload ? "text-danger" : "text-dark")">@load.ToString("N0") <small class="fs-6 fw-normal text-muted">/ 1.050 tiết/năm</small></h4>
+                            <div class="text-muted small" style="font-size: 0.8rem;">&approx; @weekEquivalent tiết/tuần (35 tuần)</div>
+                        </div>
+                        <a asp-action="MonHoc" asp-route-khoi="@(isSelected ? "" : k)" asp-route-keyword="@ViewBag.Keyword" class="btn btn-sm @(isSelected ? "btn-primary" : "btn-outline-secondary") rounded-pill py-0 px-2 align-self-start" style="font-size: 0.75rem;">
+                            @(isSelected ? "Bỏ lọc" : "Lọc môn")
+                        </a>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar @(isOverload ? "bg-danger" : (load == 1050 ? "bg-success" : "bg-primary"))" role="progressbar" style="width: @(Math.Min(100, (load * 100) / 1050))%;"></div>
+                    </div>
+                    @if (isOverload)
+                    {
+                        <div class="text-danger small mt-2" style="font-size: 0.75rem;">
+                            <i class="bi bi-info-circle me-1"></i> Tổng số tiết vượt định mức 1.050 tiết/năm (30 tiết/tuần x 35 tuần). Cần giảm bớt số tiết các môn khác khi thêm môn mới (VD: thêm Hóa học 37 tiết ở khối 8 thì giảm bớt các môn khác).
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
 
 <div class="student-admin-card">
     <div class="student-admin-card-head">
         <div>
             <h3>Danh sách môn học</h3>
-            <p>@(Model?.Count ?? 0) môn học đang có trong hệ thống</p>
+            <p>
+                @(Model?.Count ?? 0) môn học đang có trong hệ thống
+                @if (!string.IsNullOrEmpty(currentKhoi))
+                {
+                    <span class="badge bg-primary ms-2">Đang lọc: Khối @currentKhoi</span>
+                }
+            </p>
         </div>
     </div>
 
@@ -19,17 +79,27 @@
                 <i class="bi bi-search"></i>
                 <input name="keyword" value="@ViewBag.Keyword" placeholder="Tìm mã hoặc tên môn..." />
             </div>
+            @if (!string.IsNullOrEmpty(currentKhoi))
+            {
+                <input type="hidden" name="khoi" value="@currentKhoi" />
+            }
             @await Html.PartialAsync("_ExportDropdown")
             <div class="dropdown filter-dropdown">
                 <button type="button" class="btn btn-outline-secondary h-100 px-3" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                     <i class="bi bi-funnel"></i>
                 </button>
-                <div class="dropdown-menu shadow">
-                    <h6 class="fw-bold mb-3 px-1">Bộ lọc</h6>
-                    <div class="text-muted small px-1 mb-3">
-                        Chưa có bộ lọc nâng cao cho danh mục này.
+                <div class="dropdown-menu shadow p-3" style="min-width: 220px;">
+                    <h6 class="fw-bold mb-3">Lọc theo khối</h6>
+                    <div class="mb-3">
+                        <select name="khoi" class="form-select form-select-sm">
+                            <option value="">-- Tất cả các khối --</option>
+                            <option value="6" selected="@(currentKhoi == "6")">Khối 6</option>
+                            <option value="7" selected="@(currentKhoi == "7")">Khối 7</option>
+                            <option value="8" selected="@(currentKhoi == "8")">Khối 8</option>
+                            <option value="9" selected="@(currentKhoi == "9")">Khối 9</option>
+                        </select>
                     </div>
-                    <div class="d-flex justify-content-between gap-2 mt-4">
+                    <div class="d-flex justify-content-between gap-2 mt-3">
                         <a asp-action="MonHoc" class="btn btn-light btn-sm flex-grow-1">Đặt lại</a>
                         <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Áp dụng</button>
                     </div>
@@ -55,7 +125,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-3 text-muted">Vui lòng tải file mẫu để xem định dạng chuẩn trước khi nhập dữ liệu.</p>
+                        <p class="mb-3 text-muted">Vui lòng tải file mẫu để xem định dạng chuẩn (gồm Mã môn, Tên môn, Số tiết cả năm, Khối áp dụng) trước khi nhập dữ liệu.</p>
                         <a asp-action="DownloadMonHocTemplate" class="btn btn-outline-success mb-4">
                             <i class="bi bi-download me-1"></i> Tải file mẫu
                         </a>
@@ -81,16 +151,38 @@
                 <tr>
                     <th>Mã môn</th>
                     <th>Tên môn</th>
-                    <th>Số tiết</th>
+                    <th>Số tiết / năm học</th>
+                    <th>Khối áp dụng</th>
                     <th class="text-end">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
-                @if (!Model.Any()) { <tr><td colspan="4" class="text-center text-muted py-4">Chưa có môn học</td></tr> }
+                @if (!Model.Any()) { <tr><td colspan="5" class="text-center text-muted py-4">Chưa có môn học</td></tr> }
                 @foreach (var item in Model)
                 {
+                    int yearPeriods = item.SoTiet > 10 ? item.SoTiet : item.SoTiet * 35;
+                    double weekEquivalent = Math.Round((double)yearPeriods / 35.0, 1);
                     <tr data-id="@item.IdMonHoc">
-                        <td><strong>@item.MaMon</strong></td><td>@item.TenMon</td><td>@item.SoTiet</td>
+                        <td><strong>@item.MaMon</strong></td>
+                        <td>@item.TenMon</td>
+                        <td>
+                            <span class="badge bg-light text-dark border px-2 py-1 fw-bold">@yearPeriods tiết/năm</span>
+                            <span class="text-muted small ms-1">(&approx; @weekEquivalent tiết/tuần)</span>
+                        </td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(item.Khoi))
+                            {
+                                <span class="badge bg-secondary-subtle text-secondary">Tất cả các khối</span>
+                            }
+                            else
+                            {
+                                var grades = item.Khoi.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().Replace("Khối", ""));
+                                foreach (var g in grades)
+                                {
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle me-1">Khối @g</span>
+                                }
+                            }
+                        </td>
                         <td class="text-end">
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSubject-@item.IdMonHoc"><i class="bi bi-pencil"></i></button>
                             <form asp-action="XoaMon" asp-route-id="@item.IdMonHoc" method="post" class="d-inline" onsubmit="return confirm('Xóa môn học này?');">
@@ -115,12 +207,13 @@
 
 @foreach (var item in Model)
 {
+    int yearVal = item.SoTiet > 10 ? item.SoTiet : item.SoTiet * 35;
     <div class="modal fade" id="editSubject-@item.IdMonHoc" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
         <form asp-action="SuaMon" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="IdMonHoc" value="@item.IdMonHoc" />
             <div class="modal-header"><h5 class="modal-title">Sửa môn học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body">@await Html.PartialAsync("_MonForm", new eSchool.ViewModels.MonHocFormViewModel { IdMonHoc = item.IdMonHoc, MaMon = item.MaMon, TenMon = item.TenMon, SoTiet = item.SoTiet })</div>
+            <div class="modal-body">@await Html.PartialAsync("_MonForm", new eSchool.ViewModels.MonHocFormViewModel { IdMonHoc = item.IdMonHoc, MaMon = item.MaMon, TenMon = item.TenMon, SoTiet = yearVal, Khoi = item.Khoi })</div>
             <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button><button class="btn btn-primary">Cập nhật</button></div>
         </form>
     </div></div></div>

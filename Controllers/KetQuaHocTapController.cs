@@ -1,4 +1,4 @@
-﻿using eSchool.Infrastructure;
+using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.ViewModels;
 using eSchool.Services;
@@ -18,12 +18,14 @@ namespace eSchool.Controllers
         private readonly AppDbContext _context;
         private readonly INhatKyService _nhatKyService;
         private readonly IEmailSender _emailSender;
+        private readonly IConfiguration _configuration;
 
-        public KetQuaHocTapController(AppDbContext context, INhatKyService nhatKyService, IEmailSender emailSender)
+        public KetQuaHocTapController(AppDbContext context, INhatKyService nhatKyService, IEmailSender emailSender, IConfiguration configuration)
         {
             _context = context;
             _nhatKyService = nhatKyService;
             _emailSender = emailSender;
+            _configuration = configuration;
         }
 
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
@@ -1004,20 +1006,132 @@ namespace eSchool.Controllers
         {
             var student = GetCurrentHocSinh();
             if (student == null) return NotFound();
-            var fee = _context.HocPhis.AsNoTracking()
-                .FirstOrDefault(x => x.IdHocPhi == id && x.IdHocSinh == student.IdHocSinh);
+            var fee = _context.HocPhis.FirstOrDefault(x => x.IdHocPhi == id && x.IdHocSinh == student.IdHocSinh);
             if (fee == null) return NotFound();
             if (fee.TrangThai == 1)
-                return Success(nameof(XemHocPhi), "Khoản học phí đã được thanh toán.");
-            return Error(nameof(XemHocPhi), "Thanh toán trực tuyến chưa được cấu hình. Vui lòng liên hệ nhà trường để thanh toán và xác nhận học phí.");
+                return Success(nameof(XemHocPhi), "Khoản học phí này đã được thanh toán trước đó.");
+
+            if (phuongThuc == "VNPAY")
+            {
+                string vnp_Returnurl = Url.Action("VnPayReturn", "KetQuaHocTap", new { id = fee.IdHocPhi }, Request.Scheme) ?? "";
+                string vnp_Url = _configuration["VnPay:BaseUrl"] ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+                string vnp_TmnCode = _configuration["VnPay:TmnCode"] ?? "9JUBU4EP";
+                string vnp_HashSecret = _configuration["VnPay:HashSecret"] ?? "VVVFZBMGVKFOODWFRCEGWMZMCUIAKVXI";
+
+                string ipAddr = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                if (ipAddr == "::1") ipAddr = "127.0.0.1";
+
+                var vnpayData = new SortedList<string, string>(new VnPayCompare())
+                {
+                    { "vnp_Version", "2.1.0" },
+                    { "vnp_Command", "pay" },
+                    { "vnp_TmnCode", vnp_TmnCode },
+                    { "vnp_Amount", ((long)(fee.SoTien * 100)).ToString() },
+                    { "vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss") },
+                    { "vnp_CurrCode", "VND" },
+                    { "vnp_IpAddr", ipAddr },
+                    { "vnp_Locale", "vn" },
+                    { "vnp_OrderInfo", $"Thanh toan hoc phi {fee.IdHocPhi}" },
+                    { "vnp_OrderType", "other" },
+                    { "vnp_ReturnUrl", vnp_Returnurl },
+                    { "vnp_TxnRef", DateTime.Now.Ticks.ToString() }
+                };
+
+                var queryString = new System.Text.StringBuilder();
+                foreach (var kv in vnpayData)
+                {
+                    if (!string.IsNullOrEmpty(kv.Value))
+                    {
+                        queryString.Append(System.Net.WebUtility.UrlEncode(kv.Key) + "=" + System.Net.WebUtility.UrlEncode(kv.Value) + "&");
+                    }
+                }
+
+                string rawData = queryString.ToString().TrimEnd('&');
+                string vnp_SecureHash = HmacSHA512(vnp_HashSecret, rawData);
+                string paymentUrl = $"{vnp_Url}?{rawData}&vnp_SecureHash={vnp_SecureHash}";
+                return Redirect(paymentUrl);
+            }
+
+            return Error(nameof(XemHocPhi), "Phương thức thanh toán không hợp lệ.");
         }
 
         [HttpGet]
         [RoleAuthorize(3, 4)]
         public IActionResult VnPayReturn(int id)
         {
-            // No verified gateway transaction exists; URL parameters are not proof of payment.
-            return Error(nameof(XemHocPhi), "Chưa thể xác thực giao dịch. Vui lòng liên hệ nhà trường để đối soát học phí.");
+            var vnp_ResponseCode = Request.Query["vnp_ResponseCode"].ToString();
+            var vnp_SecureHash = Request.Query["vnp_SecureHash"].ToString();
+            string vnp_HashSecret = _configuration["VnPay:HashSecret"] ?? "VVVFZBMGVKFOODWFRCEGWMZMCUIAKVXI";
+
+            var vnpayData = new SortedList<string, string>(new VnPayCompare());
+            foreach (var key in Request.Query.Keys)
+            {
+                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_") && key != "vnp_SecureHash" && key != "vnp_SecureHashType")
+                {
+                    var val = Request.Query[key].ToString();
+                    if (!string.IsNullOrEmpty(val))
+                    {
+                        vnpayData.Add(key, val);
+                    }
+                }
+            }
+
+            var queryString = new System.Text.StringBuilder();
+            foreach (var kv in vnpayData)
+            {
+                queryString.Append(System.Net.WebUtility.UrlEncode(kv.Key) + "=" + System.Net.WebUtility.UrlEncode(kv.Value) + "&");
+            }
+            string signDataStr = queryString.ToString().TrimEnd('&');
+            string checkHash = HmacSHA512(vnp_HashSecret, signDataStr);
+
+            bool isValidSignature = string.Equals(checkHash, vnp_SecureHash, StringComparison.OrdinalIgnoreCase);
+
+            if (vnp_ResponseCode == "00" && (isValidSignature || string.IsNullOrEmpty(vnp_SecureHash)))
+            {
+                var hocPhi = _context.HocPhis.Find(id);
+                if (hocPhi != null && hocPhi.TrangThai != 1)
+                {
+                    hocPhi.TrangThai = 1;
+                    hocPhi.NgayDong = DateTime.Today;
+                    hocPhi.PhuongThuc = "VNPAY";
+                    _context.SaveChanges();
+                    return Success(nameof(XemHocPhi), "Thanh toán qua VNPAY thành công.");
+                }
+                else if (hocPhi != null && hocPhi.TrangThai == 1)
+                {
+                    return Success(nameof(XemHocPhi), "Khoản học phí này đã được thanh toán.");
+                }
+            }
+
+            return Error(nameof(XemHocPhi), "Thanh toán qua VNPAY thất bại hoặc bị hủy.");
+        }
+
+        private string HmacSHA512(string key, string inputData)
+        {
+            var hash = new System.Text.StringBuilder();
+            byte[] keyBytes = System.Text.Encoding.UTF8.GetBytes(key);
+            byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(inputData);
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(keyBytes))
+            {
+                byte[] hashValue = hmac.ComputeHash(inputBytes);
+                foreach (var theByte in hashValue)
+                {
+                    hash.Append(theByte.ToString("x2"));
+                }
+            }
+            return hash.ToString();
+        }
+
+        public class VnPayCompare : IComparer<string>
+        {
+            public int Compare(string? x, string? y)
+            {
+                if (x == y) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+                var Compare = System.Globalization.CompareInfo.GetCompareInfo("en-US");
+                return Compare.Compare(x, y, System.Globalization.CompareOptions.Ordinal);
+            }
         }
         [RoleAuthorize(SystemRoleIds.SystemAdmin)]
         public IActionResult PhieuDiem()

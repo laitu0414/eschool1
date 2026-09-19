@@ -47,6 +47,11 @@ namespace eSchool.ViewModels
 
         [Range(1, 500, ErrorMessage = "Số tiết phải lớn hơn 0")]
         public int SoTiet { get; set; } = 1;
+
+        [StringLength(50)]
+        public string? Khoi { get; set; }
+
+        public List<string>? SelectedKhoi { get; set; } = new();
     }
 
     public class ThoiKhoaBieuHocVuViewModel

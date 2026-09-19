@@ -1,4 +1,4 @@
-﻿using eSchool.Infrastructure;
+using eSchool.Infrastructure;
 using eSchool.Models;
 using eSchool.Services;
 using eSchool.ViewModels;
@@ -162,10 +162,9 @@ namespace eSchool.Controllers
                 ModelState.AddModelError(nameof(vm.SDT), "Số điện thoại này đã được dùng cho một tài khoản học sinh khác.");
             }
 
-            var linkedParents = _context.HocSinhPhuHuynhs
-                .Where(x => x.IdHocSinh == vm.IdHocSinh)
-                .Select(x => x.PhuHuynh)
-                .Include(x => x.TaiKhoan)
+            var linkedParents = _context.PhuHuynhs
+                .Include(p => p.TaiKhoan)
+                .Where(p => _context.HocSinhPhuHuynhs.Any(hp => hp.IdHocSinh == vm.IdHocSinh && hp.IdPhuHuynh == p.IdPhuHuynh))
                 .ToList();
             var linkedParentAccountIds = linkedParents
                 .Where(x => x.IdTaiKhoan.HasValue)
@@ -472,8 +471,12 @@ namespace eSchool.Controllers
                 foreach (var classId in new[] { originalClassId, vm.IdLopHoc }.Where(x => x.HasValue))
                 {
                     var classYear = _context.LopHocs.Where(x => x.IdLop == classId).Select(x => x.NamHoc).FirstOrDefault();
-                    if (!AcademicYearPolicy.CanModify(_context.NamHocs.FirstOrDefault(x => x.TenNamHoc == classYear), DateTime.Today))
-                        ModelState.AddModelError(nameof(vm.IdLopHoc), AcademicYearPolicy.ReadOnlyMessage);
+                    if (!string.IsNullOrWhiteSpace(classYear))
+                    {
+                        var namHocObj = _context.NamHocs.FirstOrDefault(x => x.TenNamHoc == classYear);
+                        if (namHocObj != null && !AcademicYearPolicy.CanModify(namHocObj, DateTime.Today))
+                            ModelState.AddModelError(nameof(vm.IdLopHoc), AcademicYearPolicy.ReadOnlyMessage);
+                    }
                 }
             }
             if (vm.IdTaiKhoan.HasValue)
@@ -574,8 +577,11 @@ namespace eSchool.Controllers
         private List<SelectListItem> GetLopHocSelectList()
         {
             return _context.LopHocs
-                .OrderBy(x => x.TenLop)
-                .Select(x => new SelectListItem(x.TenLop, x.IdLop.ToString()))
+                .OrderByDescending(x => x.NamHoc)
+                .ThenBy(x => x.TenLop)
+                .Select(x => new SelectListItem(
+                    string.IsNullOrEmpty(x.NamHoc) ? x.TenLop : $"{x.TenLop} ({x.NamHoc})",
+                    x.IdLop.ToString()))
                 .ToList();
         }
 

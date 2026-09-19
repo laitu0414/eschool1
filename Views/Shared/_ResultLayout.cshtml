@@ -18,6 +18,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="~/css/result.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/footer.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/pagination.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/css/table-column-manager.css" rel="stylesheet" asp-append-version="true" />
 </head>
 <body class="management-workspace">
     <aside class="sidebar">
@@ -34,9 +36,6 @@
         <nav class="sidebar-menu"><a asp-controller="LenLop" asp-action="Alumni" class="menu-item"><i class="bi bi-mortarboard"></i><span>Cựu học sinh</span></a><a asp-controller="TongKet" asp-action="Index" class="menu-item"><i class="bi bi-calendar-check"></i><span>Điểm cả năm / Tổng kết</span></a>
             <a asp-controller="KetQuaHocTap" asp-action="Diem" class="@MenuClass("Diem")">
                 <i class="bi bi-bar-chart-fill"></i><span>Qu&#7843;n l&#253; &#273;i&#7875;m</span>
-            </a>
-            <a asp-controller="KetQuaHocTap" asp-action="DiemDanh" class="@MenuClass("DiemDanh")">
-                <i class="bi bi-person-check-fill"></i><span>&#272;i&#7875;m danh</span>
             </a>
             <a asp-controller="KetQuaHocTap" asp-action="HocPhi" class="@MenuClass("HocPhi")">
                 <i class="bi bi-cash-coin"></i><span>H&#7885;c ph&#237;</span>
@@ -90,6 +89,8 @@
     <script src="~/js/required-fields.js" asp-append-version="true"></script>
     <script src="~/js/table-pagination.js" asp-append-version="true"></script>
     <script src="~/js/table-column-manager.js" asp-append-version="true"></script>
+    <script src="~/js/xlsx.full.min.js" asp-append-version="true"></script>
+    <script src="~/js/excel-preview.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

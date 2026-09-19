@@ -18,13 +18,15 @@ body.management-workspace {
     width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center;
     background: #294572; color: #dbeafe; border-radius: 12px; font-size: 22px;
 }
-.management-workspace .management-group { border: 0; }
-.management-workspace .management-group summary { color: #cfdaeb; padding: 12px 10px; }
-.management-workspace .management-items { padding-left: 10px; border-left: 1px solid #314664; margin-left: 16px; }
-.management-workspace .sidebar .management-link { color: #b9c8de; font-size: 13px; padding: 10px 12px; }
-.management-workspace .sidebar .management-link.is-active { color: #fff; background: #2563eb; box-shadow: 0 4px 12px #091a3433; }
-.management-workspace .sidebar-bottom { padding-top: 18px; border-top: 1px solid #314664; margin-top: auto; }
-.management-workspace .sidebar-bottom .menu-item { color: #c2cfe2; font-size: 13px; border-radius: 10px; }
+.management-workspace .management-group { border: 0 !important; }
+.management-workspace .management-group summary { color: #cfdaeb !important; padding: 9px 10px !important; font-size: 13.5px !important; border-radius: 8px !important; margin: 0 !important; }
+.management-workspace .management-items { padding-left: 8px !important; border-left: 1px solid #314664 !important; margin-left: 14px !important; gap: 2px !important; }
+.management-workspace .sidebar .management-link,
+.management-workspace .sidebar a.management-link { color: #b9c8de !important; font-size: 13px !important; padding: 7px 11px !important; border-radius: 8px !important; min-height: 36px !important; margin: 0 0 2px 0 !important; box-sizing: border-box !important; }
+.management-workspace .sidebar .management-link.is-active,
+.management-workspace .sidebar a.management-link.is-active { color: #fff !important; background: #2563eb !important; font-weight: 600 !important; box-shadow: 0 2px 8px rgba(9, 26, 52, 0.25) !important; }
+.management-workspace .sidebar-bottom { padding-top: 18px !important; border-top: 1px solid #314664 !important; margin-top: auto !important; }
+.management-workspace .sidebar-bottom .menu-item { color: #c2cfe2 !important; font-size: 13px !important; border-radius: 10px !important; padding: 8px 12px !important; margin: 0 !important; }
 .management-workspace .main { margin-left: 280px; width: calc(100% - 280px); min-width: 0; background: var(--ui-bg); }
 .management-workspace .topbar {
     min-height: 88px; height: auto; padding: 18px 32px; background: #fff;
@@ -54,6 +56,32 @@ body.management-workspace {
 }
 .management-workspace .filter-card:hover { transform: none; box-shadow: 0 3px 14px rgba(31,55,86,.035); }
 .management-workspace h2, .management-workspace h3, .management-workspace h4, .management-workspace h5 { color: var(--ui-ink); line-height: 1.4; }
+.management-workspace .student-admin-hero h2,
+.management-workspace .teacher-admin-hero h2,
+.management-workspace .parent-admin-hero h2,
+.management-workspace .student-hero h2,
+.management-workspace .student-score-hero h2,
+.management-workspace .student-fee-hero h2,
+.management-workspace .student-profile-hero h2,
+.management-workspace .student-profile-hero h3,
+.management-workspace .parent-profile-modal-head h2 {
+    color: #ffffff !important;
+}
+.management-workspace .student-admin-hero p,
+.management-workspace .teacher-admin-hero p,
+.management-workspace .parent-admin-hero p,
+.management-workspace .student-hero p,
+.management-workspace .student-score-hero p,
+.management-workspace .student-fee-hero p,
+.management-workspace .student-profile-hero p,
+.management-workspace .parent-profile-modal-head p {
+    color: rgba(255, 255, 255, 0.88) !important;
+}
+.management-workspace .student-admin-eyebrow,
+.management-workspace .teacher-admin-eyebrow,
+.management-workspace .parent-admin-eyebrow {
+    color: #ffffff !important;
+}
 .management-workspace .page h3 { font-size: 21px; }
 .management-workspace .page h4, .management-workspace .page h5 { font-size: 17px; }
 .management-workspace .page-tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }

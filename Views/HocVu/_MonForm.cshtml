@@ -1,17 +1,36 @@
 @model eSchool.ViewModels.MonHocFormViewModel
+@{
+    var khoiList = new[] { "6", "7", "8", "9" };
+    var currentKhois = (Model.Khoi ?? "").Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToHashSet();
+}
 
 <div class="mb-3">
     <label class="form-label">Mã môn <span class="text-danger">*</span></label>
-    <input asp-for="MaMon" class="form-control" required maxlength="20" />
+    <input asp-for="MaMon" class="form-control" required maxlength="20" placeholder="VD: TOAN, HOA8, CN6..." />
     <span asp-validation-for="MaMon" class="text-danger"></span>
 </div>
 <div class="mb-3">
     <label class="form-label">Tên môn <span class="text-danger">*</span></label>
-    <input asp-for="TenMon" class="form-control" required maxlength="100" />
+    <input asp-for="TenMon" class="form-control" required maxlength="100" placeholder="VD: Toán, Hóa học 8, Công nghệ 6..." />
     <span asp-validation-for="TenMon" class="text-danger"></span>
 </div>
-<div>
-    <label class="form-label">Tổng số tiết <span class="text-danger">*</span></label>
-    <input asp-for="SoTiet" type="number" min="1" max="500" required class="form-control" />
+<div class="mb-3">
+    <label class="form-label">Số tiết cả năm học <span class="text-danger">*</span></label>
+    <input asp-for="SoTiet" type="number" min="1" max="500" required class="form-control" placeholder="VD: 140, 105, 70, 54, 37, 35..." />
+    <small class="text-muted d-block mt-1">Tổng số tiết thực dạy trong 1 năm học (35 tuần, chuẩn tối đa 1.050 tiết/năm &approx; 30 tiết/tuần).</small>
     <span asp-validation-for="SoTiet" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label class="form-label fw-bold d-block">Khối lớp áp dụng <span class="text-danger">*</span></label>
+    <div class="d-flex flex-wrap gap-3 p-2 bg-light rounded border">
+        @foreach (var k in khoiList)
+        {
+            bool isChecked = currentKhois.Contains(k) || string.IsNullOrEmpty(Model.Khoi);
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="SelectedKhoi" value="@k" id="chk_khoi_@(Model.IdMonHoc)_@k" @(isChecked ? "checked" : "") />
+                <label class="form-check-label fw-semibold" for="chk_khoi_@(Model.IdMonHoc)_@k">Khối @k</label>
+            </div>
+        }
+    </div>
+    <small class="text-muted d-block mt-1">Môn sẽ chỉ xuất hiện khi xếp Thời khóa biểu cho các khối được chọn.</small>
 </div>
